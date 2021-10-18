@@ -10,7 +10,7 @@ makedocs(;
     sitename="SMLMData.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://kalidke.github.io/SMLMData.jl",
+        canonical="https://JuliaSMLM.github.io/SMLMData.jl",
         assets=String[],
     ),
     pages=[
