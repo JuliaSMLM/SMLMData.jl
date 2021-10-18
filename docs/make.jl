@@ -6,7 +6,7 @@ DocMeta.setdocmeta!(SMLMData, :DocTestSetup, :(using SMLMData); recursive=true)
 makedocs(;
     modules=[SMLMData],
     authors="klidke@unm.edu",
-    repo="https://github.com/kalidke/SMLMData.jl/blob/{commit}{path}#{line}",
+    repo="https://github.com/JuliaSMLM/SMLMData.jl/blob/{commit}{path}#{line}",
     sitename="SMLMData.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
