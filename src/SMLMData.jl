@@ -1,5 +1,5 @@
 module SMLMData
 
-# Write your package code here.
+include("structdefinitions.jl")
 
 end
