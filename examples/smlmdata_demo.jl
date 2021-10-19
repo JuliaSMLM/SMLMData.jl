@@ -15,4 +15,3 @@ smld_init = SMLMData.SMLD(nlocalizations)
 #  data organized as [datasetnum, framenum, x, y, x_se, y_se].
 data = DataFrames.DataFrame(CSV.File(pwd() * "\\example_data.csv"))
 smld = SMLMData.SMLD(data)
-

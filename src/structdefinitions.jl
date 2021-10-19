@@ -2,15 +2,17 @@
 using DataFrames 
 
 mutable struct SMLD
-    connectID::Vector{Int64}
+    connectID::Vector{Int}
     x::Vector{Float32}
     y::Vector{Float32}
     x_se::Vector{Float32}
     y_se::Vector{Float32}
-    framenum::Vector{Int64}
-    nframes::Int64
-    datasetnum::Vector{Int64}
-    ndatasets::Int64
+    framenum::Vector{Int}
+    datasetnum::Vector{Int}
+    nframes::Int
+    ndatasets::Int
+    ysize::Int
+    xsize::Int
     SMLD() = new()
 end
 
@@ -30,9 +32,13 @@ function SMLD(nlocalizations::Int)
     smld.y = floatfill
     smld.x_se = floatfill
     smld.y_se = floatfill
-    intfill = Vector{Int64}(undef, nlocalizations)
+    intfill = Vector{Int}(undef, nlocalizations)
     smld.framenum = intfill
     smld.datasetnum = intfill
+    smld.nframes = 0
+    smld.ndatasets = 0
+    smld.ysize = 0
+    smld.xsize = 0
 
     return smld
 end
@@ -51,14 +57,16 @@ placed into a dataframe with the DataFrames package.
 """
 function SMLD(data::DataFrames.DataFrame)
     smld = SMLD()
-    smld.datasetnum = Int64.(data[:, 1])
-    smld.framenum = Int64.(data[:, 2])
+    smld.datasetnum = Int.(data[:, 1])
+    smld.framenum = Int.(data[:, 2])
     smld.x = Float32.(data[:, 3])
     smld.y = Float32.(data[:, 4])
     smld.x_se = Float32.(data[:, 5])
     smld.y_se = Float32.(data[:, 6])
-    smld.nframes = Int64(maximum(smld.framenum))
-    smld.ndatasets = Int64(length(unique(smld.datasetnum)))
+    smld.nframes = Int(maximum(smld.framenum))
+    smld.ndatasets = Int(length(unique(smld.datasetnum)))
+    smld.ysize = ceil(maximum(data[:, 3]) - 0.5)
+    smld.xsize = ceil(maximum(data[:, 4]) - 0.5)
 
     return smld
 end
