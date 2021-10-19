@@ -33,6 +33,7 @@ function SMLD(nlocalizations::Int)
     smld.x_se = floatfill
     smld.y_se = floatfill
     intfill = Vector{Int}(undef, nlocalizations)
+    smld.connectID = intfill
     smld.framenum = intfill
     smld.datasetnum = intfill
     smld.nframes = 0
@@ -57,6 +58,7 @@ placed into a dataframe with the DataFrames package.
 """
 function SMLD(data::DataFrames.DataFrame)
     smld = SMLD()
+    smld.connectID = collect(1:size(data)[1])
     smld.datasetnum = Int.(data[:, 1])
     smld.framenum = Int.(data[:, 2])
     smld.x = Float32.(data[:, 3])

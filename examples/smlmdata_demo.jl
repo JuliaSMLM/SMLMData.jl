@@ -15,3 +15,7 @@ smld_init = SMLMData.SMLD(nlocalizations)
 #  data organized as [datasetnum, framenum, x, y, x_se, y_se].
 data = DataFrames.DataFrame(CSV.File(pwd() * "\\example_data.csv"))
 smld = SMLMData.SMLD(data)
+
+## Isolate a subregion of `smld`.
+smld_sub = SMLMData.isolatesubregion(smld, [1, 2, 3])
+smld_sub = SMLMData.isolatesubregion(smld, smld.connectID.==2)
