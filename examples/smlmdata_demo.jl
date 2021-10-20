@@ -14,9 +14,9 @@ smld_init = SMLMData.SMLD2D(nlocalizations)
 ## Create an smld structure from a properly formatted csv file:
 #  The csv file should be organized s.t. each row is a localization, with the
 #  data organized as [datasetnum, framenum, x, y, x_se, y_se].
-data = DataFrames.DataFrame(CSV.File(pwd() * "\\examples\\example_data.csv"))
+data = DataFrames.DataFrame(CSV.File("C:\\Users\\David\\Documents\\GitHub\\example_data.csv"))
 smld = SMLMData.SMLD2D(data)
 
 ## Isolate a subregion of `smld`.
-smld_sub = SMLMData.isolatesubregion(smld, [1, 2, 3])
-smld_sub = SMLMData.isolatesubregion(smld, smld.connectID.==2)
+smld_sub = SMLMData.isolatesmld(smld, [1, 2, 3])
+smld_sub = SMLMData.isolatesmld(smld, smld.connectID.==2)
