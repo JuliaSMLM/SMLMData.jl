@@ -1,3 +1,5 @@
+using Base
+
 """
     smld_sub = isolatesmld(smld::SMLD2D, subind::Vector{Int})
 
@@ -11,7 +13,7 @@ function isolatesmld(smld::SMLD2D, subind::Vector{Int})
     # Loop through each field and add it to the output SMLD.  For scalar
     # fields, we don't have to apply the indexing of `subind`.
     fields = fieldnames(SMLMData.SMLD2D)
-    nfields = length(fields)
+    nfields = Base.length(fields)
     smld_sub = deepcopy(smld)
     for ii = 1:nfields
         currentfield = getfield(smld, fields[ii])
@@ -37,7 +39,7 @@ function isolatesmld(smld::SMLD2D, keepbit::BitVector)
     # Loop through each field and add it to the output SMLD.  For scalar
     # fields, we don't have to apply the indexing of `keepbit`.
     fields = fieldnames(SMLMData.SMLD2D)
-    nfields = length(fields)
+    nfields = Base.length(fields)
     smld_sub = deepcopy(smld)
     for ii = 1:nfields
         currentfield = getfield(smld, fields[ii])

@@ -1,3 +1,5 @@
+using Base
+
 """
     smld = catsmld(smld1::SMLD2D, smld2::SMLD2D)
 
@@ -12,7 +14,7 @@ function catsmld(smld1::SMLD2D, smld2::SMLD2D)
     # Loop through each field and add it to the output SMLD.  For scalar
     # fields, we don't have to apply the indexing of `subind`.
     fields = fieldnames(SMLMData.SMLD2D)
-    nfields = length(fields)
+    nfields = Base.length(fields)
     smld = deepcopy(smld1)
     for ii = 1:nfields
         currentfield1 = getfield(smld1, fields[ii])

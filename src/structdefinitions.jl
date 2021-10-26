@@ -1,5 +1,6 @@
 # This file defines some struct types used in the SMLMData package.
-using DataFrames 
+using Base
+using DataFrames
 
 abstract type SMLD end
 
@@ -79,7 +80,7 @@ function SMLD2D(data::DataFrames.DataFrame)
     smld.bg = Float64.(data[:, 9])
     smld.σ_bg = Float64.(data[:, 10])
     smld.nframes = Int(maximum(smld.framenum))
-    smld.ndatasets = Int(length(unique(smld.datasetnum)))
+    smld.ndatasets = Int(Base.length(unique(smld.datasetnum)))
     smld.datasize = [ceil(maximum(data[:, 3]) - 0.5);
                      ceil(maximum(data[:, 4]) - 0.5)]
     smld.datafields = (:connectID, :x, :y, :σ_x, :σ_y, 
