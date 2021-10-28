@@ -1,5 +1,8 @@
 module SMLMData
 
-# Write your package code here.
+include("structdefinitions.jl")
+include("smldhelpers.jl")
+include("isolatesmld.jl")
+include("catsmld.jl")
 
 end
