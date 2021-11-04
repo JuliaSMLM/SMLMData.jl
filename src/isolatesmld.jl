@@ -79,7 +79,7 @@ function isolatesmld(smld::SMLD2D, keepbit::BitVector)
 end
 
 """
-    smld_connected = isolateconnected(smld::SMLMData.SMLD2D)
+    smld_connected, keepbool = isolateconnected(smld::SMLMData.SMLD2D)
 
 Prepare individual SMLD2D structures for each precluster in `smld`.
 
@@ -91,6 +91,12 @@ to a single connectID.
 # Inputs
 -`smld`: SMLD2D structure containing the localization data, with the field 
          connectID populated with a meaningful set of connection indices.
+
+# outputs
+-`smld_connected`: Vector of SMLD2D structures with each structure containing
+                   localizations that share the same `connectID`.
+-`keepbool`: Vector of BitVector defining the `smld` indices sharing the same
+             `connectID`.
 """
 function isolateconnected(smld::SMLMData.SMLD2D)
     # Ensure that the provided `smld` has a meaningful connectID field, 
@@ -104,9 +110,11 @@ function isolateconnected(smld::SMLMData.SMLD2D)
     # Loop through clusters in `smld` and prepare the output.
     connectIDs = unique(smld.connectID)
     smld_connected = Vector{SMLMData.SMLD2D}(undef, Base.length(connectIDs))
+    keepbool = Vector{BitVector}(undef, Base.length(connectIDs))
     for cc in connectIDs
-        smld_connected[cc] = SMLMData.isolatesmld(smld, smld.connectID .== cc)
+        keepbool[cc] = smld.connectID .== cc
+        smld_connected[cc] = SMLMData.isolatesmld(smld, keepbool[cc])
     end
 
-    return smld_connected
+    return smld_connected, keepbool
 end
