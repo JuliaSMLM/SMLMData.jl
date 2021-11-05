@@ -101,7 +101,7 @@ to a single connectID.
 function isolateconnected(smld::SMLMData.SMLD2D)
     # Ensure that the provided `smld` has a meaningful connectID field, 
     # returning if not.
-    nloc = SMLMData.length(smld)
+    nloc = Base.length(smld)
     if Base.length(smld.connectID) != nloc
         @warn "Input `smld.connectID` is not valid."
         return [smld]

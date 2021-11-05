@@ -96,5 +96,5 @@ Returns the number of localizations in `smld`.
 """
 function Base.length(smld::SMLMData.SMLD2D)
     # Determine the length of `smld` by counting the number of frames.
-    return length(smld.framenum)
+    return Base.length(smld.framenum)
 end
