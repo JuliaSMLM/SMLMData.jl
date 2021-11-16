@@ -39,7 +39,6 @@ function SMLD2D(nlocalizations::Int)
     smld.σ_x = zeros(nlocalizations)
     smld.σ_y = zeros(nlocalizations)
     smld.photons = zeros(nlocalizations)
-
     smld.connectID = zeros(Int,nlocalizations)
     smld.framenum = zeros(Int,nlocalizations)
     smld.datasetnum = zeros(Int,nlocalizations)
