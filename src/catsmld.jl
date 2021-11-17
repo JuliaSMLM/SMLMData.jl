@@ -1,4 +1,3 @@
-using Base
 
 """
     smld = catsmld(smld1::SMLD2D, smld2::SMLD2D)

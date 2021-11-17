@@ -1,6 +1,4 @@
 # This file defines some struct types used in the SMLMData package.
-using Base
-using DataFrames
 
 abstract type SMLD end
 
