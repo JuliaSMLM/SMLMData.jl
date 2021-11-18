@@ -17,12 +17,14 @@ function isolatesmld(smld::SMLD2D, subind::Vector{Int})
     indlength = Base.length(subind)
     smld_sub = deepcopy(smld)
     for ii = 1:nfields
-        currentfield = getfield(smld, fields[ii])
-        if isa(currentfield, Vector) &&
-           any(fields[ii] .== smld.datafields) &&
-           (Base.length(currentfield)>=indlength)
-            # If this field is a vector, we'll keep only the `subind` elements.
-            setfield!(smld_sub, fields[ii], currentfield[subind])
+        if isdefined(smld, fields[ii])
+            currentfield = getfield(smld, fields[ii])
+            if isa(currentfield, Vector) &&
+            any(fields[ii] .== smld.datafields) &&
+            (Base.length(currentfield) >= indlength)
+                # If this field is a vector, we'll keep only the `subind` elements.
+                setfield!(smld_sub, fields[ii], currentfield[subind])
+            end
         end
     end
 
@@ -46,12 +48,14 @@ function isolatesmld(smld::SMLD2D, keepbit::BitVector)
     bitlength = Base.length(keepbit)
     smld_sub = deepcopy(smld)
     for ii = 1:nfields
-        currentfield = getfield(smld, fields[ii])
-        if isa(currentfield, Vector) &&
-           any(fields[ii] .== smld.datafields) &&
-           (Base.length(currentfield) >= bitlength)
-            # If this field is a vector, we'll keep only the `keepbit` elements.
-            setfield!(smld_sub, fields[ii], currentfield[keepbit])
+        if isdefined(smld, fields[ii])
+            currentfield = getfield(smld, fields[ii])
+            if isa(currentfield, Vector) &&
+            any(fields[ii] .== smld.datafields) &&
+            (Base.length(currentfield) >= bitlength)
+                # If this field is a vector, we'll keep only the `keepbit` elements.
+                setfield!(smld_sub, fields[ii], currentfield[keepbit])
+            end
         end
     end
 
