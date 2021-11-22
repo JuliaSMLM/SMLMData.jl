@@ -6,7 +6,6 @@ using Distributions
 """
     image = makegaussim(μ::Matrix{Float64},
                         σ_μ::Matrix{Float64}, 
-                        photons::Vector{Float64},
                         datasize::Vector{Int},
                         mag::Float64 = 20.0, 
                         nsigma::Float64 = 5.0)
@@ -20,7 +19,6 @@ in which Gaussians with standard deviations `σ_μ` are added at positions `μ`.
 # Inputs
 -`μ`: Positions of the Gaussians. (pixels)([y x])
 -`σ_μ`: Standard errors of `μ` estimates. (pixels)([y x])
--`photons`: Photons attributed to each row of `μ`.
 -`datasize`: Size of the region of data collection. (pixels)([y; x])
 -`mag`: Approximate magnfication from data coordinates to SR coordinates. 
         (Default = 20.0)
@@ -33,7 +31,6 @@ in which Gaussians with standard deviations `σ_μ` are added at positions `μ`.
 """
 function makegaussim(μ::Matrix{Float64},
                      σ_μ::Matrix{Float64}, 
-                     photons::Vector{Float64},
                      datasize::Vector{Int},
                      mag::Float64 = 20.0,
                      nsigma::Float64 = 5.0)
@@ -58,7 +55,7 @@ function makegaussim(μ::Matrix{Float64},
         xend = min(imagesize[2], 
             Int(round(mag * (μ[nn, 2]+nsigma*σ_μ[nn, 1]))))
         for ii = ystart:yend, jj = xstart:xend
-            image[ii, jj] += photons[nn] * 
+            image[ii, jj] += 
                 Distributions.pdf(distrib, ([ii; jj].-0.5) / mag .+ 0.5)
         end
     end
@@ -107,7 +104,7 @@ function makegaussim(smld::SMLMData.SMLD2D,
                      mag::Float64 = 20.0,
                      nsigma::Float64 = 5.0)
     return SMLMData.makegaussim([smld.y smld.x], [smld.σ_y smld.σ_x], 
-        smld.photons, smld.datasize, mag, nsigma)
+        smld.datasize, mag, nsigma)
 end
 
 """
