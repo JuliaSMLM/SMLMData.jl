@@ -32,14 +32,14 @@ structure with undefined values for a predefined number of localizations.
 """
 function SMLD2D(nlocalizations::Int)
     smld = SMLD2D()
-    smld.x = zeros(nlocalizations)
-    smld.y = zeros(nlocalizations)
-    smld.σ_x = zeros(nlocalizations)
-    smld.σ_y = zeros(nlocalizations)
-    smld.photons = zeros(nlocalizations)
-    smld.connectID = zeros(Int,nlocalizations)
-    smld.framenum = zeros(Int,nlocalizations)
-    smld.datasetnum = zeros(Int,nlocalizations)
+    smld.x = zeros(Float64, nlocalizations)
+    smld.y = zeros(Float64, nlocalizations)
+    smld.σ_x = zeros(Float64, nlocalizations)
+    smld.σ_y = zeros(Float64, nlocalizations)
+    smld.photons = zeros(Float64, nlocalizations)
+    smld.connectID = collect(1:nlocalizations)
+    smld.framenum = zeros(Int, nlocalizations)
+    smld.datasetnum = zeros(Int, nlocalizations)
     smld.nframes = 0
     smld.ndatasets = 0
     smld.datasize = [0; 0]
