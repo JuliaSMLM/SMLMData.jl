@@ -1,7 +1,3 @@
-```@meta
-CurrentModule = SMLMData
-```
-
 # Library
 
 ```@index
