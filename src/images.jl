@@ -1,12 +1,29 @@
 using Base
 using Distributions
+using StatsBase
 
 # This file contains functions/methods related to images/image generation.
+
+function contraststretch!(image::Matrix{Float64};
+                          minval::Float64 = 0.0, maxval::Float64 = 1.0)
+    # Stretch the image to the range [0.0, 1.0].
+    image .-= StatsBase.minimum(image)
+    image ./= StatsBase.maximum(image)
+    image = (maxval-minval)*image .+ minval
+
+    return image
+end
+
+function contraststretch(image::Matrix{Float64};
+                         minval::Float64 = 0.0, maxval::Float64 = 1.0)
+    return SMLMData.contraststretch!(deepcopy(image);
+        minval=minval, maxval=maxval)
+end
 
 """
     image = makegaussim(μ::Matrix{Float64},
                         σ_μ::Matrix{Float64}, 
-                        datasize::Vector{Int},
+                        datasize::Vector{Int};
                         mag::Float64 = 20.0, 
                         nsigma::Float64 = 5.0)
 
@@ -31,7 +48,7 @@ in which Gaussians with standard deviations `σ_μ` are added at positions `μ`.
 """
 function makegaussim(μ::Matrix{Float64},
                      σ_μ::Matrix{Float64}, 
-                     datasize::Vector{Int},
+                     datasize::Vector{Int};
                      mag::Float64 = 20.0,
                      nsigma::Float64 = 5.0)
     # Loop through emitters and add them to our output Gaussian image.
@@ -76,7 +93,7 @@ function makegaussim(μ::Matrix{Float64},
 end
 
 """
-    image = makegaussim(smld::SMLMData.SMLD2D, 
+    image = makegaussim(smld::SMLMData.SMLD2D;
                         mag::Float64 = 20.0, 
                         nsigma::Float64 = 5.0)
 
@@ -100,11 +117,11 @@ for in this method.
 -`image`: Matrix{Float64} Gaussian image in which each localization in `smld`
           is plotted as a Gaussian.
 """
-function makegaussim(smld::SMLMData.SMLD2D,
+function makegaussim(smld::SMLMData.SMLD2D;
                      mag::Float64 = 20.0,
                      nsigma::Float64 = 5.0)
     return SMLMData.makegaussim([smld.y smld.x], [smld.σ_y smld.σ_x], 
-        smld.datasize, mag, nsigma)
+        smld.datasize; mag=mag, nsigma=nsigma)
 end
 
 """
@@ -290,13 +307,6 @@ function makecircleim(coords::Matrix{Float64},
         for ii in validind
             image[rows[ii], cols[ii]] = 1.0
         end
-    end
-
-    # Normalize the image to sum to 1.0.
-    image = image ./ max(sum(image), 1.0)
-    if !isapprox(sum(image), 1.0)
-        @warn "Image is non-normalizable!  Returning flat image."
-        image = ones(Float64, imagesize[1], imagesize[2]) ./ prod(imagesize)
     end
 
     return image
