@@ -1,6 +1,7 @@
 module SMLMData
 
 using Base
+using StatsBase
 using Distributions
 using MAT
 using DataFrames

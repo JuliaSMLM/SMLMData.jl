@@ -1,3 +1,5 @@
+using MAT
+
 # Tools for working with smite SMD structures
 
 mutable struct SMITEsmd 
