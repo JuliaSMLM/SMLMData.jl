@@ -1,6 +1,7 @@
 using Base
 using Distributions
 using StatsBase
+using Images
 
 # This file contains functions/methods related to images/image generation.
 
@@ -43,6 +44,140 @@ function contraststretch(image::Matrix{Float64};
     minval::Float64 = 0.0, maxval::Float64 = 1.0)
     return SMLMData.contraststretch!(deepcopy(image);
         minval = minval, maxval = maxval)
+end
+
+
+"""
+    image = makecircleim(coords::Matrix{Float64},
+                         σ::Vector{Float64},
+                         datasize::Vector{Int},
+                         mag::Float64 = 20.0)
+
+Make a circle image of the localizations in `coords`.
+
+# Description
+This function creates an image of the localizations in `coords` by adding a
+circle centered at the locations `coords` with radii `σ`.
+
+# Inputs
+-`coords`: Localization coordinates. ([y x])
+-`σ`: Standard error of localizations in `coords`. (nlocx1)
+-`datasize`: Size of the data image. ([ysize xsize])
+-`mag`: Approximate magnfication from data coordinates to SR coordinates. 
+        (Default = 20.0)
+
+# Outputs
+-`image`: Matrix{Float64} histogram image of localizations.
+"""
+function makecircleim(coords::Matrix{Float64},
+    σ::Vector{Float64},
+    datasize::Vector{Int},
+    mag::Float64 = 20.0)
+    # Rescale the coordinates based on `mag`.
+    coords = mag * (coords .- 0.5) .+ 0.5
+    σ *= mag
+
+    # Loop through localizations and add them to our output image.
+    imagesize = Int.(round.(datasize * mag))
+    image = zeros(Float64, imagesize[1], imagesize[2])
+    for nn = 1:size(coords, 1)
+        # If σ[nn] isn't positive, skip this localization.
+        if !(σ[nn] > 0.0)
+            continue
+        end
+
+        # Define the pixel locations that fall along the circle.
+        # NOTE: The extra factor of 4 improves circle appearance.
+        θ = range(0, 2 * pi, length = max(4, Int(ceil(4 * (2 * pi * σ[nn])))))
+        rows = Int.(round.(coords[nn, 1] .+ σ[nn] * sin.(θ)))
+        cols = Int.(round.(coords[nn, 2] .+ σ[nn] * cos.(θ)))
+        validind = findall((rows .>= 1) .* (rows .< imagesize[1]) .*
+                           (cols .>= 1) .* (cols .< imagesize[1]))
+
+        # Set the pixels of the output image to 1.0 wherever met by the circle.
+        for ii in validind
+            image[rows[ii], cols[ii]] = 1.0
+        end
+    end
+
+    return image
+end
+
+"""
+    image = makecircleim(smld::SMLMData.SMLD2D, mag::Float64 = 20.0)
+
+Make a circle image of the localizations in `smld`.
+
+# Description
+This function creates an image of the localizations in `smld` by adding a
+circle for each localization.
+
+# Inputs
+-`smld`: SMLMData.SMLD2D data structure containing localizations.
+-`mag`: Approximate magnfication from data coordinates to SR coordinates. 
+        (Default = 20.0)
+
+# Outputs
+-`image`: Matrix{Float64} circle image of localizations.
+"""
+function makecircleim(smld::SMLMData.SMLD2D, mag::Float64 = 20.0)
+    coords = [smld.y smld.x]
+    σ = vec(mean([smld.σ_y smld.σ_x], dims = 2))
+    return SMLMData.makecircleim(coords, σ, smld.datasize, mag)
+end
+
+"""
+    image = circleim(smld::SMLMData.SMLD2D, pxsize::Float64;
+                     pxsize_out::Float64 = 0.005)
+
+Generate and save a circle image.
+
+# Description
+This method is a wrapper for makecircleim() with modified inputs.
+
+# Inputs
+-`smld`: SMLMData.SMLD2D data structure containing localizations.
+-`pxsize`: Pixel size of localizations in `smld`. (micrometers)
+-`pxsize_out`: Desired output pixel size. (micrometers)
+"""
+function circleim(smld::SMLMData.SMLD2D, pxsize::Float64;
+    pxsize_out::Float64 = 0.005)
+    # Determine the requested magnfication factor. 
+    mag = pxsize / pxsize_out
+
+    # Generate the circle image.
+    image = SMLMData.makecircleim(smld, mag)
+
+    # Perform a contrast stretch so that the pixels fills the range [0, 1].
+    SMLMData.contraststretch!(image)
+
+    return image
+end
+
+"""
+    image = circleim(smld::SMLMData.SMLD2D, pxsize::Float64, filename::String;
+                     pxsize_out::Float64 = 0.005)
+
+Generate and save a circle image.
+
+# Description
+This method is a wrapper for makecircleim() which uses different inputs
+arguments and saves the image.
+
+# Inputs
+-`smld`: SMLMData.SMLD2D data structure containing localizations.
+-`pxsize`: Pixel size of localizations in `smld`. (micrometers)
+-`pxsize_out`: Desired output pixel size. (micrometers)
+"""
+function circleim(smld::SMLMData.SMLD2D, pxsize::Float64, filename::String;
+    pxsize_out::Float64 = 0.005)
+    # Generate the circle image.
+    image = SMLMData.circleim(smld, pxsize; pxsize_out = pxsize_out)
+
+    # Save the image.
+    save(filename, Images.colorview(Gray, image))
+
+    return image
 end
 
 """
@@ -147,6 +282,98 @@ function makegaussim(smld::SMLMData.SMLD2D;
     nsigma::Float64 = 5.0)
     return SMLMData.makegaussim([smld.y smld.x], [smld.σ_y smld.σ_x],
         smld.datasize; mag = mag, nsigma = nsigma)
+end
+
+"""
+    image = gaussim(smld::SMLMData.SMLD2D, pxsize::Float64;
+                    pxsize_out::Float64 = 0.005,
+                    prctileceiling::Float64 = 99.5, 
+                    nsigma::Float64 = 5.0)
+
+Generate a user-friendly (i.e., scaled and thresholded) Gaussian image.
+
+# Description
+This method is a wrapper for makegaussim() which generates a more user-friendly
+Gaussian image.  That is, this method calls makegaussim(), applies a percentile
+ceiling to the results, and then performs a contrast stretch so its pixels 
+occupy the range [0.0, 1.0].
+
+# Inputs
+-`smld`: SMLMData.SMLD2D data structure containing localizations.
+-`pxsize`: Pixel size of localizations in `smld`. (micrometers)
+-`pxsize_out`: Desired output pixel size. (micrometers)
+-`prctileceiling`: Upper percentile used to threshold the pixel values of
+                   particularly bright pixels.
+-`nsigma`: Number of standard deviations from the localization coordinate at
+           which we truncate the Gaussian. (Default = 5.0)
+"""
+function gaussim(smld::SMLMData.SMLD2D, pxsize::Float64;
+    pxsize_out::Float64 = 0.005,
+    prctileceiling::Float64 = 99.5,
+    nsigma::Float64 = 5.0)
+    # Determine the requested magnfication factor. 
+    mag = pxsize / pxsize_out
+
+    # Generate a "raw" Gaussian image (i.e., no scaling or thresholding).
+    image = SMLMData.makegaussim(smld; mag = mag, nsigma = nsigma)
+
+    # Apply a percentile ceiling to improve contrast.
+    upperbound = StatsBase.percentile(image[:], prctileceiling)
+    image[image.>upperbound] .= upperbound
+
+    # Perform a contrast stretch so that the pixels fills the range [0, 1].
+    SMLMData.contraststretch!(image)
+
+    return image
+end
+
+"""
+    image = gaussim(smld::SMLMData.SMLD2D, pxsize::Float64, filename::String;
+                    pxsize_out::Float64 = 0.005,
+                    prctileceiling::Float64 = 99.5, 
+                    nsigma::Float64 = 5.0)
+
+Generate and save a user-friendly (i.e., scaled and thresholded) Gaussian image.
+
+# Description
+This method is a wrapper for makegaussim() which generates a more user-friendly
+Gaussian image.  That is, this method calls makegaussim(), applies a percentile
+ceiling to the results, and then performs a contrast stretch so its pixels 
+occupy the range [0.0, 1.0].  This method of gaussim() saves the image in the 
+user-specified `filename`.
+
+# Inputs
+-`smld`: SMLMData.SMLD2D data structure containing localizations.
+-`pxsize`: Pixel size of localizations in `smld`. (micrometers)
+-`filename`: String specifying the location of the output image.
+-`pxsize_out`: Desired output pixel size. (micrometers)
+-`prctileceiling`: Upper percentile used to threshold the pixel values of
+                   particularly bright pixels.
+-`nsigma`: Number of standard deviations from the localization coordinate at
+           which we truncate the Gaussian. (Default = 5.0)
+"""
+function gaussim(smld::SMLMData.SMLD2D, pxsize::Float64, filename::String;
+    pxsize_out::Float64 = 0.005,
+    prctileceiling::Float64 = 99.5,
+    nsigma::Float64 = 5.0)
+    # Prepare the image.
+    image = SMLMData.gaussim(smld, pxsize;
+        pxsize_out = pxsize_out,
+        prctileceiling = prctileceiling,
+        nsigma = nsigma)
+
+    # Create a color image.
+    redchannel(x) = min(1.0, 10.0 * x)
+    greenchannel(x) = min(1.0, max(10.0 * (x - 0.4), 0.0))
+    bluechannel(x) = min(1.0, max(5.0 * (x - 0.7), 0.0))
+    imageRGB = Colors.RGB.(redchannel.(image),
+        greenchannel.(image),
+        bluechannel.(image))
+
+    # Save the image.
+    Images.save(filename, imageRGB)
+
+    return image
 end
 
 """
@@ -279,83 +506,4 @@ is then scaled so that it sums to 1.0.
 """
 function makehistim(smld::SMLMData.SMLD2D, mag::Float64 = 20.0)
     return makehistim([smld.y smld.x], smld.datasize, mag)
-end
-
-"""
-    image = makecircleim(coords::Matrix{Float64},
-                         σ::Vector{Float64},
-                         datasize::Vector{Int},
-                         mag::Float64 = 20.0)
-
-Make a circle image of the localizations in `coords`.
-
-# Description
-This function creates an image of the localizations in `coords` by adding a
-circle centered at the locations `coords` with radii `σ`.
-
-# Inputs
--`coords`: Localization coordinates. ([y x])
--`σ`: Standard error of localizations in `coords`. (nlocx1)
--`datasize`: Size of the data image. ([ysize xsize])
--`mag`: Approximate magnfication from data coordinates to SR coordinates. 
-        (Default = 20.0)
-
-# Outputs
--`image`: Matrix{Float64} histogram image of localizations.
-"""
-function makecircleim(coords::Matrix{Float64},
-    σ::Vector{Float64},
-    datasize::Vector{Int},
-    mag::Float64 = 20.0)
-    # Rescale the coordinates based on `mag`.
-    coords = mag * (coords .- 0.5) .+ 0.5
-    σ *= mag
-
-    # Loop through localizations and add them to our output image.
-    imagesize = Int.(round.(datasize * mag))
-    image = zeros(Float64, imagesize[1], imagesize[2])
-    for nn = 1:size(coords, 1)
-        # If σ[nn] isn't positive, skip this localization.
-        if !(σ[nn] > 0.0)
-            continue
-        end
-
-        # Define the pixel locations that fall along the circle.
-        # NOTE: The extra factor of 4 improves circle appearance.
-        θ = range(0, 2 * pi, length = max(4, Int(ceil(4 * (2 * pi * σ[nn])))))
-        rows = Int.(round.(coords[nn, 1] .+ σ[nn] * sin.(θ)))
-        cols = Int.(round.(coords[nn, 2] .+ σ[nn] * cos.(θ)))
-        validind = findall((rows .>= 1) .* (rows .< imagesize[1]) .*
-                           (cols .>= 1) .* (cols .< imagesize[1]))
-
-        # Set the pixels of the output image to 1.0 wherever met by the circle.
-        for ii in validind
-            image[rows[ii], cols[ii]] = 1.0
-        end
-    end
-
-    return image
-end
-
-"""
-    image = makecircleim(smld::SMLMData.SMLD2D, mag::Float64 = 20.0)
-
-Make a circle image of the localizations in `smld`.
-
-# Description
-This function creates an image of the localizations in `smld` by adding a
-circle for each localization.
-
-# Inputs
--`smld`: SMLMData.SMLD2D data structure containing localizations.
--`mag`: Approximate magnfication from data coordinates to SR coordinates. 
-        (Default = 20.0)
-
-# Outputs
--`image`: Matrix{Float64} circle image of localizations.
-"""
-function makecircleim(smld::SMLMData.SMLD2D, mag::Float64 = 20.0)
-    coords = [smld.y smld.x]
-    σ = vec(mean([smld.σ_y smld.σ_x], dims = 2))
-    return SMLMData.makecircleim(coords, σ, smld.datasize, mag)
 end

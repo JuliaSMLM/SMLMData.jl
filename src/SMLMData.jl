@@ -5,6 +5,7 @@ using StatsBase
 using Distributions
 using MAT
 using DataFrames
+using Images
 
 include("structdefinitions.jl")
 include("isolatesmld.jl")

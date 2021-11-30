@@ -27,18 +27,27 @@ smld = SMLMSim.noise(smld_model, σ_psf)
 
 ## Create and save a circle image.
 using SMLMData
-using Images
 
-magnification = 50.0
-circleim = SMLMData.makecircleim(smld, magnification)
-save("circleim.png", Images.colorview(Gray, circleim))
+pxsize = 0.1
+pxsize_out = 0.001
+SMLMData.circleim(smld, pxsize, "circleim.png";
+    pxsize_out = pxsize_out)
 
 
 ## Create and save a Gaussian image.
-using SMLMData
-using Images
+pxsize = 0.1
+pxsize_out = 0.001
+prctileceiling = 99.8
+nsigma = 5.0
+SMLMData.gaussim(smld, pxsize, "gaussim.png";
+    pxsize_out = pxsize_out,
+    prctileceiling = prctileceiling,
+    nsigma = nsigma)
 
-magnification = 50.0
-gaussim = SMLMData.makegaussim(smld; mag = magnification)
-SMLMData.contraststretch!(gaussim)
-save("gaussim.png", Images.colorview(Gray, gaussim))
+## Create a "raw" Gaussian image distribution (i.e., no extra thresholds and 
+## it sums to 1.0).
+pxsize = 0.1
+pxsize_out = 0.001
+nsigma = 5.0
+imdistrib = SMLMData.makegaussim(smld; mag = pxsize/pxsize_out, nsigma = nsigma)
+
