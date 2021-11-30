@@ -4,20 +4,45 @@ using StatsBase
 
 # This file contains functions/methods related to images/image generation.
 
+"""
+    contraststretch!(image::Matrix{Float64};
+                     minval::Float64 = 0.0, maxval::Float64 = 1.0)
+
+Stretch the histogram of `image` to fill the range `minval` to `maxval`.
+
+# Inputs
+-`image`: Image to be contrast stretched.
+-`minval`: Minimum value of pixels in `image` once stretched.
+-`maxval`: Maximum value of pixels in `image` once stretched.
+"""
 function contraststretch!(image::Matrix{Float64};
-                          minval::Float64 = 0.0, maxval::Float64 = 1.0)
+    minval::Float64 = 0.0, maxval::Float64 = 1.0)
     # Stretch the image to the range [0.0, 1.0].
     image .-= StatsBase.minimum(image)
     image ./= StatsBase.maximum(image)
-    image = (maxval-minval)*image .+ minval
+    image = (maxval - minval) * image .+ minval
 
     return image
 end
 
+"""
+    outimage = contraststretch(image::Matrix{Float64};
+                            minval::Float64 = 0.0, maxval::Float64 = 1.0)
+
+Stretch the histogram of `image` to fill the range `minval` to `maxval`.
+
+# Inputs
+-`image`: Image to be contrast stretched.
+-`minval`: Minimum value of pixels in `image` once stretched.
+-`maxval`: Maximum value of pixels in `image` once stretched.
+
+# Outputs
+-`outimage`: Contrast stretched copy of input `image`.
+"""
 function contraststretch(image::Matrix{Float64};
-                         minval::Float64 = 0.0, maxval::Float64 = 1.0)
+    minval::Float64 = 0.0, maxval::Float64 = 1.0)
     return SMLMData.contraststretch!(deepcopy(image);
-        minval=minval, maxval=maxval)
+        minval = minval, maxval = maxval)
 end
 
 """
@@ -47,10 +72,10 @@ in which Gaussians with standard deviations `σ_μ` are added at positions `μ`.
           is plotted as a Gaussian.
 """
 function makegaussim(μ::Matrix{Float64},
-                     σ_μ::Matrix{Float64}, 
-                     datasize::Vector{Int};
-                     mag::Float64 = 20.0,
-                     nsigma::Float64 = 5.0)
+    σ_μ::Matrix{Float64},
+    datasize::Vector{Int};
+    mag::Float64 = 20.0,
+    nsigma::Float64 = 5.0)
     # Loop through emitters and add them to our output Gaussian image.
     imagesize = Int.(round.(datasize * mag))
     image = zeros(Float64, imagesize[1], imagesize[2])
@@ -61,19 +86,19 @@ function makegaussim(μ::Matrix{Float64},
         end
         Σ = [σ_μ[nn, 1]^2 0.0; 0.0 σ_μ[nn, 2]^2]
         distrib = Distributions.MvNormal(μ[nn, :], Σ)
-        
+
         # Loop through pixels of the image and add this emitter.
-        ystart = max(1, 
-            Int(round(mag * (μ[nn, 1]-nsigma*σ_μ[nn, 2]-0.5))))
-        yend = min(imagesize[1], 
-            Int(round(mag * (μ[nn, 1]+nsigma*σ_μ[nn, 2]))))
-        xstart = max(1, 
-            Int(round(mag * (μ[nn, 2]-nsigma*σ_μ[nn, 1]-0.5))))
-        xend = min(imagesize[2], 
-            Int(round(mag * (μ[nn, 2]+nsigma*σ_μ[nn, 1]))))
+        ystart = max(1,
+            Int(round(mag * (μ[nn, 1] - nsigma * σ_μ[nn, 2] - 0.5))))
+        yend = min(imagesize[1],
+            Int(round(mag * (μ[nn, 1] + nsigma * σ_μ[nn, 2]))))
+        xstart = max(1,
+            Int(round(mag * (μ[nn, 2] - nsigma * σ_μ[nn, 1] - 0.5))))
+        xend = min(imagesize[2],
+            Int(round(mag * (μ[nn, 2] + nsigma * σ_μ[nn, 1]))))
         for ii = ystart:yend, jj = xstart:xend
-            image[ii, jj] += 
-                Distributions.pdf(distrib, ([ii; jj].-0.5) / mag .+ 0.5)
+            image[ii, jj] +=
+                Distributions.pdf(distrib, ([ii; jj] .- 0.5) / mag .+ 0.5)
         end
     end
 
@@ -118,10 +143,10 @@ for in this method.
           is plotted as a Gaussian.
 """
 function makegaussim(smld::SMLMData.SMLD2D;
-                     mag::Float64 = 20.0,
-                     nsigma::Float64 = 5.0)
-    return SMLMData.makegaussim([smld.y smld.x], [smld.σ_y smld.σ_x], 
-        smld.datasize; mag=mag, nsigma=nsigma)
+    mag::Float64 = 20.0,
+    nsigma::Float64 = 5.0)
+    return SMLMData.makegaussim([smld.y smld.x], [smld.σ_y smld.σ_x],
+        smld.datasize; mag = mag, nsigma = nsigma)
 end
 
 """
@@ -145,12 +170,12 @@ hot pixel at the coordinates of each localization.
 -`image`: Matrix{Float64} binary image of localizations.
 """
 function makebinim(coords::Matrix{Float64},
-                   datasize::Vector{Int},
-                   mag::Float64 = 20.0)
+    datasize::Vector{Int},
+    mag::Float64 = 20.0)
     # Loop through localizations and add them to our output binary image.
     imagesize = Int.(round.(datasize * mag))
     image = zeros(Float64, imagesize[1], imagesize[2])
-    inds = max.(1.0, (coords.-0.5)*mag)
+    inds = max.(1.0, (coords .- 0.5) * mag)
     inds[:, 1] = min.(imagesize[1], inds[:, 1])
     inds[:, 2] = min.(imagesize[2], inds[:, 2])
     inds = Int.(round.(inds))
@@ -211,12 +236,12 @@ is then scaled so that it sums to 1.0.
 -`image`: Matrix{Float64} histogram image of localizations.
 """
 function makehistim(coords::Matrix{Float64},
-                    datasize::Vector{Int},
-                    mag::Float64 = 20.0)
+    datasize::Vector{Int},
+    mag::Float64 = 20.0)
     # Loop through localizations and add them to our output image.
     imagesize = Int.(round.(datasize * mag))
     image = zeros(Float64, imagesize[1], imagesize[2])
-    inds = max.(1.0, (coords.-0.5)*mag)
+    inds = max.(1.0, (coords .- 0.5) * mag)
     inds[:, 1] = min.(imagesize[1], inds[:, 1])
     inds[:, 2] = min.(imagesize[2], inds[:, 2])
     inds = Int.(round.(inds))
@@ -279,11 +304,11 @@ circle centered at the locations `coords` with radii `σ`.
 -`image`: Matrix{Float64} histogram image of localizations.
 """
 function makecircleim(coords::Matrix{Float64},
-                      σ::Vector{Float64},
-                      datasize::Vector{Int},
-                      mag::Float64 = 20.0)
+    σ::Vector{Float64},
+    datasize::Vector{Int},
+    mag::Float64 = 20.0)
     # Rescale the coordinates based on `mag`.
-    coords = mag*(coords.-0.5) .+ 0.5
+    coords = mag * (coords .- 0.5) .+ 0.5
     σ *= mag
 
     # Loop through localizations and add them to our output image.
@@ -297,11 +322,11 @@ function makecircleim(coords::Matrix{Float64},
 
         # Define the pixel locations that fall along the circle.
         # NOTE: The extra factor of 4 improves circle appearance.
-        θ = range(0, 2*pi, length = max(4, Int(ceil(4 * (2*pi*σ[nn])))))
-        rows = Int.(round.(coords[nn, 1] .+ σ[nn]*sin.(θ)))
-        cols = Int.(round.(coords[nn, 2] .+ σ[nn]*cos.(θ)))
-        validind = findall((rows.>=1) .* (rows.<imagesize[1]) .*
-            (cols.>=1) .* (cols.<imagesize[1]))
+        θ = range(0, 2 * pi, length = max(4, Int(ceil(4 * (2 * pi * σ[nn])))))
+        rows = Int.(round.(coords[nn, 1] .+ σ[nn] * sin.(θ)))
+        cols = Int.(round.(coords[nn, 2] .+ σ[nn] * cos.(θ)))
+        validind = findall((rows .>= 1) .* (rows .< imagesize[1]) .*
+                           (cols .>= 1) .* (cols .< imagesize[1]))
 
         # Set the pixels of the output image to 1.0 wherever met by the circle.
         for ii in validind
