@@ -1,3 +1,5 @@
+using MAT
+
 # Tools for working with smite SMD structures
 
 mutable struct SMITEsmd 
@@ -20,8 +22,6 @@ function SMLD2D(smd::SMITEsmd)
     n=size(s["FrameNum"],1)
 
     smld = SMLD2D(n)
-    display(s)
-    display(Int.(s["ConnectID"]))
     smld.connectID=Int.(s["ConnectID"])[:]
     smld.x=s["X"][:]
     smld.y=s["Y"][:]
@@ -33,7 +33,7 @@ function SMLD2D(smd::SMITEsmd)
     smld.σ_bg=s["Bg_SE"][:]
     smld.framenum=Int.(s["FrameNum"])[:]
     smld.datasetnum=Int.(s["DatasetNum"])[:]
-    #smld.datasize=s[]
+    smld.datasize=Int.([s["YSize"]; s["XSize"]])
     smld.nframes=Int(s["NFrames"])
     smld.ndatasets=Int(s["NDatasets"])
     #smld.datafields=s[]
