@@ -14,6 +14,7 @@ SMLMSim = "5a0a87e4-02d4-41f5-bf26-b8c94c784a04"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
+CSV = "0.9"
 DataFrames = "1"
 Distributions = "0.25"
 StatsBase = "0.33"
