@@ -1,6 +1,4 @@
 # This file defines some struct types used in the SMLMData package.
-using Base
-using DataFrames
 
 abstract type SMLD end
 
@@ -34,17 +32,17 @@ structure with undefined values for a predefined number of localizations.
 """
 function SMLD2D(nlocalizations::Int)
     smld = SMLD2D()
-    floatfill = Vector{Float64}(undef, nlocalizations)
-    smld.x = floatfill
-    smld.y = floatfill
-    smld.σ_x = floatfill
-    smld.σ_y = floatfill
-    smld.photons = floatfill
-
-    intfill = Vector{Int}(undef, nlocalizations)
-    smld.connectID = intfill
-    smld.framenum = intfill
-    smld.datasetnum = intfill
+    smld.x = zeros(Float64, nlocalizations)
+    smld.y = zeros(Float64, nlocalizations)
+    smld.σ_x = zeros(Float64, nlocalizations)
+    smld.σ_y = zeros(Float64, nlocalizations)
+    smld.bg = zeros(Float64, nlocalizations)
+    smld.σ_bg = zeros(Float64, nlocalizations)
+    smld.photons = zeros(Float64, nlocalizations)
+    smld.σ_photons = zeros(Float64, nlocalizations)
+    smld.connectID = collect(1:nlocalizations)
+    smld.framenum = zeros(Int, nlocalizations)
+    smld.datasetnum = zeros(Int, nlocalizations)
     smld.nframes = 0
     smld.ndatasets = 0
     smld.datasize = [0; 0]
@@ -87,4 +85,14 @@ function SMLD2D(data::DataFrames.DataFrame)
         :photons, :σ_photons, :bg, :σ_bg, :framenum, :datasetnum)
 
     return smld
+end
+
+"""
+    length(smld::SMLMData.SMLD2D)
+
+Returns the number of localizations in `smld`.
+"""
+function Base.length(smld::SMLMData.SMLD2D)
+    # Determine the length of `smld` by counting the number of frames.
+    return Base.length(smld.framenum)
 end
