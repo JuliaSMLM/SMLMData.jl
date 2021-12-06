@@ -1,32 +1,6 @@
 using Base
 
 """
-    smld_sub = isolatesmld(smld::SMLD2D, subind::UnitRange)
-
-Isolate the `smld` localizations specified by `subind` indices.
-
-# Description
-This method grabs the localizations indexed by `subind` from `smld` and outputs
-a new SMLD2D structure containing only those localization.
-"""
-function isolatesmld(smld::SMLD2D, subind::UnitRange)
-    # Loop through each field and add it to the output SMLD.  For scalar
-    # fields, we don't have to apply the indexing of `subind`.
-    fields = fieldnames(SMLMData.SMLD2D)
-    nfields = Base.length(fields)
-    smld_sub = deepcopy(smld)
-    for ii = 1:nfields
-        currentfield = getfield(smld, fields[ii])
-        if isa(currentfield, Vector) && any(fields[ii] .== smld.datafields)
-            # If this field is a vector, we'll keep only the `subind` elements.
-            setfield!(smld_sub, fields[ii], currentfield[subind])
-        end
-    end
-
-    return smld_sub
-end
-
-"""
     smld_sub = isolatesmld(smld::SMLD2D, subind::Vector{Int})
 
 Isolate the `smld` localizations specified by `subind` indices.
@@ -40,12 +14,17 @@ function isolatesmld(smld::SMLD2D, subind::Vector{Int})
     # fields, we don't have to apply the indexing of `subind`.
     fields = fieldnames(SMLMData.SMLD2D)
     nfields = Base.length(fields)
+    indlength = Base.length(subind)
     smld_sub = deepcopy(smld)
     for ii = 1:nfields
-        currentfield = getfield(smld, fields[ii])
-        if isa(currentfield, Vector) && any(fields[ii] .== smld.datafields)
-            # If this field is a vector, we'll keep only the `subind` elements.
-            setfield!(smld_sub, fields[ii], currentfield[subind])
+        if isdefined(smld, fields[ii])
+            currentfield = getfield(smld, fields[ii])
+            if isa(currentfield, Vector) &&
+            any(fields[ii] .== smld.datafields) &&
+            (Base.length(currentfield) >= indlength)
+                # If this field is a vector, we'll keep only the `subind` elements.
+                setfield!(smld_sub, fields[ii], currentfield[subind])
+            end
         end
     end
 
@@ -66,16 +45,34 @@ function isolatesmld(smld::SMLD2D, keepbit::BitVector)
     # fields, we don't have to apply the indexing of `keepbit`.
     fields = fieldnames(SMLMData.SMLD2D)
     nfields = Base.length(fields)
+    bitlength = Base.length(keepbit)
     smld_sub = deepcopy(smld)
     for ii = 1:nfields
-        currentfield = getfield(smld, fields[ii])
-        if isa(currentfield, Vector) && any(fields[ii] .== smld.datafields)
-            # If this field is a vector, we'll keep only the `keepbit` elements.
-            setfield!(smld_sub, fields[ii], currentfield[keepbit])
+        if isdefined(smld, fields[ii])
+            currentfield = getfield(smld, fields[ii])
+            if isa(currentfield, Vector) &&
+            any(fields[ii] .== smld.datafields) &&
+            (Base.length(currentfield) >= bitlength)
+                # If this field is a vector, we'll keep only the `keepbit` elements.
+                setfield!(smld_sub, fields[ii], currentfield[keepbit])
+            end
         end
     end
 
     return smld_sub
+end
+
+"""
+    smld_sub = isolatesmld(smld::SMLD2D, subind::UnitRange)
+
+Isolate the `smld` localizations specified by `subind` indices.
+
+# Description
+This method grabs the localizations indexed by `subind` from `smld` and outputs
+a new SMLD2D structure containing only those localization.
+"""
+function isolatesmld(smld::SMLD2D, subind::UnitRange)
+    return SMLMData.isolatesmld(smld, collect(subind))
 end
 
 """
