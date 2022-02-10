@@ -88,11 +88,20 @@ function SMLD2D(data::DataFrames.DataFrame)
 end
 
 """
-    length(smld::SMLMData.SMLD2D)
+    Base.length(smld::SMLMData.SMLD2D)
 
 Returns the number of localizations in `smld`.
 """
 function Base.length(smld::SMLMData.SMLD2D)
     # Determine the length of `smld` by counting the number of frames.
     return Base.length(smld.framenum)
+end
+
+"""
+    Base.getindex(smld::SMLMData.SMLD2D, ind::Int)
+
+Returns the requested localization from `smld`.
+"""
+function Base.getindex(smld::SMLMData.SMLD2D, ind::Int)
+    return SMLMData.isolatesmld(smld, ind)
 end
