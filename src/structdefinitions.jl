@@ -98,10 +98,10 @@ function Base.length(smld::SMLMData.SMLD2D)
 end
 
 """
-    Base.getindex(smld::SMLMData.SMLD2D, ind::Int)
+    Base.getindex(smld::SMLMData.SMLD2D, ind)
 
 Returns the requested localization from `smld`.
 """
-function Base.getindex(smld::SMLMData.SMLD2D, ind::Int)
+function Base.getindex(smld::SMLMData.SMLD2D, ind)
     return SMLMData.isolatesmld(smld, ind)
 end
