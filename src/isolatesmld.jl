@@ -1,12 +1,44 @@
 using Base
 
+
+"""
+    smld_sub = isolatesmld(smld::SMLD2D, subind::Int)
+
+Isolate the `smld` localizations specified by `subind` index.
+
+# Description
+This method grabs the localization indexed by `subind` from `smld` and outputs
+a new SMLD2D structure containing only those localization.
+"""
+function isolatesmld(smld::SMLD2D, subind::Int)
+    # Loop through each field and add it to the output SMLD.  For scalar
+    # fields, we don't have to apply the indexing of `subind`.
+    fields = fieldnames(SMLMData.SMLD2D)
+    nfields = Base.length(fields)
+    indlength = Base.length(subind)
+    smld_sub = deepcopy(smld)
+    for ii = 1:nfields
+        if isdefined(smld, fields[ii])
+            currentfield = getfield(smld, fields[ii])
+            if isa(currentfield, Vector) &&
+            any(fields[ii] .== smld.datafields) &&
+            (Base.length(currentfield) >= indlength)
+                # If this field is a vector, we'll keep only the `subind` element.
+                setfield!(smld_sub, fields[ii], [currentfield[subind]])
+            end
+        end
+    end
+
+    return smld_sub
+end
+
 """
     smld_sub = isolatesmld(smld::SMLD2D, subind::Vector{Int})
 
 Isolate the `smld` localizations specified by `subind` indices.
 
 # Description
-This method grabs the localizations indexed by `subind` from `smld` and outputs
+This method grabs the localization indexed by `subind` from `smld` and outputs
 a new SMLD2D structure containing only those localization.
 """
 function isolatesmld(smld::SMLD2D, subind::Vector{Int})
@@ -22,7 +54,7 @@ function isolatesmld(smld::SMLD2D, subind::Vector{Int})
             if isa(currentfield, Vector) &&
             any(fields[ii] .== smld.datafields) &&
             (Base.length(currentfield) >= indlength)
-                # If this field is a vector, we'll keep only the `subind` elements.
+                # If this field is a vector, we'll keep only the `subind` element.
                 setfield!(smld_sub, fields[ii], currentfield[subind])
             end
         end
