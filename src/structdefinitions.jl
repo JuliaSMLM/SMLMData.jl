@@ -3,13 +3,14 @@
     SMLD 
 
  SMLD is the highest level abstract type in SMLMData.    
-
 """
 abstract type SMLD end
 
 
 """
     SMLD2D 
+
+Structure containing 2D localization data
 
     # Fields
     - connectID: integer ID associating localizations
