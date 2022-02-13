@@ -1,8 +1,11 @@
 # This script demonstrates how to create and save different types of
 # localization images.
 
-## Simulate some data that we'll make images from.
+using SMLMData
 using SMLMSim
+
+
+## Simulate some data that we'll make images from.
 
 γ = 1e5 # Fluorophore emission rate
 q = [0 50
@@ -26,13 +29,10 @@ smld = SMLMSim.noise(smld_model, σ_psf)
 
 
 ## Create and save a circle image.
-using SMLMData
-
 pxsize = 0.1
 pxsize_out = 0.001
 SMLMData.circleim(smld, pxsize, "circleim.png";
     pxsize_out = pxsize_out)
-
 
 ## Create and save a Gaussian image.
 pxsize = 0.1

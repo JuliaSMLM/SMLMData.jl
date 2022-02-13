@@ -1,7 +1,35 @@
 # This file defines some struct types used in the SMLMData package.
+"""
+    SMLD 
 
+ SMLD is the highest level abstract type in SMLMData.    
+
+"""
 abstract type SMLD end
 
+"""
+    SMLD2D 
+
+    # Fields
+    - γ: photon emission rate in HzStructure with Fields
+
+
+    - connectID: integer ID associating localizations
+    - x: x position 
+    - y: y position
+    - σ_x: standard error uncertainty in x
+    - σ_y: standard error uncertainty in y
+    - photons: total photons 
+    - σ_photons: standard error uncertainty in σ_photons
+    - bg: fit fluorescence background (photons/pixel)
+    - σ_bg: standard error uncertainty in bg
+    - framenum: integer framenumber within a dataset
+    - datasetnum: integer dataset number
+    - datasize::Vector{Int}: size of image area
+    - nframes: integer frames per dataset
+    - ndatasets: number of dataasets
+    - datafields: bookeeping - do not modify
+"""
 mutable struct SMLD2D <: SMLD
     connectID::Vector{Int}
     x::Vector{Float64}
@@ -53,7 +81,7 @@ function SMLD2D(nlocalizations::Int)
 end
 
 """
-    SMLD2D(nlocalizations::Int)
+    SMLD2D(data::DataFrames.DataFrame)
 
 Constructor to generate an `smld` from a data frame.
 
@@ -61,7 +89,7 @@ Constructor to generate an `smld` from a data frame.
 This is a constructor for the SMLD2D struct which allows you to populate the
 structure with data defined in the dataframe `data`. The intention is that a
 .csv table can be organized with localizations on each row as
-[datasetnum, framenum, x, y, σ_x, σ_y], loaded using the CSV package, and 
+`[datasetnum, framenum, x, y, σ_x, σ_y]`, loaded using the CSV package, and 
 placed into a dataframe with the DataFrames package.
 """
 function SMLD2D(data::DataFrames.DataFrame)
