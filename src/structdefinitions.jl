@@ -7,13 +7,11 @@
 """
 abstract type SMLD end
 
+
 """
     SMLD2D 
 
     # Fields
-    - γ: photon emission rate in HzStructure with Fields
-
-
     - connectID: integer ID associating localizations
     - x: x position 
     - y: y position
@@ -48,6 +46,7 @@ mutable struct SMLD2D <: SMLD
     datafields::NTuple{11, Symbol}
     SMLD2D() = new()
 end
+
 
 """
     SMLD2D(nlocalizations::Int)
