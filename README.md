@@ -10,7 +10,7 @@ Data types and utilities for SMLM coordinate data.
 ## Overview
 SMLMData provides a type for storing SMLM data as well as visualization tools and utilty functions.  SMLMData Types should inherit from `SMLD`.  The 2D data type is:
 
-`
+```
 mutable struct SMLD2D <: SMLD
     connectID::Vector{Int}
     x::Vector{Float64}
@@ -29,7 +29,7 @@ mutable struct SMLD2D <: SMLD
     datafields::NTuple{11, Symbol}
     SMLD2D() = new()
 end
-`
+```
 
 
 ## Visualization Tools
