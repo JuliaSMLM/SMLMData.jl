@@ -372,6 +372,74 @@ function gaussim(smld::SMLMData.SMLD2D, pxsize::Float64, filename::String;
 end
 
 """
+    image = makegaussim_raw(μ::Matrix{Float64},
+        framenum::Vector{Int},
+        photons::Vector{Float64},
+        datasize::Vector{Int};
+        σ_psf::Float64 = 1.0,
+        nframes::Int = 1,
+        bg::Float64 = 0.0,
+        σ_noise::Float64 = 0.0)
+
+Simulate raw data images that could generate localizations `μ`.
+
+# Description
+This function creates an image of the raw data defined by `μ`
+corresponding to the convolution of the localization image with the diffraction
+limited PSF.
+
+# Inputs
+- `μ`: Positions of the Gaussians. (pixels)([y x])
+- `framenum`: Frame in which localizations `μ` appeared.
+- `photons`: Collected photons from localizations `μ`.
+- `σ_psf`: Standard deviation of the PSF. (pixels)
+- `datasize`: Size of the region of data collection. (pixels)([y; x])
+- `nframes`: Total number of frames (if set to 1, input `framenum` isn't used).
+- `bg`: Uniform background signal across entire image.
+- `σ_noise`: Additional Gaussian noise applied after Poisson statistics (e.g., 
+             a camera read noise).
+
+# Outputs
+-`images`: Matrix{Float64} Gaussian image(s) corresponding to localizations `μ`.
+"""
+function makegaussim_raw(μ::Matrix{Float64},
+    framenum::Vector{Int},
+    photons::Vector{Float64},
+    datasize::Vector{Int};
+    σ_psf::Float64 = 1.0,
+    nframes::Int = 1,
+    bg::Float64 = 0.0,
+    σ_noise::Float64 = 0.0)
+
+    # Prepare the raw data image(s).
+    framenum = (nframes > 1) ? copy(framenum) : ones(Int, size(μ)[1])
+    images = zeros(Float64, datasize[1], datasize[2], nframes)
+    for ff = 1:nframes
+        # Prepare a histogram image for this frame.
+        currentframe = framenum .== ff
+        histimage = makehistim_photons(μ[currentframe, :], photons[currentframe], datasize, 1.0)
+
+        # Convolve the histogram image with the PSF.
+        images[:, :, ff] = ImageFiltering.imfilter(histimage, Kernel.gaussian(σ_psf))
+    end
+
+    # Noise the images.
+    images .+= bg
+    for ii = 1:length(images)
+        images[ii] = Base.rand(Distributions.Poisson(images[ii]))
+    end
+    images += σ_noise .* Base.randn(Float64, size(images))
+
+    return images
+end
+function makegaussim_raw(smld::SMLMData.SMLD2D; 
+    σ_psf::Float64 = 1.0, nframes::Int = 1, bg::Float64 = 0.0, σ_noise::Float64 = 0.0)
+
+    return makegaussim_raw([smld.y smld.x], smld.framenum, smld.photons, smld.datasize; 
+        σ_psf = σ_psf, nframes = nframes, bg = bg, σ_noise = σ_noise)
+end
+
+"""
     image = makebinim(coords::Matrix{Float64}, 
                       datasize::Vector{Float64},
                       mag::Float64 = 20.0)
@@ -501,4 +569,48 @@ is then scaled so that it sums to 1.0.
 """
 function makehistim(smld::SMLMData.SMLD2D, mag::Float64 = 20.0)
     return makehistim([smld.y smld.x], smld.datasize, mag)
+end
+
+"""
+    image = makehistim_photons(coords::Matrix{Float64},
+        photons::Vector{Float64},
+        datasize::Vector{Int},
+        mag::Float64 = 1.0)
+
+Make a histogram image of the localizations in `coords` and `photons`.
+
+# Description
+This function creates an image of the localizations in `coords` by adding 
+`photons` to a pixel for each localization present within that pixel.
+
+# Inputs
+-`coords`: Localization coordinates. ([y x])
+-`photons`: Collected photons corresponding to each of `coords`.
+-`datasize`: Size of the data image. ([ysize xsize])
+-`mag`: Approximate magnfication from data coordinates to SR coordinates. 
+        (Default = 20.0)
+
+# Outputs
+-`image`: Matrix{Float64} histogram image of localizations.
+"""
+function makehistim_photons(coords::Matrix{Float64},
+    photons::Vector{Float64},
+    datasize::Vector{Int},
+    mag::Float64 = 1.0)
+
+    # Loop through localizations and add them to our output image, throwing
+    # out localizations that fall beyond the `datasize` boundaries.
+    imagesize = Int.(round.(datasize * mag))
+    image = zeros(Float64, imagesize[1], imagesize[2])
+    inds = Int.(round.((coords .- 0.5) * mag .+ 0.5))
+    keepinds = findall((inds[:, 1] .>= 1) .& (inds[:, 1] .<= datasize[1]) .&
+        (inds[:, 2] .>= 1) .& (inds[:, 2] .<= datasize[2]))
+    for nn in keepinds
+        image[inds[nn, 1], inds[nn, 2]] += photons[nn]
+    end
+
+    return image
+end
+function makehistim_photons(smld::SMLMData.SMLD2D, mag::Float64 = 1.0)
+    return makehistim_photons([smld.y smld.x], smld.photons, smld.datasize, mag)
 end
