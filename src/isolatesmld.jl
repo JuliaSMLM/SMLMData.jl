@@ -108,7 +108,7 @@ function isolatesmld(smld::SMLD2D, subind::UnitRange)
 end
 
 """
-    smld_sub = isolateROI(smld::SMLD2D, roi::Vector{<:Real})
+    smld_sub = isolateROI(smld::SMLD, roi::Vector{<:Real})
 
 Isolate the `smld` localizations specified by the `roi` region of interest.
 
@@ -116,7 +116,7 @@ Isolate the `smld` localizations specified by the `roi` region of interest.
 This method grabs the localizations from `smld` that fall within `roi`.
 
 # Inputs
-- `smld`: SMLMData.SMLD2D structure populated with localizations.
+- `smld`: SMLMData.SMLD structure populated with localizations.
 - `roi`: Region of interest containing desired localizations.  Must use the 
          same units as smld.x and smld.y, with the pixel convention that
          pixel coordinates exist in the range [-0.5, 0.5]. 
