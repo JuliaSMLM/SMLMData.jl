@@ -2,30 +2,32 @@
 # SMLD structures.
 
 """
-    addoffset!(smld::SMLD2D, offset::Vector{Float64})
+    addoffset!(smld::SMLD, offset::Vector{Float64})
 
-Add an offset elementwise to each localization `smld.y` and `smld.x`.
+Add an offset elementwise to each localization coordinate in `smld`.
 
 # Inputs
--`offset`: Two element vector describing the offset. ([offset_y; offset_x])
+-`offset`: Vector describing the offset. 
+           (for SMLD2D: [offset_y; offset_x], for SMLD3D: [offset_y; offset_x; offset_z])
 """
+function addoffset!(smld::SMLD, offset::Vector{Float64})
+end
+
 function addoffset!(smld::SMLD2D, offset::Vector{Float64})
     smld.y .+= offset[1]
     smld.x .+= offset[2]
+
+    return smld
 end
 
-"""
-    smld_offset = addoffset(smld::SMLD2D, offset::Vector{Float64})
+function addoffset!(smld::SMLD3D, offset::Vector{Float64})
+    smld.y .+= offset[1]
+    smld.x .+= offset[2]
+    smld.z .+= offset[3]
 
-Add an offset elementwise to each localization `smld.y` and `smld.x`.
+    return smld
+end
 
-# Inputs
--`offset`: Two element vector describing the offset. ([offset_y; offset_x])
-"""
-function addoffset(smld::SMLD2D, offset::Vector{Float64})
-    smld_offset = deepcopy(smld)
-    smld_offset.y .+= offset[1]
-    smld_offset.x .+= offset[2]
-
-    return smld_offset
+function addoffset(smld::SMLD, offset::Vector{Float64})
+    return addoffset!(deepcopy(smld))
 end
