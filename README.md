@@ -35,4 +35,9 @@ end
 ## Visualization Tools
 
 ## Utilities
+A sub-Region Of Interest (ROI) can be extracted from an `smld` using SMLMData.isolateROI() as follows:
 
+```
+roi = [1.0; 1.0; 16.0; 16.0] # [YStart; XStart; YEnd; XEnd], same units as smld.x and smld.y
+smld_sub = SMLMData.isolateROI(smld, roi)
+```

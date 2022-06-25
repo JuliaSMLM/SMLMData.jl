@@ -21,8 +21,8 @@ function isolatesmld(smld::SMLD2D, subind::Int)
         if isdefined(smld, fields[ii])
             currentfield = getfield(smld, fields[ii])
             if isa(currentfield, Vector) &&
-            any(fields[ii] .== smld.datafields) &&
-            (Base.length(currentfield) >= indlength)
+               any(fields[ii] .== smld.datafields) &&
+               (Base.length(currentfield) >= indlength)
                 # If this field is a vector, we'll keep only the `subind` element.
                 setfield!(smld_sub, fields[ii], [currentfield[subind]])
             end
@@ -52,8 +52,8 @@ function isolatesmld(smld::SMLD2D, subind::Vector{Int})
         if isdefined(smld, fields[ii])
             currentfield = getfield(smld, fields[ii])
             if isa(currentfield, Vector) &&
-            any(fields[ii] .== smld.datafields) &&
-            (Base.length(currentfield) >= indlength)
+               any(fields[ii] .== smld.datafields) &&
+               (Base.length(currentfield) >= indlength)
                 # If this field is a vector, we'll keep only the `subind` element.
                 setfield!(smld_sub, fields[ii], currentfield[subind])
             end
@@ -83,8 +83,8 @@ function isolatesmld(smld::SMLD2D, keepbit::BitVector)
         if isdefined(smld, fields[ii])
             currentfield = getfield(smld, fields[ii])
             if isa(currentfield, Vector) &&
-            any(fields[ii] .== smld.datafields) &&
-            (Base.length(currentfield) >= bitlength)
+               any(fields[ii] .== smld.datafields) &&
+               (Base.length(currentfield) >= bitlength)
                 # If this field is a vector, we'll keep only the `keepbit` elements.
                 setfield!(smld_sub, fields[ii], currentfield[keepbit])
             end
@@ -105,6 +105,27 @@ a new SMLD2D structure containing only those localization.
 """
 function isolatesmld(smld::SMLD2D, subind::UnitRange)
     return SMLMData.isolatesmld(smld, collect(subind))
+end
+
+"""
+    smld_sub = isolateROI(smld::SMLD, roi::Vector{<:Real})
+
+Isolate the `smld` localizations specified by the `roi` region of interest.
+
+# Description
+This method grabs the localizations from `smld` that fall within `roi`.
+
+# Inputs
+- `smld`: SMLMData.SMLD structure populated with localizations.
+- `roi`: Region of interest containing desired localizations.  Must use the 
+         same units as smld.x and smld.y, with the pixel convention that
+         pixel coordinates exist in the range [-0.5, 0.5]. 
+         ([YStart; XStart; YEnd; XEnd])
+"""
+function isolateROI(smld::SMLD2D, roi::Vector{<:Real})
+    keepind = (smld.y .>= (roi[1] - 0.5)) .& (smld.x .>= (roi[2] - 0.5)) .&
+              (smld.y .<= (roi[3] + 0.5)) .& (smld.x .<= (roi[4] + 0.5))
+    return SMLMData.isolatesmld(smld, keepind)
 end
 
 """
