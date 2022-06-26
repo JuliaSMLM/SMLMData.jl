@@ -2,18 +2,18 @@ using Base
 
 
 """
-    smld_sub = isolatesmld(smld::SMLD2D, subind::Int)
+    smld_sub = isolatesmld(smld::SMLD, subind::Int)
 
 Isolate the `smld` localizations specified by `subind` index.
 
 # Description
 This method grabs the localization indexed by `subind` from `smld` and outputs
-a new SMLD2D structure containing only those localization.
+a new SMLD structure containing only those localization.
 """
-function isolatesmld(smld::SMLD2D, subind::Int)
+function isolatesmld(smld::SMLD, subind::Int)
     # Loop through each field and add it to the output SMLD.  For scalar
     # fields, we don't have to apply the indexing of `subind`.
-    fields = fieldnames(SMLMData.SMLD2D)
+    fields = fieldnames(typeof(smld))
     nfields = Base.length(fields)
     indlength = Base.length(subind)
     smld_sub = deepcopy(smld)
@@ -32,19 +32,20 @@ function isolatesmld(smld::SMLD2D, subind::Int)
     return smld_sub
 end
 
+
 """
-    smld_sub = isolatesmld(smld::SMLD2D, subind::Vector{Int})
+    smld_sub = isolatesmld(smld::SMLD, subind::Vector{Int})
 
 Isolate the `smld` localizations specified by `subind` indices.
 
 # Description
 This method grabs the localization indexed by `subind` from `smld` and outputs
-a new SMLD2D structure containing only those localization.
+a new SMLD structure containing only those localization.
 """
-function isolatesmld(smld::SMLD2D, subind::Vector{Int})
+function isolatesmld(smld::SMLD, subind::Vector{Int})
     # Loop through each field and add it to the output SMLD.  For scalar
     # fields, we don't have to apply the indexing of `subind`.
-    fields = fieldnames(SMLMData.SMLD2D)
+    fields = fieldnames(typeof(smld))
     nfields = Base.length(fields)
     indlength = Base.length(subind)
     smld_sub = deepcopy(smld)
@@ -64,7 +65,7 @@ function isolatesmld(smld::SMLD2D, subind::Vector{Int})
 end
 
 """
-smld_sub = isolatesmld(smld::SMLD2D, keepbit::BitVector)
+smld_sub = isolatesmld(smld::SMLD, keepbit::BitVector)
 
 Isolate the `smld` localizations specified by `keepbit` BitVector.
 
@@ -72,10 +73,10 @@ Isolate the `smld` localizations specified by `keepbit` BitVector.
 This method grabs the localizations requested by the BitVector `keepbit`,
 which should have the same length as the number of localizations in `smld`.
 """
-function isolatesmld(smld::SMLD2D, keepbit::BitVector)
+function isolatesmld(smld::SMLD, keepbit::BitVector)
     # Loop through each field and add it to the output SMLD.  For scalar
     # fields, we don't have to apply the indexing of `keepbit`.
-    fields = fieldnames(SMLMData.SMLD2D)
+    fields = fieldnames(typeof(smld))
     nfields = Base.length(fields)
     bitlength = Base.length(keepbit)
     smld_sub = deepcopy(smld)
@@ -95,15 +96,15 @@ function isolatesmld(smld::SMLD2D, keepbit::BitVector)
 end
 
 """
-    smld_sub = isolatesmld(smld::SMLD2D, subind::UnitRange)
+    smld_sub = isolatesmld(smld::SMLD, subind::UnitRange)
 
 Isolate the `smld` localizations specified by `subind` indices.
 
 # Description
 This method grabs the localizations indexed by `subind` from `smld` and outputs
-a new SMLD2D structure containing only those localization.
+a new SMLD structure containing only those localization.
 """
-function isolatesmld(smld::SMLD2D, subind::UnitRange)
+function isolatesmld(smld::SMLD, subind::UnitRange)
     return SMLMData.isolatesmld(smld, collect(subind))
 end
 
@@ -120,35 +121,46 @@ This method grabs the localizations from `smld` that fall within `roi`.
 - `roi`: Region of interest containing desired localizations.  Must use the 
          same units as smld.x and smld.y, with the pixel convention that
          pixel coordinates exist in the range [-0.5, 0.5]. 
-         ([YStart; XStart; YEnd; XEnd])
+         (for SMLD2D: [YStart; XStart; YEnd; XEnd]
+          for SMLD3D: [YStart; XStart; ZStart; YEnd; XEnd; ZEnd])
 """
+function isolateROI(smld::SMLD, roi::Vector{<:Real})
+end
+
 function isolateROI(smld::SMLD2D, roi::Vector{<:Real})
     keepind = (smld.y .>= (roi[1] - 0.5)) .& (smld.x .>= (roi[2] - 0.5)) .&
               (smld.y .<= (roi[3] + 0.5)) .& (smld.x .<= (roi[4] + 0.5))
     return SMLMData.isolatesmld(smld, keepind)
 end
 
-"""
-    smld_connected, keepbool = isolateconnected(smld::SMLMData.SMLD2D)
+function isolateROI(smld::SMLD3D, roi::Vector{<:Real})
+    keepind = (smld.y .>= (roi[1] - 0.5)) .& (smld.x .>= (roi[2] - 0.5)) .& (smld.z .>= (roi[3] - 0.5)) .&
+              (smld.y .<= (roi[4] + 0.5)) .& (smld.x .<= (roi[5] + 0.5)) .& (smld.z .<= (roi[6] + 0.5))
+    return SMLMData.isolatesmld(smld, keepind)
+end
 
-Prepare individual SMLD2D structures for each precluster in `smld`.
+
+"""
+    smld_connected, keepbool = isolateconnected(smld::SMLMData.SMLD)
+
+Prepare individual SMLD structures for each precluster in `smld`.
 
 # Description
 Connected localizations in `smld` (based on their connectID field) are 
-reorganized into distinct SMLD2D structures, with each structure corresponding
+reorganized into distinct SMLD structures, with each structure corresponding
 to a single connectID.
 
 # Inputs
--`smld`: SMLD2D structure containing the localization data, with the field 
+-`smld`: SMLD structure containing the localization data, with the field 
          connectID populated with a meaningful set of connection indices.
 
 # outputs
--`smld_connected`: Vector of SMLD2D structures with each structure containing
+-`smld_connected`: Vector of SMLD structures with each structure containing
                    localizations that share the same `connectID`.
 -`keepbool`: Vector of BitVector defining the `smld` indices sharing the same
              `connectID`.
 """
-function isolateconnected(smld::SMLMData.SMLD2D)
+function isolateconnected(smld::SMLMData.SMLD)
     # Ensure that the provided `smld` has a meaningful connectID field, 
     # returning if not.
     nloc = Base.length(smld)
@@ -159,7 +171,7 @@ function isolateconnected(smld::SMLMData.SMLD2D)
 
     # Loop through clusters in `smld` and prepare the output.
     connectIDs = unique(smld.connectID)
-    smld_connected = Vector{SMLMData.SMLD2D}(undef, Base.length(connectIDs))
+    smld_connected = Vector{typeof(smld)}(undef, Base.length(connectIDs))
     keepbool = Vector{BitVector}(undef, Base.length(connectIDs))
     for cc in connectIDs
         keepbool[cc] = smld.connectID .== cc
