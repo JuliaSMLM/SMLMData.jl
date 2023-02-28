@@ -6,6 +6,7 @@ using Distributions
 using MAT
 using DataFrames
 using Images
+using StatsFuns
 
 include("structdefinitions.jl")
 include("isolatesmld.jl")
