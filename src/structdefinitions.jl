@@ -117,6 +117,26 @@ function SMLD2D(data::DataFrames.DataFrame)
 end
 
 
+"""
+                SMLD2D_to_DF(s::SMLD2D)
+
+Constructor to generate data frame from `smld` struct type.
+
+# Description
+This is a constructor for generating the dataframe from `SMLD2D struct` which allows you to present the
+structure with data in the form of dataframe table. Each SMLD field will be in a column form like,
+`[datasetnum, framenum, x, y, σ_x, σ_y]`with column values representing localizations. 
+
+"""
+## Define a function that takes a struct as an argument and returns a dataframe. 
+function SMLD2D_to_DF(s::SMLD2D)
+    smldFields = fieldnames(typeof(s))
+    smldFieldsVals = [getfield(s,field) for field in smldFields]
+
+    return DataFrame(hcat(smldFieldsVals...), collect(smldFields))
+end
+
+
 ## SMLD3D specific structures and functions.
 
 """
