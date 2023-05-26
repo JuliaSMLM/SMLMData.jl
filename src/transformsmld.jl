@@ -29,5 +29,5 @@ function addoffset!(smld::SMLD3D, offset::Vector{Float64})
 end
 
 function addoffset(smld::SMLD, offset::Vector{Float64})
-    return addoffset!(deepcopy(smld))
+    return addoffset!(deepcopy(smld),offset)
 end
