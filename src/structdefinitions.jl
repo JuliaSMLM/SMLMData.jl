@@ -116,6 +116,50 @@ function SMLD2D(data::DataFrames.DataFrame)
     return smld
 end
 
+#function SMLD2D(; x=[], y=[], σ_x=[], σ_y=[])
+    #smld = SMLD2D()
+
+    #data = [x, y, σ_x, σ_y,]
+    #nlocs = 4
+    #for value in data
+    #    if length(value) != 0
+    #        nlocs = value
+    #        break
+    #    end
+    #end
+#
+    #for value in data
+    #    if length(value) == 0
+    #        smld.value = zeros(Float64, nlocs)
+    #    else
+    #        smld.value = value
+    #    end
+    #end
+    
+    #smld.x = x
+    #smld.y = y
+    #smld.σ_x = σ_x
+    #smld.σ_y = σ_y
+    #smld.x = zeros(Float64, nlocs)
+    #smld.y = zeros(Float64, nlocs)
+    #smld.σ_x = zeros(Float64, nlocs)
+    #smld.σ_y = zeros(Float64, nlocs)
+    #smld.bg = zeros(Float64, nlocs)
+    #smld.σ_bg = zeros(Float64, nlocs)
+    #smld.photons = zeros(Float64, nlocs)
+    #smld.σ_photons = zeros(Float64, nlocs)
+    #smld.connectID = collect(1:nlocs)
+    #smld.framenum = zeros(Int, nlocs)
+    #smld.datasetnum = zeros(Int, nlocs)
+    #smld.nframes = 0
+    #smld.ndatasets = 0
+    #smld.datasize = [0; 0]
+    #smld.datafields = (:connectID, :x, :y, :σ_x, :σ_y, 
+    #    :photons, :σ_photons, :bg, :σ_bg, :framenum, :datasetnum)
+
+    #return smld
+#end
+
 
 ## SMLD3D specific structures and functions.
 
