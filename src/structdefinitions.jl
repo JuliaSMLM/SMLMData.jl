@@ -51,34 +51,63 @@ mutable struct SMLD2D <: SMLD
 end
 
 """
-    SMLD2D(nlocalizations::Int)
+    SMLD2D(nlocalizations::Int; 
+        x=zeros(Float64, nlocalizations), 
+        y=zeros(Float64, nlocalizations), 
+        σ_x=zeros(Float64, nlocalizations), 
+        σ_y=zeros(Float64, nlocalizations), 
+        bg=zeros(Float64, nlocalizations), 
+        σ_bg=zeros(Float64, nlocalizations))
 
-Constructor to generate an empty `smld` with a specific size.
+Constructor to generate an `smld` with a specific size.
 
 # Description
 This is a constructor for the SMLD2D struct which allows you to populate the
-structure with undefined values for a predefined number of localizations.
+structure with undefined values for a predefined number of localizations. You can also
+choose to input an x,y,σ_x,σ_y,bg, or σ_bg vector and it will fill the SMLD2D structure.
 """
-function SMLD2D(nlocalizations::Int)
-    smld = SMLD2D()
-    smld.x = zeros(Float64, nlocalizations)
-    smld.y = zeros(Float64, nlocalizations)
-    smld.σ_x = zeros(Float64, nlocalizations)
-    smld.σ_y = zeros(Float64, nlocalizations)
-    smld.bg = zeros(Float64, nlocalizations)
-    smld.σ_bg = zeros(Float64, nlocalizations)
-    smld.photons = zeros(Float64, nlocalizations)
-    smld.σ_photons = zeros(Float64, nlocalizations)
-    smld.connectID = collect(1:nlocalizations)
-    smld.framenum = zeros(Int, nlocalizations)
-    smld.datasetnum = zeros(Int, nlocalizations)
-    smld.nframes = 0
-    smld.ndatasets = 0
-    smld.datasize = [0; 0]
-    smld.datafields = (:connectID, :x, :y, :σ_x, :σ_y, 
-        :photons, :σ_photons, :bg, :σ_bg, :framenum, :datasetnum)
+function SMLD2D(nlocalizations::Int; 
+    x=zeros(Float64, nlocalizations), 
+    y=zeros(Float64, nlocalizations), 
+    σ_x=zeros(Float64, nlocalizations), 
+    σ_y=zeros(Float64, nlocalizations), 
+    bg=zeros(Float64, nlocalizations), 
+    σ_bg=zeros(Float64, nlocalizations))
 
-    return smld
+
+    smld = SMLD2D()
+
+    data = [x, y, σ_x, σ_y, bg, σ_bg]
+    error = 0
+    for value in data
+        if length(value) != nlocalizations
+            println("Error: The length of one of your data inputs doesn't match your number of localizations input")
+            error = 1
+            break
+        end
+    end
+
+
+    if error == 0
+        smld.x = x
+        smld.y = y
+        smld.σ_x = σ_x
+        smld.σ_y = σ_y
+        smld.bg = bg
+        smld.σ_bg = σ_bg
+        smld.photons = zeros(Float64, nlocalizations)
+        smld.σ_photons = zeros(Float64, nlocalizations)
+        smld.connectID = collect(1:nlocalizations)
+        smld.framenum = zeros(Int, nlocalizations)
+        smld.datasetnum = zeros(Int, nlocalizations)
+        smld.nframes = 0
+        smld.ndatasets = 0
+        smld.datasize = [0; 0]
+        smld.datafields = (:connectID, :x, :y, :σ_x, :σ_y, 
+            :photons, :σ_photons, :bg, :σ_bg, :framenum, :datasetnum)
+
+        return smld
+    end
 end
 
 """
@@ -115,50 +144,6 @@ function SMLD2D(data::DataFrames.DataFrame)
 
     return smld
 end
-
-#function SMLD2D(; x=[], y=[], σ_x=[], σ_y=[])
-    #smld = SMLD2D()
-
-    #data = [x, y, σ_x, σ_y,]
-    #nlocs = 4
-    #for value in data
-    #    if length(value) != 0
-    #        nlocs = value
-    #        break
-    #    end
-    #end
-#
-    #for value in data
-    #    if length(value) == 0
-    #        smld.value = zeros(Float64, nlocs)
-    #    else
-    #        smld.value = value
-    #    end
-    #end
-    
-    #smld.x = x
-    #smld.y = y
-    #smld.σ_x = σ_x
-    #smld.σ_y = σ_y
-    #smld.x = zeros(Float64, nlocs)
-    #smld.y = zeros(Float64, nlocs)
-    #smld.σ_x = zeros(Float64, nlocs)
-    #smld.σ_y = zeros(Float64, nlocs)
-    #smld.bg = zeros(Float64, nlocs)
-    #smld.σ_bg = zeros(Float64, nlocs)
-    #smld.photons = zeros(Float64, nlocs)
-    #smld.σ_photons = zeros(Float64, nlocs)
-    #smld.connectID = collect(1:nlocs)
-    #smld.framenum = zeros(Int, nlocs)
-    #smld.datasetnum = zeros(Int, nlocs)
-    #smld.nframes = 0
-    #smld.ndatasets = 0
-    #smld.datasize = [0; 0]
-    #smld.datafields = (:connectID, :x, :y, :σ_x, :σ_y, 
-    #    :photons, :σ_photons, :bg, :σ_bg, :framenum, :datasetnum)
-
-    #return smld
-#end
 
 
 ## SMLD3D specific structures and functions.
