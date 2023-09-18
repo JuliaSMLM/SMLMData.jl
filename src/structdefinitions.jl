@@ -47,67 +47,129 @@ mutable struct SMLD2D <: SMLD
     nframes::Int
     ndatasets::Int
     datafields::NTuple{11, Symbol}
-    SMLD2D() = new()
 end
 
 """
-    SMLD2D(nlocalizations::Int; 
-        x=zeros(Float64, nlocalizations), 
-        y=zeros(Float64, nlocalizations), 
-        σ_x=zeros(Float64, nlocalizations), 
-        σ_y=zeros(Float64, nlocalizations), 
-        bg=zeros(Float64, nlocalizations), 
-        σ_bg=zeros(Float64, nlocalizations))
+    SMLD2D(nlocalizations::Int)
 
-Constructor to generate an `smld` with a specific size.
+Constructor to generate an empty `smld` with a specific size.
 
 # Description
 This is a constructor for the SMLD2D struct which allows you to populate the
-structure with undefined values for a predefined number of localizations. You can also
-choose to input an x,y,σ_x,σ_y,bg, or σ_bg vector and it will fill the SMLD2D structure.
+structure with undefined values for a predefined number of localizations.
 """
-function SMLD2D(nlocalizations::Int; 
-    x=zeros(Float64, nlocalizations), 
-    y=zeros(Float64, nlocalizations), 
-    σ_x=zeros(Float64, nlocalizations), 
-    σ_y=zeros(Float64, nlocalizations), 
-    bg=zeros(Float64, nlocalizations), 
-    σ_bg=zeros(Float64, nlocalizations))
-
-
+function SMLD2D(nlocalizations::Int)
     smld = SMLD2D()
+    smld.x = zeros(Float64, nlocalizations)
+    smld.y = zeros(Float64, nlocalizations)
+    smld.σ_x = zeros(Float64, nlocalizations)
+    smld.σ_y = zeros(Float64, nlocalizations)
+    smld.bg = zeros(Float64, nlocalizations)
+    smld.σ_bg = zeros(Float64, nlocalizations)
+    smld.photons = zeros(Float64, nlocalizations)
+    smld.σ_photons = zeros(Float64, nlocalizations)
+    smld.connectID = collect(1:nlocalizations)
+    smld.framenum = zeros(Int, nlocalizations)
+    smld.datasetnum = zeros(Int, nlocalizations)
+    smld.nframes = 0
+    smld.ndatasets = 0
+    smld.datasize = [0; 0]
+    smld.datafields = (:connectID, :x, :y, :σ_x, :σ_y, 
+        :photons, :σ_photons, :bg, :σ_bg, :framenum, :datasetnum)
 
-    data = [x, y, σ_x, σ_y, bg, σ_bg]
-    error = 0
+    return smld
+end
+
+"""
+    SMLD2D(; 
+        x=zeros(Float64, 0), 
+        y=zeros(Float64, 0), 
+        σ_x=zeros(Float64, 0), 
+        σ_y=zeros(Float64, 0), 
+        bg=zeros(Float64, 0), 
+        σ_bg=zeros(Float64, 0),
+        photons=ones(Float64, 0),
+        σ_photons=zeros(Float64, 0),
+        framenum=ones(Int, 0),
+        datasetnum=ones(Int, 0),
+        nframes = 1,
+        ndatasets = 1)
+
+Constructor to generate an `smld` with vectors of data.
+
+# Description
+This is a constructor for the SMLD2D struct which allows you to populate the
+structure with a vector or vectors of data: x,y,σ_x,σ_y,bg, σ_bg, photons, or σ_photons.
+"""
+function SMLD2D(;
+    x=zeros(Float64, 0), 
+    y=zeros(Float64, 0), 
+    σ_x=zeros(Float64, 0), 
+    σ_y=zeros(Float64, 0), 
+    photons=ones(Float64, 0),
+    σ_photons=zeros(Float64, 0),
+    bg=zeros(Float64, 0), 
+    σ_bg=zeros(Float64, 0),
+    framenum=ones(Int, 0),
+    datasetnum=ones(Int, 0),
+    nframes = 1,
+    ndatasets = 1)
+
+
+    #make sure all inputs are in the correct format
+    x=float(x)
+    y=float(y)
+    σ_x=float(σ_x)
+    σ_y=float(σ_y)
+    photons=float(photons)
+    σ_photons=float(σ_photons)
+    bg=float(bg)
+    σ_bg=float(σ_bg)
+
+    #put the data vectors into a single vector
+    data = [x, y, σ_x, σ_y, bg, σ_bg, photons, σ_photons]
+
+    #set nloc equal to the length of the first nonzero vector
+    nloc = 0
     for value in data
-        if length(value) != nlocalizations
-            println("Error: The length of one of your data inputs doesn't match your number of localizations input")
-            error = 1
+        if length(value) != 0
+            nloc = length(value)
             break
         end
     end
 
-
-    if error == 0
-        smld.x = x
-        smld.y = y
-        smld.σ_x = σ_x
-        smld.σ_y = σ_y
-        smld.bg = bg
-        smld.σ_bg = σ_bg
-        smld.photons = zeros(Float64, nlocalizations)
-        smld.σ_photons = zeros(Float64, nlocalizations)
-        smld.connectID = collect(1:nlocalizations)
-        smld.framenum = zeros(Int, nlocalizations)
-        smld.datasetnum = zeros(Int, nlocalizations)
-        smld.nframes = 0
-        smld.ndatasets = 0
-        smld.datasize = [0; 0]
-        smld.datafields = (:connectID, :x, :y, :σ_x, :σ_y, 
-            :photons, :σ_photons, :bg, :σ_bg, :framenum, :datasetnum)
-
-        return smld
+    #check that nloc matches the length of all the vectors inputted
+    for value in data
+        if nloc != length(value) && nloc != 0 && length(value) != 0
+            println("Error: Your data input vectors are not all the same length.")
+            return
+        end
     end
+
+    #fill each remaining empty keyword argument with a vector of zeros the length of nloc
+    x = isempty(x) ? zeros(Float64, nloc) : x
+    y = isempty(y) ? zeros(Float64, nloc) : y
+    σ_x = isempty(σ_x) ? zeros(Float64, nloc) : σ_x
+    σ_y = isempty(σ_y) ? zeros(Float64, nloc) : σ_y
+    photons = isempty(photons) ? zeros(Float64, nloc) : photons
+    σ_photons = isempty(σ_photons) ? zeros(Float64, nloc) : σ_photons
+    bg = isempty(bg) ? zeros(Float64, nloc) : bg
+    σ_bg = isempty(σ_bg) ? zeros(Float64, nloc) : σ_bg
+    framenum = isempty(framenum) ? zeros(Int, nloc) : framenum
+    datasetnum = isempty(datasetnum) ? zeros(Int, nloc) : datasetnum
+
+    #set the values that the user was not allowed to change
+    connectID = collect(1:nloc)
+    datasize = [0; 0]
+    datafields = (:connectID, :x, :y, :σ_x, :σ_y, 
+         :photons, :σ_photons, :bg, :σ_bg, :framenum, :datasetnum)
+
+
+    #fill the smld structure
+    smld = SMLD2D(connectID, x, y, σ_x, σ_y, photons, σ_photons, bg, σ_bg,
+         framenum, datasetnum, datasize, nframes, ndatasets, datafields)
+
+    return smld
 end
 
 """
@@ -190,7 +252,6 @@ mutable struct SMLD3D <: SMLD
     nframes::Int
     ndatasets::Int
     datafields::NTuple{13, Symbol}
-    SMLD3D() = new()
 end
 
 """
@@ -222,6 +283,106 @@ function SMLD3D(nlocalizations::Int)
     smld.datasize = [0; 0; 0]
     smld.datafields = (:connectID, :x, :y, :z, :σ_x, :σ_y, :σ_z,
         :photons, :σ_photons, :bg, :σ_bg, :framenum, :datasetnum)
+
+    return smld
+end
+
+"""
+    SMLD3D(; 
+        x=zeros(Float64, 0), 
+        y=zeros(Float64, 0), 
+        z=zeros(Float64, 0),
+        σ_x=zeros(Float64, 0), 
+        σ_y=zeros(Float64, 0), 
+        σ_z=zeros(Float64, 0),
+        bg=zeros(Float64, 0), 
+        σ_bg=zeros(Float64, 0),
+        photons=ones(Float64, 0),
+        σ_photons=zeros(Float64, 0),
+        framenum=ones(Int, 0),
+        datasetnum=ones(Int, 0),
+        nframes = 1,
+        ndatasets = 1)
+
+Constructor to generate an `smld` with vectors of data.
+
+# Description
+This is a constructor for the SMLD3D struct which allows you to populate the
+structure with a vector or vectors of data: x ,y ,z ,σ_x ,σ_y ,σ_z,bg , σ_bg, photons, or σ_photons.
+"""
+function SMLD3D(;
+    x=zeros(Float64, 0), 
+    y=zeros(Float64, 0), 
+    z=zeros(Float64, 0),
+    σ_x=zeros(Float64, 0), 
+    σ_y=zeros(Float64, 0), 
+    σ_z=zeros(Float64, 0),
+    photons=ones(Float64, 0),
+    σ_photons=zeros(Float64, 0),
+    bg=zeros(Float64, 0), 
+    σ_bg=zeros(Float64, 0),
+    framenum=ones(Int, 0),
+    datasetnum=ones(Int, 0),
+    nframes = 1,
+    ndatasets = 1)
+
+
+    #make sure all inputs are in the correct format
+    x=float(x)
+    y=float(y)
+    z=float(z)
+    σ_x=float(σ_x)
+    σ_y=float(σ_y)
+    σ_z=float(σ_z)
+    photons=float(photons)
+    σ_photons=float(σ_photons)
+    bg=float(bg)
+    σ_bg=float(σ_bg)
+
+    #put the data vectors into a single vector
+    data = [x, y, z, σ_x, σ_y, σ_z, bg, σ_bg, photons, σ_photons, framenum]
+
+    #set nloc equal to the length of the first nonzero vector
+    nloc = 0
+    for value in data
+        if length(value) != 0
+            nloc = length(value)
+            break
+        end
+    end
+
+    #check that nloc matches the length of all the vectors inputted
+    for value in data
+        if nloc != length(value) && nloc != 0 && length(value) != 0
+            println("Error: Your data input vectors are not all the same length.")
+            return
+        end
+    end
+
+    #fill each remaining empty keyword argument with a vector of zeros the length of nloc
+    x = isempty(x) ? zeros(Float64, nloc) : x
+    y = isempty(y) ? zeros(Float64, nloc) : y
+    z = isempty(z) ? zeros(Float64, nloc) : z
+    σ_x = isempty(σ_x) ? zeros(Float64, nloc) : σ_x
+    σ_y = isempty(σ_y) ? zeros(Float64, nloc) : σ_y
+    σ_z = isempty(σ_z) ? zeros(Float64, nloc) : σ_z
+    photons = isempty(photons) ? zeros(Float64, nloc) : photons
+    σ_photons = isempty(σ_photons) ? zeros(Float64, nloc) : σ_photons
+    bg = isempty(bg) ? zeros(Float64, nloc) : bg
+    σ_bg = isempty(σ_bg) ? zeros(Float64, nloc) : σ_bg
+    framenum = isempty(framenum) ? zeros(Int, nloc) : framenum
+    datasetnum = isempty(datasetnum) ? zeros(Int, nloc) : datasetnum
+
+    #set the values that the user was not allowed to change
+    connectID = collect(1:nloc)
+    datasize = [0; 0; 0]
+    datafields = (:connectID, :x, :y, :z, :σ_x, :σ_y, :σ_z,  
+         :photons, :σ_photons, :bg, :σ_bg, :framenum, :datasetnum)
+
+
+    #fill the smld structure
+    smld = SMLD3D(connectID, x, y, z, σ_x, σ_y, σ_z, photons, σ_photons, bg, σ_bg,
+         framenum, datasetnum, datasize, nframes, ndatasets, datafields)
 
     return smld
 end
