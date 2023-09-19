@@ -112,6 +112,7 @@ function SMLD2D(;
     σ_bg=zeros(Float64, 0),
     framenum=ones(Int, 0),
     datasetnum=ones(Int, 0),
+    datasize = [0; 0],
     nframes = 1,
     ndatasets = 1)
 
@@ -125,6 +126,7 @@ function SMLD2D(;
     σ_photons=float(σ_photons)
     bg=float(bg)
     σ_bg=float(σ_bg)
+    datasize=round.(float(datasize))
 
     #put the data vectors into a single vector
     data = [x, y, σ_x, σ_y, bg, σ_bg, photons, σ_photons]
@@ -146,21 +148,21 @@ function SMLD2D(;
         end
     end
 
-    #fill each remaining empty keyword argument with a vector of zeros the length of nloc
+    #fill each remaining empty keyword argument with the desired vector the length of nloc
     x = isempty(x) ? zeros(Float64, nloc) : x
     y = isempty(y) ? zeros(Float64, nloc) : y
     σ_x = isempty(σ_x) ? zeros(Float64, nloc) : σ_x
     σ_y = isempty(σ_y) ? zeros(Float64, nloc) : σ_y
-    photons = isempty(photons) ? zeros(Float64, nloc) : photons
+    photons = isempty(photons) ? ones(Float64, nloc) : photons
     σ_photons = isempty(σ_photons) ? zeros(Float64, nloc) : σ_photons
     bg = isempty(bg) ? zeros(Float64, nloc) : bg
     σ_bg = isempty(σ_bg) ? zeros(Float64, nloc) : σ_bg
-    framenum = isempty(framenum) ? zeros(Int, nloc) : framenum
-    datasetnum = isempty(datasetnum) ? zeros(Int, nloc) : datasetnum
+    framenum = isempty(framenum) ? ones(Int, nloc) : framenum
+    datasetnum = isempty(datasetnum) ? ones(Int, nloc) : datasetnum
+    datasize = all(datasize .== 0) ? [round(maximum(y)); round(maximum(x))] : datasize
 
     #set the values that the user was not allowed to change
     connectID = collect(1:nloc)
-    datasize = [0; 0]
     datafields = (:connectID, :x, :y, :σ_x, :σ_y, 
          :photons, :σ_photons, :bg, :σ_bg, :framenum, :datasetnum)
 
@@ -323,6 +325,7 @@ function SMLD3D(;
     σ_bg=zeros(Float64, 0),
     framenum=ones(Int, 0),
     datasetnum=ones(Int, 0),
+    datasize = [0; 0; 0],
     nframes = 1,
     ndatasets = 1)
 
@@ -338,6 +341,7 @@ function SMLD3D(;
     σ_photons=float(σ_photons)
     bg=float(bg)
     σ_bg=float(σ_bg)
+    datasize=round.(float(datasize))
 
     #put the data vectors into a single vector
     data = [x, y, z, σ_x, σ_y, σ_z, bg, σ_bg, photons, σ_photons, framenum]
@@ -359,23 +363,23 @@ function SMLD3D(;
         end
     end
 
-    #fill each remaining empty keyword argument with a vector of zeros the length of nloc
+    #fill each remaining empty keyword argument with the desired vector the length of nloc
     x = isempty(x) ? zeros(Float64, nloc) : x
     y = isempty(y) ? zeros(Float64, nloc) : y
     z = isempty(z) ? zeros(Float64, nloc) : z
     σ_x = isempty(σ_x) ? zeros(Float64, nloc) : σ_x
     σ_y = isempty(σ_y) ? zeros(Float64, nloc) : σ_y
     σ_z = isempty(σ_z) ? zeros(Float64, nloc) : σ_z
-    photons = isempty(photons) ? zeros(Float64, nloc) : photons
+    photons = isempty(photons) ? ones(Float64, nloc) : photons
     σ_photons = isempty(σ_photons) ? zeros(Float64, nloc) : σ_photons
     bg = isempty(bg) ? zeros(Float64, nloc) : bg
     σ_bg = isempty(σ_bg) ? zeros(Float64, nloc) : σ_bg
-    framenum = isempty(framenum) ? zeros(Int, nloc) : framenum
-    datasetnum = isempty(datasetnum) ? zeros(Int, nloc) : datasetnum
+    framenum = isempty(framenum) ? ones(Int, nloc) : framenum
+    datasetnum = isempty(datasetnum) ? ones(Int, nloc) : datasetnum
+    datasize = all(datasize .== 0) ? [round(maximum(y)); round(maximum(x)); round(maximum(z))] : datasize
 
     #set the values that the user was not allowed to change
     connectID = collect(1:nloc)
-    datasize = [0; 0; 0]
     datafields = (:connectID, :x, :y, :z, :σ_x, :σ_y, :σ_z,  
          :photons, :σ_photons, :bg, :σ_bg, :framenum, :datasetnum)
 
