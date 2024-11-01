@@ -1,18 +1,96 @@
+"""
+    SMLMData
+
+A Julia package for working with Single Molecule Localization Microscopy (SMLM) data.
+
+# Features
+- Type system for emitters, cameras, and localization data
+- Physical coordinate handling (microns) with camera pixel mappings
+- Filtering and ROI selection tools
+- SMITE format compatibility
+- Memory-efficient data structures
+
+# Basic Usage
+```julia
+using SMLMData
+
+# Create a camera
+cam = IdealCamera(1:512, 1:512, 0.1)  # 512x512 camera with 0.1 micron pixels
+
+# Create some emitters
+emitters = [
+    Emitter2DFit{Float64}(1.0, 2.0, 1000.0, 10.0, 0.01, 0.01, 50.0, 2.0),
+    Emitter2DFit{Float64}(3.0, 4.0, 1200.0, 12.0, 0.01, 0.01, 60.0, 2.0)
+]
+
+# Create SMLD object
+smld = BasicSMLD(emitters, cam, 1, 1, Dict{String,Any}())
+
+# Filter operations
+roi = filter_roi(smld, 0.0:2.0, 1.0:3.0)
+bright = @filter(smld, photons > 1000)
+```
+"""
 module SMLMData
 
-using Base
-using StatsBase
-using Distributions
+# External Packages
 using MAT
-using DataFrames
-using Images
-using StatsFuns
 
-include("structdefinitions.jl")
-include("isolatesmld.jl")
-include("catsmld.jl")
-include("transformsmld.jl")
-include("images.jl")
-include("smite.jl")
+# Base imports
+import Base: filter
 
-end
+# Type definitions
+export 
+    # Abstract types
+    AbstractEmitter,
+    AbstractCamera,
+    SMLD,
+
+    # Concrete emitter types
+    Emitter2D,
+    Emitter3D,
+    Emitter2DFit,
+    Emitter3DFit,
+
+    # Camera types
+    IdealCamera,
+    
+    # SMLD types
+    BasicSMLD,
+    SmiteSMLD,
+    SmiteSMD
+
+# Coordinates and conversions
+export 
+    pixel_to_physical,
+    physical_to_pixel,
+    physical_to_pixel_index,
+    compute_bin_edges,
+    get_pixel_centers
+
+# Filtering and operations
+export
+    @filter,
+    filter_frames,
+    filter_roi,
+    cat_smld,
+    merge_smld
+
+# SMITE functionality
+export
+    load_smite_2d,
+    load_smite_3d,
+    save_smite
+
+# Include all source files
+include("types/emitters.jl")
+include("types/cameras.jl")
+include("types/smld.jl")
+include("coordinates.jl")
+include("filters.jl")
+include("operations.jl")
+include("smite/types.jl")
+include("smite/loading.jl")
+include("smite/saving.jl")
+
+end 
