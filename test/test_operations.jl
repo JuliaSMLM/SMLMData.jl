@@ -58,17 +58,25 @@
         end
 
         @testset "Empty and Single SMLD" begin
-            smld = create_test_smld(1:2)
-            empty_smld = create_test_smld(Int[])
+            # Test concatenating empty vector of SMLDs
+            @test_throws ErrorException cat_smld(SMLD[])
             
-            # Test concatenation with empty SMLD
-            result = cat_smld(smld, empty_smld)
-            @test length(result.emitters) == 2
+            # Create a test SMLD
+            cam = IdealCamera(1:512, 1:512, 0.1)
+            emitters = [
+                Emitter2DFit{Float64}(1.0, 2.0, 1000.0, 10.0, 0.01, 0.01, 50.0, 2.0, frame=1)
+            ]
+            smld = BasicSMLD(emitters, cam, 1, 1, Dict{String,Any}())
             
             # Test single SMLD
             result = cat_smld([smld])
-            @test length(result.emitters) == 2
-            @test result.n_frames == 2
+            @test length(result.emitters) == 1
+            
+            # Test concatenation with empty emitters but valid SMLD
+            empty_emitters = Emitter2DFit{Float64}[]
+            empty_smld = BasicSMLD(empty_emitters, cam, 0, 1, Dict{String,Any}())
+            result = cat_smld([smld, empty_smld])
+            @test length(result.emitters) == 1
         end
     end
 

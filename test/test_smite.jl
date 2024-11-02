@@ -4,12 +4,17 @@
         cam = IdealCamera(1:512, 1:512, 0.1)
         emitters = [
             Emitter2DFit{Float64}(1.0, 2.0, 1000.0, 10.0, 0.01, 0.01, 50.0, 2.0,
-                                frame=f, dataset=dataset_num, track_id=1, id=i)
+                                  frame=f, dataset=dataset_num, track_id=1, id=i)
             for (i, f) in enumerate(frame_range)
         ]
-        return BasicSMLD(emitters, cam, maximum(frame_range), dataset_num, 
-                        Dict{String,Any}("original_frames" => frame_range))
+    
+        # Set n_frames to 0 if frame_range is empty
+        n_frames = isempty(frame_range) ? 0 : maximum(frame_range)
+    
+        return BasicSMLD(emitters, cam, n_frames, dataset_num, 
+                         Dict{String, Any}("original_frames" => frame_range))
     end
+    
 
     @testset "cat_smld" begin
         @testset "Basic Concatenation" begin

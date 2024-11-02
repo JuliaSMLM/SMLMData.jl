@@ -1,29 +1,12 @@
 """
-    pixel_to_physical(px::Real, py::Real, pixel_size::Real)
+    pixel_to_physical(px::Real, py::Real, pixel_size::T) where T
 
 Convert pixel coordinates to physical coordinates (in microns).
-
-# Arguments
-- `px::Real`: x pixel coordinate (1,1 is center of top-left pixel)
-- `py::Real`: y pixel coordinate (1,1 is center of top-left pixel)
-- `pixel_size::Real`: size of a pixel in microns
-
-# Returns
-Tuple{Float64, Float64}: (x,y) physical coordinates in microns where (0,0) is top-left of image
-
-# Example
-```julia
-# For a camera with 0.1 micron pixels
-x, y = pixel_to_physical(1.0, 1.0, 0.1)  # Center of top-left pixel
-# Returns (0.05, 0.05) microns - half a pixel in from corner
-```
+Returns coordinates with the same type as pixel_size.
 """
-function pixel_to_physical(px::Real, py::Real, pixel_size::Real)
-    # Convert from pixel center coordinates to physical units
-    # For pixel (1,1), we want to be half a pixel in from the origin
-    x_physical = (px - 0.5) * pixel_size
-    y_physical = (py - 0.5) * pixel_size
-    
+function pixel_to_physical(px::Real, py::Real, pixel_size::T) where T
+    x_physical = T((px - 0.5) * pixel_size)
+    y_physical = T((py - 0.5) * pixel_size)
     return (x_physical, y_physical)
 end
 

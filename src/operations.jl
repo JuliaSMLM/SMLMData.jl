@@ -29,29 +29,33 @@ combined = cat_smld([smld1, smld2, smld3])
 ```
 """
 function cat_smld(smlds::Vector{<:SMLD})
+    # First check emptiness before any operations
     isempty(smlds) && error("No SMLDs to concatenate")
+
+    # Then do single SMLD check
     length(smlds) == 1 && return first(smlds)
-    
-    # Check camera compatibility
+
+    # At this point we know we have at least 2 SMLDs
     ref_camera = smlds[1].camera
     for smld in smlds[2:end]
         if !is_same_camera(ref_camera, smld.camera)
             error("Cannot concatenate SMLDs with different cameras")
         end
     end
-    
+
     # Concatenate emitters
     all_emitters = vcat([smld.emitters for smld in smlds]...)
-    
+
     # Find maximum frame and dataset numbers
     max_frames = maximum(smld.n_frames for smld in smlds)
     max_datasets = maximum(smld.n_datasets for smld in smlds)
-    
+
     # Combine metadata
     metadata = copy(smlds[1].metadata)
     metadata["concatenated_from"] = length(smlds)
-    
-    return typeof(first(smlds))(
+
+    # Use typeof(smlds[1]) instead of typeof(first(smlds))
+    return typeof(smlds[1])(
         all_emitters,
         ref_camera,
         max_frames,
@@ -97,26 +101,41 @@ merged = merge_smld([smld1, smld2, smld3],
                    adjust_datasets=true)
 ```
 """
-function merge_smld(smlds::Vector{<:SMLD}; 
-                   adjust_frames::Bool=false, 
-                   adjust_datasets::Bool=false)
+function merge_smld(smlds::Vector{<:SMLD};
+    adjust_frames::Bool=false,
+    adjust_datasets::Bool=false)
     isempty(smlds) && error("No SMLDs to merge")
     length(smlds) == 1 && return first(smlds)
-    
+
     # Check camera compatibility
     if !all(is_same_camera(smlds[1].camera, smld.camera) for smld in smlds[2:end])
         error("Cannot merge SMLDs with different cameras")
     end
-    
+
     # Initialize with copied emitters from first SMLD
     all_emitters = copy(smlds[1].emitters)
-    frame_offset = smlds[1].n_frames
-    dataset_offset = smlds[1].n_datasets
-    
+    frame_offset = 0
+    dataset_offset = 0
+
+    # Adjust first SMLD if needed
+    if adjust_frames
+        for e in all_emitters
+            e.frame += frame_offset
+        end
+    end
+    frame_offset += smlds[1].n_frames
+
+    if adjust_datasets
+        for e in all_emitters
+            e.dataset += dataset_offset
+        end
+    end
+    dataset_offset += 1  # Increment by 1, not by smlds[1].n_datasets
+
     # Process each additional SMLD
-    for (i, smld) in enumerate(smlds[2:end])
+    for smld in smlds[2:end]
         new_emitters = copy(smld.emitters)
-        
+
         if adjust_frames
             # Adjust frame numbers to be sequential
             for e in new_emitters
@@ -124,37 +143,38 @@ function merge_smld(smlds::Vector{<:SMLD};
             end
             frame_offset += smld.n_frames
         end
-        
+
         if adjust_datasets
             # Adjust dataset numbers to be sequential
             for e in new_emitters
                 e.dataset += dataset_offset
             end
-            dataset_offset += smld.n_datasets
+            dataset_offset += 1  # Increment by 1, not by smld.n_datasets
         end
-        
+
         append!(all_emitters, new_emitters)
     end
-    
+
     # Calculate new n_frames and n_datasets
     new_n_frames = if adjust_frames
         sum(smld.n_frames for smld in smlds)
     else
         maximum(smld.n_frames for smld in smlds)
     end
-    
+
     new_n_datasets = if adjust_datasets
-        sum(smld.n_datasets for smld in smlds)
+        length(smlds)  # Since dataset numbers are adjusted to be sequential
     else
         maximum(smld.n_datasets for smld in smlds)
     end
-    
+
     # Combine metadata
     metadata = copy(smlds[1].metadata)
     metadata["merged_from"] = length(smlds)
     metadata["frame_adjustment"] = adjust_frames
     metadata["dataset_adjustment"] = adjust_datasets
-    
+
+    # Create the new SMLD object
     return typeof(first(smlds))(
         all_emitters,
         smlds[1].camera,
@@ -163,6 +183,8 @@ function merge_smld(smlds::Vector{<:SMLD};
         metadata
     )
 end
+
+
 
 # Varargs version
 merge_smld(smlds::SMLD...; kwargs...) = merge_smld(collect(smlds); kwargs...)

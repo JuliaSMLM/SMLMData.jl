@@ -30,46 +30,39 @@ Any concrete subtype of AbstractCamera must provide:
 abstract type AbstractCamera end
 
 """
-    compute_edges_1d(centers::AbstractUnitRange, pixel_size::Real)
+    compute_edges_1d(centers::AbstractUnitRange, pixel_size::T) where T<:Real
 
-Compute pixel edges in physical units (microns) for a given range of pixel centers and pixel size.
+Compute pixel edges in one dimension. Maintains the numeric type of pixel_size.
+The first edge starts at 0 and each pixel has width pixel_size.
 
 # Arguments
-- `centers::AbstractUnitRange`: Range of pixel center indices (typically 1:N)
-- `pixel_size::Real`: Size of pixels in microns
+- `centers::AbstractUnitRange`: Range of pixel center indices
+- `pixel_size::T`: Size of pixels in microns
 
 # Returns
-Vector{Float64}: Edge positions in physical units (microns)
-
-Note: Returns N+1 edges for N pixels, with edges positioned half a pixel before 
-first center and half a pixel after last center.
+Vector{T}: Edge positions in physical units (microns), starting at 0
 """
-function compute_edges_1d(centers::AbstractUnitRange, pixel_size::Real)
-    # Convert first and last center positions to physical coordinates
-    first_center = pixel_to_physical(first(centers), 1, pixel_size)[1]
-    last_center = pixel_to_physical(last(centers), 1, pixel_size)[1]
+function compute_edges_1d(centers::AbstractUnitRange, pixel_size::T) where T<:Real
+    n_centers = length(centers)
+    edges = Vector{T}(undef, n_centers + 1)
     
-    # Create edge array extending half a pixel beyond centers
-    edges = range(first_center - pixel_size/2, last_center + pixel_size/2, 
-                 length=length(centers) + 1)
+    # First edge starts at 0
+    edges[1] = zero(T)
     
-    return collect(edges)
+    # Each subsequent edge is one pixel_size further
+    for i in 1:n_centers
+        edges[i + 1] = T(i) * pixel_size
+    end
+    
+    return edges
 end
 
 """
-    compute_bin_edges(centers_x::AbstractUnitRange, centers_y::AbstractUnitRange, pixel_size::Real)
+    compute_bin_edges(centers_x::AbstractUnitRange, centers_y::AbstractUnitRange, pixel_size::T) where T
 
-Compute pixel edges in both dimensions for square pixels.
-
-# Arguments
-- `centers_x::AbstractUnitRange`: Range of pixel center indices in x
-- `centers_y::AbstractUnitRange`: Range of pixel center indices in y
-- `pixel_size::Real`: Size of pixels in microns
-
-# Returns
-Tuple{Vector{Float64}, Vector{Float64}}: (edges_x, edges_y) in physical units (microns)
+Compute pixel edges in both dimensions. Returns vectors with same type as pixel_size.
 """
-function compute_bin_edges(centers_x::AbstractUnitRange, centers_y::AbstractUnitRange, pixel_size::Real)
+function compute_bin_edges(centers_x::AbstractUnitRange, centers_y::AbstractUnitRange, pixel_size::T) where T
     edges_x = compute_edges_1d(centers_x, pixel_size)
     edges_y = compute_edges_1d(centers_y, pixel_size)
     return edges_x, edges_y
@@ -112,7 +105,7 @@ struct IdealCamera{T} <: AbstractCamera
 end
 
 """
-    IdealCamera(pixel_centers_x::AbstractUnitRange, pixel_centers_y::AbstractUnitRange, pixel_size::Real)
+    IdealCamera(pixel_centers_x::AbstractUnitRange, pixel_centers_y::AbstractUnitRange, pixel_size::T) where T<:Real
 
 Construct an IdealCamera with square pixels given pixel center positions and a scalar pixel size.
 
@@ -122,41 +115,61 @@ Construct an IdealCamera with square pixels given pixel center positions and a s
 - `pixel_size::Real`: Size of pixels in microns
 
 # Returns
-IdealCamera: Camera with computed pixel edges
+IdealCamera{T} where T matches the type of pixel_size
+
+# Type Parameters
+- `T`: Numeric type for all spatial measurements (e.g., Float64, Float32)
 
 # Example
 ```julia
-# Create a 512x256 camera with 0.1 micron square pixels
-cam = IdealCamera(1:512, 1:256, 0.1)
+# Create a 512x512 camera with 0.1 micron square pixels
+cam = IdealCamera(1:512, 1:512, 0.1)
+
+# Create with Float32 precision
+cam32 = IdealCamera(1:512, 1:512, 0.1f0)
 ```
+
+Note: Pixel (1,1) is centered at (pixel_size/2, pixel_size/2) in physical coordinates.
 """
-function IdealCamera(pixel_centers_x::AbstractUnitRange, pixel_centers_y::AbstractUnitRange, pixel_size::Real)
-    T = promote_type(typeof(pixel_size), Float64)
+function IdealCamera(pixel_centers_x::AbstractUnitRange, 
+                    pixel_centers_y::AbstractUnitRange, 
+                    pixel_size::T) where T<:Real
     edges_x, edges_y = compute_bin_edges(pixel_centers_x, pixel_centers_y, pixel_size)
     return IdealCamera{T}(edges_x, edges_y)
 end
 
 """
-    IdealCamera(pixel_centers_x::AbstractUnitRange, pixel_centers_y::AbstractUnitRange, pixel_size::Tuple{Real, Real})
+    IdealCamera(pixel_centers_x::AbstractUnitRange, pixel_centers_y::AbstractUnitRange, 
+                pixel_size::Tuple{T, T}) where T<:Real
 
 Construct an IdealCamera with rectangular pixels given pixel center positions and x,y pixel sizes.
 
 # Arguments
 - `pixel_centers_x::AbstractUnitRange`: Range of pixel center indices in x (typically 1:N)
 - `pixel_centers_y::AbstractUnitRange`: Range of pixel center indices in y (typically 1:M)
-- `pixel_size::Tuple{Real, Real}`: Tuple of (x_size, y_size) in microns
+- `pixel_size::Tuple{T, T}`: Tuple of (x_size, y_size) in microns
 
 # Returns
-IdealCamera: Camera with computed pixel edges
+IdealCamera{T} where T matches the type of the pixel sizes
+
+# Type Parameters
+- `T`: Numeric type for all spatial measurements (e.g., Float64, Float32)
 
 # Example
 ```julia
 # Create a 512x256 camera with rectangular pixels (0.1 x 0.15 microns)
 cam = IdealCamera(1:512, 1:256, (0.1, 0.15))
+
+# Create with Float32 precision
+cam32 = IdealCamera(1:512, 1:256, (0.1f0, 0.15f0))
 ```
+
+Note: Pixel (1,1) is centered at (pixel_size[1]/2, pixel_size[2]/2) in physical coordinates.
 """
-function IdealCamera(pixel_centers_x::AbstractUnitRange, pixel_centers_y::AbstractUnitRange, pixel_size::Tuple{Real, Real})
-    T = promote_type(typeof(pixel_size[1]), typeof(pixel_size[2]), Float64)
-    edges_x, edges_y = compute_bin_edges(pixel_centers_x, pixel_centers_y, pixel_size)
+function IdealCamera(pixel_centers_x::AbstractUnitRange,
+                    pixel_centers_y::AbstractUnitRange,
+                    pixel_size::Tuple{T, T}) where T<:Real
+    edges_x = compute_edges_1d(pixel_centers_x, pixel_size[1])
+    edges_y = compute_edges_1d(pixel_centers_y, pixel_size[2])
     return IdealCamera{T}(edges_x, edges_y)
 end
