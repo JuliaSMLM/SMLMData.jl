@@ -83,14 +83,16 @@ export
     save_smite
 
 # Include all source files
-include("types/emitters.jl")
-include("types/cameras.jl")
-include("types/smld.jl")
-include("coordinates.jl")
-include("filters.jl")
-include("operations.jl")
-include("smite/types.jl")
-include("smite/loading.jl")
-include("smite/saving.jl")
+include("types/emitters.jl")  # Move from current location
+include("types/cameras.jl")   # Move from current location  
+include("types/smld.jl")      # Move from current location
 
-end 
+include("core/coordinates.jl") # Move from coordinates.jl
+include("core/filters.jl")    # Move from filters.jl
+include("core/operations.jl") # Move from operations.jl
+
+include("io/smite/types.jl")   # Move from smite/types.jl
+include("io/smite/loading.jl") # Move from smite/loading.jl
+include("io/smite/saving.jl")  # Move from smite/saving.jl
+
+end
