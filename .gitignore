@@ -1,8 +1,9 @@
 *.jl.*.cov
 *.jl.cov
 *.jl.mem
-/docs/build/
+docs/build/
 .vscode/*
 Manifest.toml
 examples/.vscode/*
 *.png
+docs/Manifest.toml
