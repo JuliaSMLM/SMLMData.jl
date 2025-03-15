@@ -173,3 +173,59 @@ function IdealCamera(pixel_centers_x::AbstractUnitRange,
     edges_y = compute_edges_1d(pixel_centers_y, pixel_size[2])
     return IdealCamera{T}(edges_x, edges_y)
 end
+
+"""
+    IdealCamera(n_pixels_x::Integer, n_pixels_y::Integer, pixel_size::T) where T<:Real
+
+Construct an IdealCamera with square pixels directly from the number of pixels and pixel size.
+
+# Arguments
+- `n_pixels_x::Integer`: Number of pixels in x dimension
+- `n_pixels_y::Integer`: Number of pixels in y dimension
+- `pixel_size::Real`: Size of pixels in microns
+
+# Returns
+IdealCamera{T} where T matches the type of pixel_size
+
+# Example
+```julia
+# Create a 512x512 camera with 0.1 micron square pixels
+cam = IdealCamera(512, 512, 0.1)
+
+# Create with Float32 precision
+cam32 = IdealCamera(512, 512, 0.1f0)
+```
+"""
+function IdealCamera(n_pixels_x::Integer, n_pixels_y::Integer, pixel_size::T) where T<:Real
+    pixel_centers_x = 1:n_pixels_x
+    pixel_centers_y = 1:n_pixels_y
+    return IdealCamera(pixel_centers_x, pixel_centers_y, pixel_size)
+end
+
+"""
+    IdealCamera(n_pixels_x::Integer, n_pixels_y::Integer, pixel_size::Tuple{T, T}) where T<:Real
+
+Construct an IdealCamera with rectangular pixels directly from the number of pixels and x,y pixel sizes.
+
+# Arguments
+- `n_pixels_x::Integer`: Number of pixels in x dimension
+- `n_pixels_y::Integer`: Number of pixels in y dimension
+- `pixel_size::Tuple{T, T}`: Tuple of (x_size, y_size) in microns
+
+# Returns
+IdealCamera{T} where T matches the type of the pixel sizes
+
+# Example
+```julia
+# Create a 512x256 camera with rectangular pixels (0.1 x 0.15 microns)
+cam = IdealCamera(512, 256, (0.1, 0.15))
+
+# Create with Float32 precision
+cam32 = IdealCamera(512, 256, (0.1f0, 0.15f0))
+```
+"""
+function IdealCamera(n_pixels_x::Integer, n_pixels_y::Integer, pixel_size::Tuple{T, T}) where T<:Real
+    pixel_centers_x = 1:n_pixels_x
+    pixel_centers_y = 1:n_pixels_y
+    return IdealCamera(pixel_centers_x, pixel_centers_y, pixel_size)
+end
