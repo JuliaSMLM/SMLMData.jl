@@ -1,7 +1,7 @@
 name = "SMLMData"
 uuid = "5488f106-40b8-4660-84c5-84a168990d1b"
 authors = ["klidke@unm.edu"]
-version = "0.2.1"
+version = "0.2.2"
 
 [deps]
 MAT = "23992714-dd62-5051-b70f-ba57cb901cac"
