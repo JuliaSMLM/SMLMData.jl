@@ -13,7 +13,8 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
-        "Library.md"
+        "Saving and Loading" => "io.md",
+        "API Reference" => "api.md",
     ],
 )
 
