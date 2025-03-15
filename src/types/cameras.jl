@@ -229,3 +229,41 @@ function IdealCamera(n_pixels_x::Integer, n_pixels_y::Integer, pixel_size::Tuple
     pixel_centers_y = 1:n_pixels_y
     return IdealCamera(pixel_centers_x, pixel_centers_y, pixel_size)
 end
+
+
+# Standard show method (used in arrays and collections)
+function Base.show(io::IO, camera::IdealCamera{T}) where T
+    n_pixels_x = length(camera.pixel_edges_x) - 1
+    n_pixels_y = length(camera.pixel_edges_y) - 1
+    pixel_size_x = round(camera.pixel_edges_x[2] - camera.pixel_edges_x[1], digits=4)
+    pixel_size_y = round(camera.pixel_edges_y[2] - camera.pixel_edges_y[1], digits=4)
+    
+    if pixel_size_x ≈ pixel_size_y
+        print(io, "IdealCamera{$T}($(n_pixels_x)×$(n_pixels_y), $(pixel_size_x)μm)")
+    else
+        print(io, "IdealCamera{$T}($(n_pixels_x)×$(n_pixels_y), $(pixel_size_x)×$(pixel_size_y)μm)")
+    end
+end
+
+# Detailed show method (used at REPL and when explicitly showing)
+function Base.show(io::IO, ::MIME"text/plain", camera::IdealCamera{T}) where T
+    n_pixels_x = length(camera.pixel_edges_x) - 1
+    n_pixels_y = length(camera.pixel_edges_y) - 1
+    pixel_size_x = round(camera.pixel_edges_x[2] - camera.pixel_edges_x[1], digits=4)
+    pixel_size_y = round(camera.pixel_edges_y[2] - camera.pixel_edges_y[1], digits=4)
+    
+    x_size = round(camera.pixel_edges_x[end] - camera.pixel_edges_x[1], digits=2)
+    y_size = round(camera.pixel_edges_y[end] - camera.pixel_edges_y[1], digits=2)
+    
+    println(io, "IdealCamera{$T} with:")
+    println(io, "  Dimensions: $(n_pixels_x) × $(n_pixels_y) pixels")
+    
+    if pixel_size_x ≈ pixel_size_y
+        println(io, "  Pixel size: $(pixel_size_x) μm")
+    else
+        println(io, "  Pixel size: $(pixel_size_x) × $(pixel_size_y) μm")
+    end
+    
+    print(io, "  Field of view: $(x_size) × $(y_size) μm")
+end
+

@@ -117,3 +117,59 @@ Enable iteration over emitters in an SMLD object.
 """
 Base.iterate(smld::SMLD) = iterate(smld.emitters)
 Base.iterate(smld::SMLD, state) = iterate(smld.emitters, state)
+
+
+"""
+    Base.show methods for SMLD types
+
+These methods provide informative displays of SMLD data containers in both REPL and other contexts.
+"""
+
+# --- Generic SMLD compact show method ---
+# This works for any concrete SMLD type
+
+function Base.show(io::IO, smld::S) where {S<:SMLD}
+    n_emitters = length(smld.emitters)
+    emitter_type = eltype(smld.emitters)
+    camera_type = typeof(smld.camera)
+    
+    # Get a cleaner type name without parameters
+    type_name = string(S.name.name)
+    
+    print(io, "$type_name($n_emitters $emitter_type, $camera_type, $(smld.n_frames) frames)")
+end
+
+# --- BasicSMLD detailed show method ---
+
+function Base.show(io::IO, ::MIME"text/plain", smld::BasicSMLD{T,E}) where {T,E}
+    n_emitters = length(smld.emitters)
+    
+    # Camera info
+    cam = smld.camera
+    n_pixels_x = length(cam.pixel_edges_x) - 1
+    n_pixels_y = length(cam.pixel_edges_y) - 1
+    
+    # Find mean photons per emitter
+    if n_emitters > 0
+        mean_photons = sum(e.photons for e in smld.emitters) / n_emitters
+        mean_photons = round(mean_photons, digits=1)
+    else
+        mean_photons = "N/A"
+    end
+    
+    # Prepare metadata preview
+    meta_keys = keys(smld.metadata)
+    meta_preview = isempty(meta_keys) ? "none" : join(collect(meta_keys)[1:min(3, length(meta_keys))], ", ")
+    if length(meta_keys) > 3
+        meta_preview *= ", ..."
+    end
+    
+    println(io, "BasicSMLD{$T,$E}:")
+    println(io, "  Emitters: $n_emitters")
+    println(io, "  Camera: $(n_pixels_x)×$(n_pixels_y) pixels")
+    println(io, "  Frames: $(smld.n_frames)")
+    println(io, "  Datasets: $(smld.n_datasets)")
+    println(io, "  Mean photons: $mean_photons")
+    print(io, "  Metadata keys: $meta_preview")
+end
+
