@@ -2,11 +2,10 @@
 
 Data types and utilities for Single Molecule Localization Microscopy (SMLM) in Julia.
 
-[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://juliasmlm.github.io/SMLMData.jl/stable)
-[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliasmlm.github.io/SMLMData.jl/dev)
-[![Build Status](https://github.com/juliasmlm/SMLMData.jl/workflows/CI/badge.svg)](https://github.com/juliasmlm/SMLMData.jl/actions)
-[![Coverage](https://codecov.io/gh/juliasmlm/SMLMData.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/juliasmlm/SMLMData.jl)
-[![Julia Version](https://img.shields.io/badge/julia-%3E%3D%201.6-brightgreen.svg)](https://julialang.org/)
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://JuliaSMLM.github.io/SMLMData.jl/stable)
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://JuliaSMLM.github.io/SMLMData.jl/dev)
+[![Build Status](https://github.com/JuliaSMLM/SMLMData.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/JuliaSMLM/SMLMData.jl/actions/workflows/CI.yml)
+[![Coverage](https://codecov.io/gh/JuliaSMLM/SMLMData.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/JuliaSMLM/SMLMData.jl)
 
 ## Quick Start
 
