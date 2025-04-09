@@ -82,6 +82,7 @@ SmiteSMLD containing 2D localizations
 - All spatial coordinates are converted to microns
 - If PixelSize is not specified in the file, defaults to 0.1 microns
 - Emitters with non-zero imaginary components will be excluded with a warning
+- Fields are converted from Float32 to Float64 as needed
 """
 function load_smite_2d(smd::SmiteSMD)
     # Load matlab file 
@@ -113,14 +114,23 @@ function load_smite_2d(smd::SmiteSMD)
     # Create emitters (only for valid indices)
     n_valid = length(valid_indices)
     emitters = Vector{Emitter2DFit{Float64}}(undef, n_valid)
-    T = Float64
-
+    
     for (new_idx, i) in enumerate(valid_indices)
-        emitters[new_idx] = Emitter2DFit{T}(
-            real(s["X"][i]), real(s["Y"][i]),             # x, y (take real part)
-            real(s["Photons"][i]), real(s["Bg"][i]),      # photons, background
-            real(s["X_SE"][i]), real(s["Y_SE"][i]),       # σ_x, σ_y
-            real(s["Photons_SE"][i]), real(s["Bg_SE"][i]);# σ_photons, σ_bg
+        # Convert all values to Float64 explicitly
+        x = Float64(real(s["X"][i]))
+        y = Float64(real(s["Y"][i]))
+        photons = Float64(real(s["Photons"][i]))
+        bg = Float64(real(s["Bg"][i]))
+        σ_x = Float64(real(s["X_SE"][i]))
+        σ_y = Float64(real(s["Y_SE"][i]))
+        σ_photons = Float64(real(s["Photons_SE"][i]))
+        σ_bg = Float64(real(s["Bg_SE"][i]))
+        
+        emitters[new_idx] = Emitter2DFit{Float64}(
+            x, y,                 # x, y (converted to Float64)
+            photons, bg,          # photons, background
+            σ_x, σ_y,             # σ_x, σ_y
+            σ_photons, σ_bg;      # σ_photons, σ_bg
             frame=Int(s["FrameNum"][i]),
             dataset=Int(s["DatasetNum"][i]),
             track_id=Int(s["ConnectID"][i]),
@@ -177,6 +187,7 @@ SmiteSMLD containing 3D localizations
 - All spatial coordinates are converted to microns
 - If PixelSize is not specified in the file, defaults to 0.1 microns
 - Emitters with non-zero imaginary components will be excluded with a warning
+- Fields are converted from Float32 to Float64 as needed
 """
 function load_smite_3d(smd::SmiteSMD)
     # Load matlab file 
@@ -210,11 +221,23 @@ function load_smite_3d(smd::SmiteSMD)
     emitters = Vector{Emitter3DFit{Float64}}(undef, n_valid)
     
     for (new_idx, i) in enumerate(valid_indices)
+        # Convert all values to Float64 explicitly
+        x = Float64(real(s["X"][i]))
+        y = Float64(real(s["Y"][i]))
+        z = Float64(real(s["Z"][i]))
+        photons = Float64(real(s["Photons"][i]))
+        bg = Float64(real(s["Bg"][i]))
+        σ_x = Float64(real(s["X_SE"][i]))
+        σ_y = Float64(real(s["Y_SE"][i]))
+        σ_z = Float64(real(s["Z_SE"][i]))
+        σ_photons = Float64(real(s["Photons_SE"][i]))
+        σ_bg = Float64(real(s["Bg_SE"][i]))
+        
         emitters[new_idx] = Emitter3DFit{Float64}(
-            real(s["X"][i]), real(s["Y"][i]), real(s["Z"][i]),       # x, y, z (take real part)
-            real(s["Photons"][i]), real(s["Bg"][i]),                 # photons, background
-            real(s["X_SE"][i]), real(s["Y_SE"][i]), real(s["Z_SE"][i]), # σ_x, σ_y, σ_z
-            real(s["Photons_SE"][i]), real(s["Bg_SE"][i]);           # σ_photons, σ_bg
+            x, y, z,                   # x, y, z (converted to Float64)
+            photons, bg,               # photons, background
+            σ_x, σ_y, σ_z,             # σ_x, σ_y, σ_z
+            σ_photons, σ_bg;           # σ_photons, σ_bg
             frame=Int(s["FrameNum"][i]),
             dataset=Int(s["DatasetNum"][i]),
             track_id=Int(s["ConnectID"][i]),
