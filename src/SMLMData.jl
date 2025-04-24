@@ -30,6 +30,19 @@ smld = BasicSMLD(emitters, cam, 1, 1, Dict{String,Any}())
 roi = filter_roi(smld, 0.0:2.0, 1.0:3.0)
 bright = @filter(smld, photons > 1000)
 ```
+
+# API Overview
+For a comprehensive overview of the API, use the help mode on `api_overview`:
+
+```julia
+?api_overview
+```
+
+Or access the complete API documentation programmatically:
+
+```julia
+docs = SMLMData.api_overview()
+```
 """
 module SMLMData
 
@@ -94,5 +107,8 @@ include("core/operations.jl") # Move from operations.jl
 include("io/smite/types.jl")   # Move from smite/types.jl
 include("io/smite/loading.jl") # Move from smite/loading.jl
 include("io/smite/saving.jl")  # Move from smite/saving.jl
+
+# Include the API overview functionality
+include("api.jl")
 
 end
