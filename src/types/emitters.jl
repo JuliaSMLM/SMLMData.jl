@@ -131,7 +131,7 @@ Convenience constructor for 2D localization fit results with optional identifica
 - `σ_bg::T`: uncertainty in background level
 
 ## Optional Keywords
-- `frame::Int=0`: frame number in acquisition sequence
+- `frame::Int=1`: frame number in acquisition sequence
 - `dataset::Int=1`: identifier for specific acquisition/dataset
 - `track_id::Int=0`: identifier for linking localizations across frames
 - `id::Int=0`: unique identifier within dataset
@@ -155,7 +155,7 @@ emitter = Emitter2DFit{Float64}(
 """
 function Emitter2DFit{T}(x::T, y::T, photons::T, bg::T, 
                         σ_x::T, σ_y::T, σ_photons::T, σ_bg::T;
-                        frame::Int=0, dataset::Int=1, track_id::Int=0, id::Int=0) where T
+                        frame::Int=1, dataset::Int=1, track_id::Int=0, id::Int=0) where T
     Emitter2DFit{T}(x, y, photons, bg, σ_x, σ_y, σ_photons, σ_bg, 
                     frame, dataset, track_id, id)
 end
@@ -180,7 +180,7 @@ Convenience constructor for 3D localization fit results with optional identifica
 - `σ_bg::T`: uncertainty in background level
 
 ## Optional Keywords
-- `frame::Int=0`: frame number in acquisition sequence
+- `frame::Int=1`: frame number in acquisition sequence
 - `dataset::Int=1`: identifier for specific acquisition/dataset
 - `track_id::Int=0`: identifier for linking localizations across frames
 - `id::Int=0`: unique identifier within dataset
@@ -204,7 +204,7 @@ emitter = Emitter3DFit{Float64}(
 """
 function Emitter3DFit{T}(x::T, y::T, z::T, photons::T, bg::T, 
                         σ_x::T, σ_y::T, σ_z::T, σ_photons::T, σ_bg::T;
-                        frame::Int=0, dataset::Int=1, track_id::Int=0, id::Int=0) where T
+                        frame::Int=1, dataset::Int=1, track_id::Int=0, id::Int=0) where T
     Emitter3DFit{T}(x, y, z, photons, bg, σ_x, σ_y, σ_z, σ_photons, σ_bg,
                     frame, dataset, track_id, id)
 end

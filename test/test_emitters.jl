@@ -39,7 +39,7 @@ end
         e2df_simple = Emitter2DFit{Float64}(
             1.0, 2.0, 1000.0, 10.0, 0.01, 0.01, 50.0, 2.0
         )
-        @test e2df_simple.frame == 0  # default value
+        @test e2df_simple.frame == 1  # default value
         @test e2df_simple.dataset == 1  # default value
         @test e2df_simple.track_id == 0  # default value
         @test e2df_simple.id == 0  # default value
@@ -62,7 +62,7 @@ end
             1.0, 2.0, 3.0, 1000.0, 10.0, 
             0.01, 0.01, 0.02, 50.0, 2.0
         )
-        @test e3df_simple.frame == 0
+        @test e3df_simple.frame == 1
         @test e3df_simple.dataset == 1
     end
 end
