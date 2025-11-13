@@ -142,6 +142,12 @@ Cameras define the imaging system's geometry and handling of pixel coordinates.
 
 ### Camera Types
 
+SMLMData provides two camera types:
+- **IdealCamera**: For detectors with Poisson noise only (e.g., EMCCD in photon-counting mode)
+- **SCMOSCamera**: For sCMOS detectors with pixel-dependent calibration parameters
+
+#### IdealCamera
+
 ```julia
 # Create a camera with 512x512 pixels, each 100nm (0.1μm) in size
 camera = IdealCamera(512, 512, 0.1)
@@ -149,6 +155,47 @@ camera = IdealCamera(512, 512, 0.1)
 # For non-square pixels, specify different x and y sizes
 camera_rect = IdealCamera(512, 512, (0.1, 0.12))
 ```
+
+#### SCMOSCamera
+
+```julia
+# Minimal: uniform readnoise (assumes offset=0, gain=1, qe=1)
+cam_scmos = SCMOSCamera(512, 512, 0.1, 1.6)  # 1.6 e⁻ rms readnoise
+
+# From camera spec sheet (e.g., ORCA-Flash4.0 V3)
+cam_flash = SCMOSCamera(
+    2048, 2048, 0.065,  # 2048×2048 pixels, 65nm pixel size
+    1.6,                 # 1.6 e⁻ rms readnoise from spec
+    offset = 100.0,      # typical dark level (ADU)
+    gain = 0.46,         # 0.46 e⁻/ADU from spec
+    qe = 0.72            # 72% QE at 550nm
+)
+
+# With per-pixel calibration maps (precision SMLM)
+readnoise_map = load("camera_noise.mat")  # 512×512 measured values
+gain_map = load("camera_gain.mat")
+qe_map = load("camera_qe.mat")
+cam_calibrated = SCMOSCamera(512, 512, 0.1, readnoise_map,
+                              gain=gain_map, qe=qe_map)
+
+# Mixed scalar and matrix parameters
+cam_mixed = SCMOSCamera(
+    512, 512, 0.1, readnoise_map,  # Per-pixel noise
+    offset = 100.0,                 # Uniform offset
+    gain = 0.5                      # Uniform gain
+)
+```
+
+**SCMOSCamera Parameters:**
+- `offset`: Dark level in ADU (analog-to-digital units)
+- `gain`: Conversion gain in e⁻/ADU (electrons per ADU)
+- `readnoise`: Read noise in e⁻ rms (root-mean-square, matches spec sheets)
+- `qe`: Quantum efficiency (dimensionless, 0-1)
+
+Each parameter can be:
+- **Scalar**: Uniform value across the sensor
+- **Matrix**: Per-pixel calibration map (size must match pixel grid)
+
 
 ### Coordinate Conventions
 

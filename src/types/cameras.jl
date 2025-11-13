@@ -267,3 +267,342 @@ function Base.show(io::IO, ::MIME"text/plain", camera::IdealCamera{T}) where T
     print(io, "  Field of view: $(x_size) × $(y_size) μm")
 end
 
+"""
+    SCMOSCamera{T<:Real} <: AbstractCamera
+
+sCMOS camera with pixel-dependent calibration parameters matching spec sheets.
+
+# Fields
+- `pixel_edges_x::Vector{T}`: Physical pixel edges in x (μm)
+- `pixel_edges_y::Vector{T}`: Physical pixel edges in y (μm)
+- `offset::Union{T, Matrix{T}}`: Dark level (ADU)
+- `gain::Union{T, Matrix{T}}`: Conversion gain (e⁻/ADU)
+- `readnoise::Union{T, Matrix{T}}`: Read noise (e⁻ rms)
+- `qe::Union{T, Matrix{T}}`: Quantum efficiency (0-1)
+
+# Units
+
+Calibration parameters follow camera specification sheet conventions:
+
+- **offset**: ADU (analog-to-digital units)
+  - Typical values: 100-500 ADU
+  - Dark level with no illumination
+
+- **gain**: e⁻/ADU (electrons per ADU)
+  - Typical values: 0.1-2.0 e⁻/ADU depending on readout mode
+  - Example: ORCA-Flash4.0: 0.46 e⁻/ADU (12-bit), 0.11 e⁻/ADU (16-bit)
+
+- **readnoise**: e⁻ rms (electrons, root-mean-square)
+  - Typical values: 0.3-5.0 e⁻ rms
+  - Example: ORCA-Flash4.0 V3: 1.6 e⁻ rms
+  - Example: ORCA-Quest qCMOS: 0.27 e⁻ rms
+
+- **qe**: dimensionless (0 to 1)
+  - Typical values: 0.5-0.95 at peak wavelength
+  - Example: ORCA-Flash4.0 V2: 0.72 at 550nm
+  - Example: ORCA-Fusion BT: 0.95 (back-thinned)
+
+# Physical Signal Chain
+
+Photons → Electrons → ADU:
+```
+Incident photons (N)
+  ↓ [× QE]
+Photoelectrons (N × QE)
+  ↓ [+ readnoise (Gaussian)]
+Signal electrons (N × QE + ε), where ε ~ N(0, readnoise²)
+  ↓ [÷ gain, + offset]
+ADU readout = (N × QE + ε)/gain + offset
+```
+
+# Scalar vs Matrix Parameters
+
+Each calibration parameter can be:
+- **Scalar** (T): Uniform across sensor (approximation or post-calibration)
+- **Matrix** (Matrix{T}): Per-pixel calibration map (size must match pixel grid)
+
+Use matrices for:
+- Precision SMLM (2-5% variations can affect results)
+- Quantitative imaging
+- Artifact correction
+
+Use scalars for:
+- Quick analysis
+- Post-calibrated data
+- Uniform approximation
+
+# Constructors
+
+```julia
+# Minimal - most common case (requires readnoise, others default to 0, 1, 1)
+cam = SCMOSCamera(512, 512, 0.1, 1.6)
+
+# With additional parameters
+cam = SCMOSCamera(512, 512, 0.1, readnoise_map,
+                  offset=100.0, gain=0.46, qe=0.72)
+
+# Custom edges (advanced)
+cam = SCMOSCamera(custom_edges_x, custom_edges_y,
+                  readnoise=noise_map, gain=gain_map)
+```
+
+# Examples
+
+```julia
+# Example 1: From spec sheet (ORCA-Flash4.0 V3, 12-bit mode)
+cam = SCMOSCamera(
+    2048, 2048, 0.065,  # 2048×2048 pixels, 65nm pixel size
+    1.6,                 # From spec: 1.6 e⁻ rms readnoise
+    offset = 100.0,      # Typical offset
+    gain = 0.46,         # From spec: 0.46 e⁻/ADU
+    qe = 0.72            # 72% QE at 550nm
+)
+
+# Example 2: With calibration maps (precision SMLM)
+readnoise_map = load("camera_noise.mat")  # 512×512 measured values
+gain_map = load("camera_gain.mat")
+qe_map = load("camera_qe.mat")
+
+cam = SCMOSCamera(
+    512, 512, 0.1, readnoise_map,
+    gain = gain_map,
+    qe = qe_map
+)
+
+# Example 3: Minimal (variance-only approximation)
+# Common when you only have noise map, assume ideal otherwise
+cam = SCMOSCamera(512, 512, 0.1, readnoise_map)
+
+# Example 4: Ultra-low noise camera (ORCA-Quest)
+cam = SCMOSCamera(
+    2304, 4096, 0.0044,  # 4.4μm pixels
+    0.27,                 # Incredible 0.27 e⁻ rms!
+    offset = 100.0,
+    gain = 0.5,
+    qe = 0.85
+)
+
+# Example 5: Rectangular pixels
+cam = SCMOSCamera(512, 256, (0.1, 0.15), 1.8)
+
+# Example 6: Mixed scalar/matrix parameters
+cam = SCMOSCamera(
+    512, 512, 0.1, readnoise_map,  # Per-pixel noise
+    offset = 100.0,                 # Uniform offset
+    gain = 0.5,                     # Uniform gain
+    qe = qe_map                     # Per-pixel QE
+)
+```
+
+# See Also
+[`IdealCamera`](@ref) for Poisson-only noise (readnoise=0)
+"""
+struct SCMOSCamera{T<:Real} <: AbstractCamera
+    pixel_edges_x::Vector{T}
+    pixel_edges_y::Vector{T}
+    offset::Union{T, Matrix{T}}
+    gain::Union{T, Matrix{T}}
+    readnoise::Union{T, Matrix{T}}
+    qe::Union{T, Matrix{T}}
+end
+
+"""
+    SCMOSCamera(nx, ny, pixel_size, readnoise; offset=0, gain=1, qe=1)
+
+Construct sCMOS camera from pixel dimensions and calibration parameters.
+
+# Arguments
+- `nx::Integer`: Number of pixels in x
+- `ny::Integer`: Number of pixels in y
+- `pixel_size::Union{T, Tuple{T,T}}`: Pixel size in μm (scalar or (x_size, y_size))
+- `readnoise::Union{T, Matrix{T}}`: Read noise in e⁻ rms (required)
+
+# Keywords
+- `offset::Union{T, Matrix{T}} = 0`: Dark level in ADU
+- `gain::Union{T, Matrix{T}} = 1`: Conversion gain in e⁻/ADU
+- `qe::Union{T, Matrix{T}} = 1`: Quantum efficiency (0-1)
+
+Each parameter can be scalar (uniform) or Matrix{T} with size (nx, ny).
+
+# Examples
+```julia
+# Minimal: just readnoise (assumes calibrated data: offset=0, gain=1, qe=1)
+cam = SCMOSCamera(512, 512, 0.1, 1.6)
+
+# From spec sheet (ORCA-Flash4.0 V3)
+cam = SCMOSCamera(2048, 2048, 0.065, 1.6, offset=100.0, gain=0.46, qe=0.72)
+
+# With calibration maps
+cam = SCMOSCamera(512, 512, 0.1, readnoise_map,
+                  offset=offset_map, gain=gain_map, qe=qe_map)
+
+# Rectangular pixels
+cam = SCMOSCamera(512, 256, (0.1, 0.15), 1.8)
+```
+"""
+function SCMOSCamera(
+    nx::Integer,
+    ny::Integer,
+    pixel_size::Union{T, Tuple{T,T}},
+    readnoise::Union{T, Matrix{T}};
+    offset::Union{T, Matrix{T}} = zero(T),
+    gain::Union{T, Matrix{T}} = one(T),
+    qe::Union{T, Matrix{T}} = one(T)
+) where T<:Real
+
+    # Compute pixel edges
+    if pixel_size isa Tuple
+        edges_x = collect(range(zero(T), nx * pixel_size[1], length=nx+1))
+        edges_y = collect(range(zero(T), ny * pixel_size[2], length=ny+1))
+    else
+        edges_x = collect(range(zero(T), nx * pixel_size, length=nx+1))
+        edges_y = collect(range(zero(T), ny * pixel_size, length=ny+1))
+    end
+
+    # Validate dimensions
+    _validate_camera_param(offset, nx, ny, "offset")
+    _validate_camera_param(gain, nx, ny, "gain")
+    _validate_camera_param(readnoise, nx, ny, "readnoise")
+    _validate_camera_param(qe, nx, ny, "qe")
+
+    return SCMOSCamera{T}(edges_x, edges_y, offset, gain, readnoise, qe)
+end
+
+"""
+    SCMOSCamera(pixel_edges_x, pixel_edges_y; offset=0, gain=1, readnoise, qe=1)
+
+Construct sCMOS camera with custom pixel edge positions.
+
+# Arguments
+- `pixel_edges_x::Vector{T}`: Pixel edge positions in x (μm), length nx+1
+- `pixel_edges_y::Vector{T}`: Pixel edge positions in y (μm), length ny+1
+
+# Keywords
+- `readnoise::Union{T, Matrix{T}}`: Read noise in e⁻ rms (required)
+- `offset::Union{T, Matrix{T}} = 0`: Dark level in ADU
+- `gain::Union{T, Matrix{T}} = 1`: Conversion gain in e⁻/ADU
+- `qe::Union{T, Matrix{T}} = 1`: Quantum efficiency (0-1)
+
+Matrix parameters must have size (nx, ny) where nx = length(pixel_edges_x) - 1.
+
+# Example
+```julia
+# Custom non-uniform pixel grid
+edges_x = [0.0, 0.1, 0.21, 0.33, 0.46]  # Non-uniform spacing
+edges_y = [0.0, 0.1, 0.2, 0.3]
+cam = SCMOSCamera(edges_x, edges_y, readnoise=1.5, gain=0.5)
+```
+"""
+function SCMOSCamera(
+    pixel_edges_x::Vector{T},
+    pixel_edges_y::Vector{T};
+    readnoise::Union{T, Matrix{T}},
+    offset::Union{T, Matrix{T}} = zero(T),
+    gain::Union{T, Matrix{T}} = one(T),
+    qe::Union{T, Matrix{T}} = one(T)
+) where T<:Real
+
+    nx = length(pixel_edges_x) - 1
+    ny = length(pixel_edges_y) - 1
+
+    # Validate dimensions
+    _validate_camera_param(offset, nx, ny, "offset")
+    _validate_camera_param(gain, nx, ny, "gain")
+    _validate_camera_param(readnoise, nx, ny, "readnoise")
+    _validate_camera_param(qe, nx, ny, "qe")
+
+    return SCMOSCamera{T}(pixel_edges_x, pixel_edges_y, offset, gain, readnoise, qe)
+end
+
+# Validation helper
+function _validate_camera_param(param::AbstractMatrix, nx, ny, name)
+    size(param) == (nx, ny) ||
+        throw(DimensionMismatch("$name size $(size(param)) must match ($nx, $ny)"))
+end
+_validate_camera_param(param::Real, nx, ny, name) = nothing
+
+# Accessor functions (for use in other packages like GaussMLE)
+"""
+    get_offset(camera, i, j) -> T
+
+Get offset value at pixel (i,j), handling both scalar and matrix parameters.
+"""
+@inline function get_offset(cam::SCMOSCamera{T}, i::Int, j::Int) where T
+    cam.offset isa T ? cam.offset : cam.offset[i, j]
+end
+
+"""
+    get_gain(camera, i, j) -> T
+
+Get gain value at pixel (i,j), handling both scalar and matrix parameters.
+"""
+@inline function get_gain(cam::SCMOSCamera{T}, i::Int, j::Int) where T
+    cam.gain isa T ? cam.gain : cam.gain[i, j]
+end
+
+"""
+    get_readnoise(camera, i, j) -> T
+
+Get readnoise (e⁻ rms) at pixel (i,j), handling both scalar and matrix parameters.
+"""
+@inline function get_readnoise(cam::SCMOSCamera{T}, i::Int, j::Int) where T
+    cam.readnoise isa T ? cam.readnoise : cam.readnoise[i, j]
+end
+
+"""
+    get_qe(camera, i, j) -> T
+
+Get quantum efficiency at pixel (i,j), handling both scalar and matrix parameters.
+"""
+@inline function get_qe(cam::SCMOSCamera{T}, i::Int, j::Int) where T
+    cam.qe isa T ? cam.qe : cam.qe[i, j]
+end
+
+"""
+    get_readnoise_var(camera, i, j) -> T
+
+Get readnoise variance (e⁻²) at pixel (i,j), computed from readnoise rms.
+"""
+@inline function get_readnoise_var(cam::SCMOSCamera{T}, i::Int, j::Int) where T
+    rms = get_readnoise(cam, i, j)
+    return rms * rms
+end
+
+# Display methods
+function Base.show(io::IO, cam::SCMOSCamera{T}) where T
+    nx = length(cam.pixel_edges_x) - 1
+    ny = length(cam.pixel_edges_y) - 1
+    px = round(cam.pixel_edges_x[2] - cam.pixel_edges_x[1], digits=4)
+    py = round(cam.pixel_edges_y[2] - cam.pixel_edges_y[1], digits=4)
+
+    psize_str = px ≈ py ? "$(px)μm" : "$(px)×$(py)μm"
+    print(io, "SCMOSCamera{$T}($(nx)×$(ny), $(psize_str))")
+end
+
+function Base.show(io::IO, ::MIME"text/plain", cam::SCMOSCamera{T}) where T
+    nx = length(cam.pixel_edges_x) - 1
+    ny = length(cam.pixel_edges_y) - 1
+    px = round(cam.pixel_edges_x[2] - cam.pixel_edges_x[1], digits=4)
+    py = round(cam.pixel_edges_y[2] - cam.pixel_edges_y[1], digits=4)
+
+    println(io, "SCMOSCamera{$T} with:")
+    println(io, "  Dimensions: $(nx) × $(ny) pixels")
+
+    if px ≈ py
+        println(io, "  Pixel size: $(px) μm")
+    else
+        println(io, "  Pixel size: $(px) × $(py) μm")
+    end
+
+    # Show parameter types (scalar vs matrix)
+    offset_type = cam.offset isa T ? "uniform" : "per-pixel"
+    gain_type = cam.gain isa T ? "uniform" : "per-pixel"
+    readnoise_type = cam.readnoise isa T ? "uniform" : "per-pixel"
+    qe_type = cam.qe isa T ? "uniform" : "per-pixel"
+
+    println(io, "  Offset: $(offset_type)")
+    println(io, "  Gain: $(gain_type)")
+    println(io, "  Read noise: $(readnoise_type)")
+    print(io, "  QE: $(qe_type)")
+end
+

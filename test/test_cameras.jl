@@ -182,3 +182,210 @@ end
         @test edges_y[end] - edges_y[1] ≈ 0.6
     end
 end
+
+@testset "SCMOSCamera" begin
+    @testset "Construction with scalar parameters" begin
+        # Minimal constructor (readnoise only)
+        cam = SCMOSCamera(512, 512, 0.1, 1.6)
+        @test length(cam.pixel_edges_x) == 513
+        @test length(cam.pixel_edges_y) == 513
+        @test cam.offset === 0.0
+        @test cam.gain === 1.0
+        @test cam.readnoise === 1.6
+        @test cam.qe === 1.0
+
+        # With all parameters
+        cam_full = SCMOSCamera(512, 512, 0.1, 1.6, offset=100.0, gain=0.46, qe=0.72)
+        @test cam_full.offset === 100.0
+        @test cam_full.gain === 0.46
+        @test cam_full.readnoise === 1.6
+        @test cam_full.qe === 0.72
+
+        # Rectangular pixels
+        cam_rect = SCMOSCamera(512, 256, (0.1, 0.15), 1.8)
+        @test cam_rect.pixel_edges_x[2] ≈ 0.1
+        @test cam_rect.pixel_edges_y[2] ≈ 0.15
+        @test cam_rect.readnoise === 1.8
+    end
+
+    @testset "Construction with matrix parameters" begin
+        # Create calibration maps
+        readnoise_map = ones(Float64, 10, 10) .* 1.5
+        readnoise_map[5, 5] = 2.0  # Hot pixel
+
+        gain_map = ones(Float64, 10, 10) .* 0.5
+        qe_map = ones(Float64, 10, 10) .* 0.85
+
+        # With readnoise map only
+        cam1 = SCMOSCamera(10, 10, 0.1, readnoise_map)
+        @test cam1.readnoise isa Matrix{Float64}
+        @test size(cam1.readnoise) == (10, 10)
+        @test cam1.readnoise[5, 5] ≈ 2.0
+        @test cam1.offset === 0.0  # Scalar default
+        @test cam1.gain === 1.0
+
+        # With all matrix parameters
+        offset_map = ones(Float64, 10, 10) .* 100.0
+        cam2 = SCMOSCamera(10, 10, 0.1, readnoise_map,
+                          offset=offset_map, gain=gain_map, qe=qe_map)
+        @test cam2.offset isa Matrix{Float64}
+        @test cam2.gain isa Matrix{Float64}
+        @test cam2.qe isa Matrix{Float64}
+        @test size(cam2.offset) == (10, 10)
+
+        # Mixed scalar and matrix
+        cam3 = SCMOSCamera(10, 10, 0.1, readnoise_map,
+                          offset=100.0, gain=gain_map, qe=0.85)
+        @test cam3.offset isa Float64
+        @test cam3.gain isa Matrix{Float64}
+        @test cam3.qe isa Float64
+    end
+
+    @testset "Construction with custom edges" begin
+        edges_x = collect(range(0.0, 1.0, length=11))
+        edges_y = collect(range(0.0, 0.5, length=6))
+
+        # Scalar parameters
+        cam = SCMOSCamera(edges_x, edges_y, readnoise=1.5, gain=0.5)
+        @test length(cam.pixel_edges_x) == 11
+        @test length(cam.pixel_edges_y) == 6
+        @test cam.readnoise === 1.5
+        @test cam.gain === 0.5
+
+        # Matrix parameters
+        noise_map = ones(Float64, 10, 5) .* 1.2
+        cam2 = SCMOSCamera(edges_x, edges_y, readnoise=noise_map)
+        @test size(cam2.readnoise) == (10, 5)
+    end
+
+    @testset "Type stability" begin
+        # Float32
+        cam32 = SCMOSCamera(10, 10, 0.1f0, 1.6f0)
+        @test eltype(cam32.pixel_edges_x) === Float32
+        @test eltype(cam32.pixel_edges_y) === Float32
+        @test cam32.offset === 0.0f0
+        @test cam32.readnoise === 1.6f0
+
+        # Float64
+        cam64 = SCMOSCamera(10, 10, 0.1, 1.6)
+        @test eltype(cam64.pixel_edges_x) === Float64
+        @test cam64.offset === 0.0
+
+        # Matrix type matching
+        noise_map32 = ones(Float32, 10, 10)
+        cam_mat32 = SCMOSCamera(10, 10, 0.1f0, noise_map32)
+        @test eltype(cam_mat32.readnoise) === Float32
+    end
+
+    @testset "Dimension validation" begin
+        # Wrong matrix size should error
+        wrong_size_map = ones(Float64, 5, 5)
+        @test_throws DimensionMismatch SCMOSCamera(10, 10, 0.1, wrong_size_map)
+        @test_throws DimensionMismatch SCMOSCamera(10, 10, 0.1, 1.5, gain=wrong_size_map)
+        @test_throws DimensionMismatch SCMOSCamera(10, 10, 0.1, 1.5, offset=wrong_size_map)
+        @test_throws DimensionMismatch SCMOSCamera(10, 10, 0.1, 1.5, qe=wrong_size_map)
+    end
+
+    @testset "Accessor functions" begin
+        # Scalar parameters
+        cam_scalar = SCMOSCamera(10, 10, 0.1, 1.5, offset=100.0, gain=0.5, qe=0.8)
+        @test SMLMData.get_offset(cam_scalar, 1, 1) === 100.0
+        @test SMLMData.get_gain(cam_scalar, 5, 5) === 0.5
+        @test SMLMData.get_readnoise(cam_scalar, 10, 10) === 1.5
+        @test SMLMData.get_qe(cam_scalar, 3, 7) === 0.8
+        @test SMLMData.get_readnoise_var(cam_scalar, 1, 1) ≈ 1.5^2
+
+        # Matrix parameters
+        readnoise_map = ones(Float64, 10, 10) .* 1.5
+        readnoise_map[5, 5] = 2.5
+        gain_map = ones(Float64, 10, 10) .* 0.5
+        gain_map[3, 7] = 0.6
+
+        cam_matrix = SCMOSCamera(10, 10, 0.1, readnoise_map, gain=gain_map)
+        @test SMLMData.get_readnoise(cam_matrix, 5, 5) ≈ 2.5
+        @test SMLMData.get_readnoise(cam_matrix, 1, 1) ≈ 1.5
+        @test SMLMData.get_gain(cam_matrix, 3, 7) ≈ 0.6
+        @test SMLMData.get_readnoise_var(cam_matrix, 5, 5) ≈ 2.5^2
+
+        # Mixed
+        cam_mixed = SCMOSCamera(10, 10, 0.1, readnoise_map,
+                                offset=100.0, gain=gain_map, qe=0.85)
+        @test SMLMData.get_offset(cam_mixed, 5, 5) === 100.0  # Scalar
+        @test SMLMData.get_gain(cam_mixed, 3, 7) ≈ 0.6  # Matrix
+        @test SMLMData.get_qe(cam_mixed, 1, 1) === 0.85  # Scalar
+    end
+
+    @testset "Realistic use cases" begin
+        # ORCA-Flash4.0 V3
+        cam_flash = SCMOSCamera(
+            2048, 2048, 0.065,
+            1.6,
+            offset = 100.0,
+            gain = 0.46,
+            qe = 0.72
+        )
+        @test length(cam_flash.pixel_edges_x) == 2049
+        @test cam_flash.readnoise === 1.6
+        @test cam_flash.gain === 0.46
+
+        # ORCA-Quest (ultra low noise)
+        cam_quest = SCMOSCamera(2304, 4096, 0.0044, 0.27, gain=0.5, qe=0.85)
+        @test cam_quest.readnoise === 0.27
+        @test cam_quest.qe === 0.85
+
+        # With per-pixel calibration
+        nx, ny = 512, 512
+        readnoise_map = randn(nx, ny) .* 0.2 .+ 1.5  # ~1.5 ± 0.2 e⁻ rms
+        gain_map = randn(nx, ny) .* 0.05 .+ 0.5      # ~0.5 ± 0.05 e⁻/ADU
+        qe_map = randn(nx, ny) .* 0.02 .+ 0.85       # ~0.85 ± 0.02
+
+        cam_calibrated = SCMOSCamera(
+            nx, ny, 0.1, readnoise_map,
+            offset = 100.0,
+            gain = gain_map,
+            qe = qe_map
+        )
+        @test size(cam_calibrated.readnoise) == (nx, ny)
+        @test size(cam_calibrated.gain) == (nx, ny)
+        @test cam_calibrated.offset === 100.0  # Scalar
+    end
+
+    @testset "Display methods" begin
+        # Compact display (scalar)
+        cam = SCMOSCamera(512, 512, 0.1, 1.6)
+        str = sprint(show, cam)
+        @test contains(str, "SCMOSCamera{Float64}")
+        @test contains(str, "512×512")
+        @test contains(str, "0.1μm")
+
+        # Detailed display
+        io = IOBuffer()
+        show(io, MIME("text/plain"), cam)
+        detailed = String(take!(io))
+        @test contains(detailed, "SCMOSCamera{Float64}")
+        @test contains(detailed, "Dimensions: 512 × 512 pixels")
+        @test contains(detailed, "Pixel size: 0.1 μm")
+        @test contains(detailed, "Offset: uniform")
+        @test contains(detailed, "Gain: uniform")
+        @test contains(detailed, "Read noise: uniform")
+        @test contains(detailed, "QE: uniform")
+
+        # With matrix parameters
+        noise_map = ones(Float64, 10, 10)
+        gain_map = ones(Float64, 10, 10)
+        cam_matrix = SCMOSCamera(10, 10, 0.1, noise_map,
+                                 offset=100.0, gain=gain_map, qe=0.85)
+        io = IOBuffer()
+        show(io, MIME("text/plain"), cam_matrix)
+        detailed_matrix = String(take!(io))
+        @test contains(detailed_matrix, "Offset: uniform")
+        @test contains(detailed_matrix, "Gain: per-pixel")
+        @test contains(detailed_matrix, "Read noise: per-pixel")
+        @test contains(detailed_matrix, "QE: uniform")
+
+        # Rectangular pixels
+        cam_rect = SCMOSCamera(512, 256, (0.1, 0.15), 1.8)
+        str_rect = sprint(show, cam_rect)
+        @test contains(str_rect, "0.1×0.15μm")
+    end
+end

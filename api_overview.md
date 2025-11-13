@@ -36,7 +36,8 @@ AbstractEmitter                   # Base for all emitter types
 └── Emitter3DFit{T}               # 3D emitters with fit results
 
 AbstractCamera                    # Base for all camera types
-└── IdealCamera{T}                # Camera with regular pixel grid
+├── IdealCamera{T}                # Camera with regular pixel grid (Poisson noise only)
+└── SCMOSCamera{T}                # sCMOS camera with pixel-dependent calibration
 
 SMLD                              # Base for data containers
 ├── BasicSMLD{T,E}                # General-purpose container
@@ -132,17 +133,27 @@ emitter_2d_fit = Emitter2DFit{Float64}(
 ### Camera Types
 
 ```julia
-# Camera with uniform pixel grid
+# Ideal camera with uniform pixel grid (Poisson noise only)
 struct IdealCamera{T} <: AbstractCamera
     pixel_edges_x::Vector{T}  # pixel edges in x
     pixel_edges_y::Vector{T}  # pixel edges in y
+end
+
+# sCMOS camera with pixel-dependent calibration parameters
+struct SCMOSCamera{T} <: AbstractCamera
+    pixel_edges_x::Vector{T}      # pixel edges in x
+    pixel_edges_y::Vector{T}      # pixel edges in y
+    offset::Union{T, Matrix{T}}   # dark level (ADU)
+    gain::Union{T, Matrix{T}}     # conversion gain (e⁻/ADU)
+    readnoise::Union{T, Matrix{T}}  # read noise (e⁻ rms)
+    qe::Union{T, Matrix{T}}       # quantum efficiency (0-1)
 end
 ```
 
 #### Camera Constructor Examples
 
 ```julia
-# Create a camera with 512x512 pixels, each 100nm (0.1μm) in size
+# IdealCamera: Create a camera with 512x512 pixels, each 100nm (0.1μm) in size
 # Convenience constructor (most common)
 cam = IdealCamera(512, 512, 0.1)
 
@@ -151,6 +162,34 @@ cam_explicit = IdealCamera(1:512, 1:512, 0.1)
 
 # For non-square pixels, specify different x and y sizes
 cam_rect = IdealCamera(512, 512, (0.1, 0.12))
+
+# SCMOSCamera: Create with readnoise specification (matching spec sheets)
+# Minimal (uniform readnoise, assumes offset=0, gain=1, qe=1)
+cam_scmos = SCMOSCamera(512, 512, 0.1, 1.6)  # 1.6 e⁻ rms readnoise
+
+# From camera spec sheet (e.g., ORCA-Flash4.0 V3)
+cam_flash = SCMOSCamera(
+    2048, 2048, 0.065,  # 2048×2048 pixels, 65nm pixel size
+    1.6,                # 1.6 e⁻ rms readnoise from spec
+    offset = 100.0,     # typical dark level
+    gain = 0.46,        # 0.46 e⁻/ADU from spec
+    qe = 0.72           # 72% QE at 550nm
+)
+
+# With per-pixel calibration maps (precision SMLM)
+readnoise_map = load("camera_noise.mat")  # 512×512 measured values
+gain_map = load("camera_gain.mat")
+qe_map = load("camera_qe.mat")
+cam_calibrated = SCMOSCamera(512, 512, 0.1, readnoise_map,
+                              gain=gain_map, qe=qe_map)
+
+# Mixed scalar and matrix parameters
+cam_mixed = SCMOSCamera(
+    512, 512, 0.1, readnoise_map,  # Per-pixel noise
+    offset = 100.0,                 # Uniform offset
+    gain = 0.5,                     # Uniform gain
+    qe = qe_map                     # Per-pixel QE
+)
 ```
 
 ### SMLD Container Types
