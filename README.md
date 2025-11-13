@@ -13,7 +13,10 @@ Data types and utilities for Single Molecule Localization Microscopy (SMLM) in J
 using SMLMData
 
 # Create a camera with 100nm pixels
-cam = IdealCamera(512, 512, 0.1)  
+cam = IdealCamera(512, 512, 0.1)
+
+# Or an sCMOS camera with per-pixel noise characteristics
+cam_scmos = SCMOSCamera(512, 512, 0.1, 1.6)  # 1.6 e⁻ rms readnoise
 
 # Create emitters
 emitters = [
@@ -48,7 +51,8 @@ SMLMData provides a unified framework for handling Single Molecule Localization 
 
 ```
 AbstractCamera
- └─ IdealCamera{T}
+ ├─ IdealCamera{T}
+ └─ SCMOSCamera{T}
 
 AbstractEmitter
  ├─ Emitter2D{T}
@@ -122,10 +126,20 @@ struct Emitter2D{T} <: AbstractEmitter
     photons::T
 end
 
-# Camera defined by its pixel edges in physical units
+# Ideal camera defined by its pixel edges (Poisson noise only)
 struct IdealCamera{T} <: AbstractCamera
     pixel_edges_x::Vector{T}  # microns
     pixel_edges_y::Vector{T}  # microns
+end
+
+# sCMOS camera with pixel-dependent calibration parameters
+struct SCMOSCamera{T} <: AbstractCamera
+    pixel_edges_x::Vector{T}      # microns
+    pixel_edges_y::Vector{T}      # microns
+    offset::Union{T, Matrix{T}}   # ADU (dark level)
+    gain::Union{T, Matrix{T}}     # e⁻/ADU (conversion gain)
+    readnoise::Union{T, Matrix{T}}  # e⁻ rms (readout noise)
+    qe::Union{T, Matrix{T}}       # dimensionless 0-1 (quantum efficiency)
 end
 
 # Basic SMLD implementation

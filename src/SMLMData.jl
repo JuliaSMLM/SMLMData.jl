@@ -67,7 +67,8 @@ export
 
     # Camera types
     IdealCamera,
-    
+    SCMOSCamera,
+
     # SMLD types
     BasicSMLD,
     SmiteSMLD,
