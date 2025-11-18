@@ -13,6 +13,10 @@ using Test
         include("test_cameras.jl")
     end
 
+    @testset "ROI Batch Types" begin
+        include("test_roi_batch.jl")
+    end
+
     @testset "SMLD Types" begin
         include("test_smld.jl")
     end
