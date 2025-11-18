@@ -60,6 +60,10 @@ AbstractEmitter
  ├─ Emitter2DFit{T}
  └─ Emitter3DFit{T}
 
+ROI Batch Types
+ ├─ SingleROI{T}
+ └─ ROIBatch{T,N,A,C}
+
 SMLD
  └─ BasicSMLD{T,E}
  

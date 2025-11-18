@@ -39,6 +39,10 @@ AbstractCamera                    # Base for all camera types
 ├── IdealCamera{T}                # Camera with regular pixel grid (Poisson noise only)
 └── SCMOSCamera{T}                # sCMOS camera with pixel-dependent calibration
 
+ROI Batch Types                   # For batched ROI processing
+├── SingleROI{T}                  # Single ROI with location context
+└── ROIBatch{T,N,A,C}             # Batch of ROIs for parallel processing
+
 SMLD                              # Base for data containers
 ├── BasicSMLD{T,E}                # General-purpose container
 └── SmiteSMLD{T,E}                # SMITE-compatible container
@@ -191,6 +195,70 @@ cam_mixed = SCMOSCamera(
     qe = qe_map                     # Per-pixel QE
 )
 ```
+
+### ROI Batch Types
+
+ROI batch types provide efficient storage and processing of image regions across the JuliaSMLM ecosystem.
+
+```julia
+# Single ROI with location context
+struct SingleROI{T}
+    data::Matrix{T}              # ROI image data (roi_size × roi_size)
+    corner::SVector{2,Int32}     # (x, y) = (col, row) corner position (1-indexed)
+    frame_idx::Int32             # Frame number (1-indexed)
+end
+
+# Batch of ROIs for parallel processing
+struct ROIBatch{T,N,A<:AbstractArray{T,N},C<:AbstractCamera}
+    data::A                      # ROI stack (roi_size × roi_size × n_rois)
+    corners::Matrix{Int32}       # 2×n_rois corner positions [x; y] = [col; row]
+    frame_indices::Vector{Int32} # Frame number for each ROI
+    camera::C                    # Camera object (IdealCamera or SCMOSCamera)
+    roi_size::Int                # Size of each ROI (square)
+end
+```
+
+#### ROI Batch Constructor Examples
+
+```julia
+# From arrays (main constructor)
+camera = IdealCamera(512, 512, 0.1)
+data = rand(Float32, 11, 11, 100)  # 100 ROIs of 11×11 pixels
+corners = rand(Int32(1):Int32(500), 2, 100)
+frame_indices = rand(Int32(1):Int32(50), 100)
+batch = ROIBatch(data, corners, frame_indices, camera)
+
+# From separate x/y corner vectors
+x_corners = rand(Int32(1):Int32(500), 100)
+y_corners = rand(Int32(1):Int32(500), 100)
+batch = ROIBatch(data, x_corners, y_corners, frame_indices, camera)
+
+# From vector of SingleROI
+rois = [SingleROI(rand(Float32, 11, 11), SVector{2,Int32}(i*10, i*10), Int32(i))
+        for i in 1:100]
+batch = ROIBatch(rois, camera)
+
+# Indexing and iteration
+roi = batch[5]              # Get single ROI
+for roi in batch
+    process(roi.data)       # Iterate over all ROIs
+end
+
+# GPU adaptation (via Adapt.jl)
+using CUDA
+batch_gpu = adapt(CuArray, batch)  # Transfer to GPU
+```
+
+**Coordinate System:**
+- **Camera coordinates**: 1-indexed, (1,1) = top-left of full image
+- **ROI corners**: (x, y) = (col, row) position in camera coordinates
+- **ROI data**: Local coordinates, (1,1) = top-left within ROI
+- **Frame indices**: 1-indexed, matching camera frame numbering
+
+**Typical Workflow:**
+1. SMLMBoxer extracts ROIs → `ROIBatch`
+2. GaussMLE fits ROIs → `LocalizationResult`
+3. Convert to `BasicSMLD` for analysis
 
 ### SMLD Container Types
 
