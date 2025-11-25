@@ -7,3 +7,4 @@ Manifest.toml
 examples/.vscode/*
 *.png
 docs/Manifest.toml
+build/
