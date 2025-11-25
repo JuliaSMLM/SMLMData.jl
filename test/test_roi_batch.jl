@@ -48,13 +48,15 @@ end
         roi_size = 11
 
         data = rand(Float32, roi_size, roi_size, n_rois)
-        corners = rand(Int32(1):Int32(500), 2, n_rois)
+        x_corners = rand(Int32(1):Int32(500), n_rois)
+        y_corners = rand(Int32(1):Int32(500), n_rois)
         frame_indices = rand(Int32(1):Int32(100), n_rois)
 
-        batch = ROIBatch(data, corners, frame_indices, camera)
+        batch = ROIBatch(data, x_corners, y_corners, frame_indices, camera)
 
         @test batch.data === data
-        @test batch.corners === corners
+        @test batch.x_corners === x_corners
+        @test batch.y_corners === y_corners
         @test batch.frame_indices === frame_indices
         @test batch.camera === camera
         @test batch.roi_size === roi_size
@@ -67,10 +69,11 @@ end
         roi_size = 9
 
         data = rand(Float32, roi_size, roi_size, n_rois)
-        corners = rand(Int32(1):Int32(500), 2, n_rois)
+        x_corners = rand(Int32(1):Int32(500), n_rois)
+        y_corners = rand(Int32(1):Int32(500), n_rois)
         frame_indices = rand(Int32(1):Int32(50), n_rois)
 
-        batch = ROIBatch(data, corners, frame_indices, camera)
+        batch = ROIBatch(data, x_corners, y_corners, frame_indices, camera)
 
         @test batch.camera isa SCMOSCamera
         @test batch.roi_size === roi_size
@@ -89,8 +92,8 @@ end
         batch = ROIBatch(data, x_corners, y_corners, frame_indices, camera)
 
         @test length(batch) === n_rois
-        @test batch.corners[1, :] == Int32.(x_corners)
-        @test batch.corners[2, :] == Int32.(y_corners)
+        @test batch.x_corners == Int32.(x_corners)
+        @test batch.y_corners == Int32.(y_corners)
         @test batch.frame_indices == Int32.(frame_indices)
     end
 
@@ -114,8 +117,8 @@ end
         # Verify data integrity
         for i in 1:n_rois
             @test batch.data[:, :, i] == rois[i].data
-            @test batch.corners[1, i] == rois[i].corner[1]
-            @test batch.corners[2, i] == rois[i].corner[2]
+            @test batch.x_corners[i] == rois[i].corner[1]
+            @test batch.y_corners[i] == rois[i].corner[2]
             @test batch.frame_indices[i] == rois[i].frame_idx
         end
     end
@@ -128,7 +131,8 @@ end
 
         @test length(batch) === 0
         @test size(batch.data) === (0, 0, 0)
-        @test size(batch.corners) === (2, 0)
+        @test length(batch.x_corners) === 0
+        @test length(batch.y_corners) === 0
         @test length(batch.frame_indices) === 0
     end
 end
@@ -137,37 +141,41 @@ end
     @testset "Non-square ROIs error" begin
         camera = IdealCamera(512, 512, 0.1)
         data = rand(Float32, 11, 13, 5)  # Non-square
-        corners = rand(Int32(1):Int32(500), 2, 5)
+        x_corners = rand(Int32(1):Int32(500), 5)
+        y_corners = rand(Int32(1):Int32(500), 5)
         frame_indices = rand(Int32(1):Int32(100), 5)
 
-        @test_throws AssertionError ROIBatch(data, corners, frame_indices, camera)
+        @test_throws AssertionError ROIBatch(data, x_corners, y_corners, frame_indices, camera)
     end
 
-    @testset "Corner size mismatch error" begin
+    @testset "x_corners size mismatch error" begin
         camera = IdealCamera(512, 512, 0.1)
         data = rand(Float32, 11, 11, 5)
-        corners = rand(Int32(1):Int32(500), 2, 7)  # Wrong n_rois
+        x_corners = rand(Int32(1):Int32(500), 7)  # Wrong n_rois
+        y_corners = rand(Int32(1):Int32(500), 5)
         frame_indices = rand(Int32(1):Int32(100), 5)
 
-        @test_throws AssertionError ROIBatch(data, corners, frame_indices, camera)
+        @test_throws AssertionError ROIBatch(data, x_corners, y_corners, frame_indices, camera)
+    end
+
+    @testset "y_corners size mismatch error" begin
+        camera = IdealCamera(512, 512, 0.1)
+        data = rand(Float32, 11, 11, 5)
+        x_corners = rand(Int32(1):Int32(500), 5)
+        y_corners = rand(Int32(1):Int32(500), 7)  # Wrong n_rois
+        frame_indices = rand(Int32(1):Int32(100), 5)
+
+        @test_throws AssertionError ROIBatch(data, x_corners, y_corners, frame_indices, camera)
     end
 
     @testset "Frame indices size mismatch error" begin
         camera = IdealCamera(512, 512, 0.1)
         data = rand(Float32, 11, 11, 5)
-        corners = rand(Int32(1):Int32(500), 2, 5)
+        x_corners = rand(Int32(1):Int32(500), 5)
+        y_corners = rand(Int32(1):Int32(500), 5)
         frame_indices = rand(Int32(1):Int32(100), 3)  # Wrong count
 
-        @test_throws AssertionError ROIBatch(data, corners, frame_indices, camera)
-    end
-
-    @testset "Wrong corner dimensions error" begin
-        camera = IdealCamera(512, 512, 0.1)
-        data = rand(Float32, 11, 11, 5)
-        corners = rand(Int32(1):Int32(500), 3, 5)  # Should be 2×n_rois
-        frame_indices = rand(Int32(1):Int32(100), 5)
-
-        @test_throws AssertionError ROIBatch(data, corners, frame_indices, camera)
+        @test_throws AssertionError ROIBatch(data, x_corners, y_corners, frame_indices, camera)
     end
 end
 
@@ -177,10 +185,11 @@ end
     roi_size = 11
 
     data = rand(Float32, roi_size, roi_size, n_rois)
-    corners = rand(Int32(1):Int32(500), 2, n_rois)
+    x_corners = rand(Int32(1):Int32(500), n_rois)
+    y_corners = rand(Int32(1):Int32(500), n_rois)
     frame_indices = rand(Int32(1):Int32(100), n_rois)
 
-    batch = ROIBatch(data, corners, frame_indices, camera)
+    batch = ROIBatch(data, x_corners, y_corners, frame_indices, camera)
 
     @testset "Single element indexing" begin
         for i in [1, 5, n_rois]
@@ -188,7 +197,7 @@ end
 
             @test roi isa SingleROI{Float32}
             @test roi.data == data[:, :, i]
-            @test roi.corner == SVector{2,Int32}(corners[1, i], corners[2, i])
+            @test roi.corner == SVector{2,Int32}(x_corners[i], y_corners[i])
             @test roi.frame_idx == frame_indices[i]
         end
     end
@@ -239,10 +248,11 @@ end
     @testset "Float32" begin
         camera = IdealCamera(512, 512, 0.1f0)
         data = rand(Float32, 11, 11, 5)
-        corners = rand(Int32(1):Int32(500), 2, 5)
+        x_corners = rand(Int32(1):Int32(500), 5)
+        y_corners = rand(Int32(1):Int32(500), 5)
         frames = rand(Int32(1):Int32(100), 5)
 
-        batch = ROIBatch(data, corners, frames, camera)
+        batch = ROIBatch(data, x_corners, y_corners, frames, camera)
 
         @test batch isa ROIBatch{Float32,3,Array{Float32,3},IdealCamera{Float32}}
         @test eltype(batch.data) === Float32
@@ -254,10 +264,11 @@ end
     @testset "Float64" begin
         camera = IdealCamera(512, 512, 0.1)
         data = rand(Float64, 11, 11, 5)
-        corners = rand(Int32(1):Int32(500), 2, 5)
+        x_corners = rand(Int32(1):Int32(500), 5)
+        y_corners = rand(Int32(1):Int32(500), 5)
         frames = rand(Int32(1):Int32(100), 5)
 
-        batch = ROIBatch(data, corners, frames, camera)
+        batch = ROIBatch(data, x_corners, y_corners, frames, camera)
 
         @test batch isa ROIBatch{Float64,3,Array{Float64,3},IdealCamera{Float64}}
         @test eltype(batch.data) === Float64
@@ -270,10 +281,11 @@ end
 @testset "ROIBatch Display" begin
     camera = IdealCamera(512, 512, 0.1)
     data = rand(Float32, 13, 13, 25)
-    corners = rand(Int32(1):Int32(500), 2, 25)
+    x_corners = rand(Int32(1):Int32(500), 25)
+    y_corners = rand(Int32(1):Int32(500), 25)
     frames = rand(Int32(1):Int32(100), 25)
 
-    batch = ROIBatch(data, corners, frames, camera)
+    batch = ROIBatch(data, x_corners, y_corners, frames, camera)
 
     @testset "Compact display" begin
         str = sprint(show, batch)
@@ -288,7 +300,9 @@ end
         @test contains(str, "ROI size: 13 × 13")
         @test contains(str, "Number of ROIs: 25")
         @test contains(str, "IdealCamera")
-        @test contains(str, "Frame range:")
+        @test contains(str, "Frames:")
+        @test contains(str, "spanning")
+        @test contains(str, "Corner range:")
     end
 end
 
@@ -297,7 +311,8 @@ end
         camera = IdealCamera(1024, 1024, 0.065)
         batch = ROIBatch(
             rand(Float32, 11, 11, 10),
-            rand(Int32(1):Int32(1000), 2, 10),
+            rand(Int32(1):Int32(1000), 10),
+            rand(Int32(1):Int32(1000), 10),
             rand(Int32(1):Int32(50), 10),
             camera
         )
@@ -310,7 +325,8 @@ end
                             offset=100.0, gain=0.46, qe=0.72)
         batch = ROIBatch(
             rand(Float32, 9, 9, 15),
-            rand(Int32(1):Int32(2000), 2, 15),
+            rand(Int32(1):Int32(2000), 15),
+            rand(Int32(1):Int32(2000), 15),
             rand(Int32(1):Int32(100), 15),
             camera
         )
@@ -325,7 +341,8 @@ end
 
         batch = ROIBatch(
             rand(Float32, 11, 11, 8),
-            rand(Int32(1):Int32(500), 2, 8),
+            rand(Int32(1):Int32(500), 8),
+            rand(Int32(1):Int32(500), 8),
             rand(Int32(1):Int32(20), 8),
             camera
         )
@@ -342,10 +359,11 @@ end
     n_rois = 5
 
     data = rand(Float32, 11, 11, n_rois)
-    corners = rand(Int32(1):Int32(500), 2, n_rois)
+    x_corners = rand(Int32(1):Int32(500), n_rois)
+    y_corners = rand(Int32(1):Int32(500), n_rois)
     frames = rand(Int32(1):Int32(50), n_rois)
 
-    batch = ROIBatch(data, corners, frames, camera)
+    batch = ROIBatch(data, x_corners, y_corners, frames, camera)
 
     @testset "Adapt.adapt_structure defined" begin
         # Test that adapt_structure is defined
@@ -358,7 +376,8 @@ end
 
         @test adapted isa ROIBatch
         @test adapted.data isa Array
-        @test adapted.corners isa Matrix{Int32}
+        @test adapted.x_corners isa Vector{Int32}
+        @test adapted.y_corners isa Vector{Int32}
         @test adapted.frame_indices isa Vector{Int32}
         @test adapted.camera === batch.camera  # Camera stays on host
         @test adapted.roi_size === batch.roi_size
@@ -402,10 +421,11 @@ end
         roi_size = 9
 
         data = rand(Float32, roi_size, roi_size, n_rois)
-        corners = rand(Int32(1):Int32(500), 2, n_rois)
+        x_corners = rand(Int32(1):Int32(500), n_rois)
+        y_corners = rand(Int32(1):Int32(500), n_rois)
         frames = rand(Int32(1):Int32(500), n_rois)
 
-        batch = ROIBatch(data, corners, frames, camera)
+        batch = ROIBatch(data, x_corners, y_corners, frames, camera)
 
         @test length(batch) === n_rois
 
@@ -424,10 +444,11 @@ end
         n_total = n_frames * rois_per_frame
 
         data = rand(Float32, 11, 11, n_total)
-        corners = rand(Int32(1):Int32(240), 2, n_total)
+        x_corners = rand(Int32(1):Int32(240), n_total)
+        y_corners = rand(Int32(1):Int32(240), n_total)
         frames = repeat(Int32(1):Int32(n_frames), inner=rois_per_frame)
 
-        batch = ROIBatch(data, corners, frames, camera)
+        batch = ROIBatch(data, x_corners, y_corners, frames, camera)
 
         # Verify frame distribution
         frame_counts = Dict{Int32,Int}()

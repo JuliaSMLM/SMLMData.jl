@@ -62,7 +62,8 @@ packages like GaussMLE.
 
 # Fields
 - `data::A` - ROI image stack (roi_size × roi_size × n_rois)
-- `corners::Matrix{Int32}` - ROI corner positions (2 × n_rois), [x; y] = [col; row] format
+- `x_corners::Vector{Int32}` - X (column) coordinates of ROI corners in camera coordinates
+- `y_corners::Vector{Int32}` - Y (row) coordinates of ROI corners in camera coordinates
 - `frame_indices::Vector{Int32}` - Frame number for each ROI (1-indexed)
 - `camera::C` - Camera object (IdealCamera or SCMOSCamera) representing full image
 - `roi_size::Int` - Size of each ROI in pixels (assumed square)
@@ -77,7 +78,7 @@ packages like GaussMLE.
 
 ## From arrays (main constructor)
 ```julia
-ROIBatch(data::AbstractArray{T,3}, corners::Matrix{Int32},
+ROIBatch(data::AbstractArray{T,3}, x_corners::Vector{Int32}, y_corners::Vector{Int32},
          frame_indices::Vector{Int32}, camera::AbstractCamera)
 ```
 
@@ -94,13 +95,14 @@ ROIBatch(rois::Vector{SingleROI{T}}, camera::AbstractCamera)
 
 # Validation
 - ROIs must be square (data dimensions 1 == dimension 2)
-- Corners must be 2×n_rois
+- x_corners must have length n_rois
+- y_corners must have length n_rois
 - Frame indices must have length n_rois
 - All arrays must have consistent n_rois
 
 # Indexing and Iteration
 ```julia
-batch = ROIBatch(data, corners, frames, camera)
+batch = ROIBatch(data, x_corners, y_corners, frames, camera)
 
 # Get single ROI
 roi = batch[5]  # Returns SingleROI{T}
@@ -152,22 +154,24 @@ println("First ROI at position: \$(first_roi.corner)")
 """
 struct ROIBatch{T,N,A<:AbstractArray{T,N},C<:AbstractCamera}
     data::A
-    corners::Matrix{Int32}
+    x_corners::Vector{Int32}
+    y_corners::Vector{Int32}
     frame_indices::Vector{Int32}
     camera::C
     roi_size::Int
 
-    function ROIBatch(data::A, corners::Matrix{Int32}, frame_indices::Vector{Int32},
-                     camera::C) where {T,A<:AbstractArray{T,3},C<:AbstractCamera}
+    function ROIBatch(data::A, x_corners::Vector{Int32}, y_corners::Vector{Int32},
+                     frame_indices::Vector{Int32}, camera::C) where {T,A<:AbstractArray{T,3},C<:AbstractCamera}
         n_rois = size(data, 3)
         roi_size = size(data, 1)
 
         # Validation
         @assert size(data, 1) == size(data, 2) "ROIs must be square (got $(size(data, 1))×$(size(data, 2)))"
-        @assert size(corners) == (2, n_rois) "Corners must be 2×n_rois (got $(size(corners)) for $n_rois ROIs)"
+        @assert length(x_corners) == n_rois "Must have one x_corner per ROI (got $(length(x_corners)) for $n_rois ROIs)"
+        @assert length(y_corners) == n_rois "Must have one y_corner per ROI (got $(length(y_corners)) for $n_rois ROIs)"
         @assert length(frame_indices) == n_rois "Must have one frame index per ROI (got $(length(frame_indices)) for $n_rois ROIs)"
 
-        new{T,3,A,C}(data, corners, frame_indices, camera, roi_size)
+        new{T,3,A,C}(data, x_corners, y_corners, frame_indices, camera, roi_size)
     end
 end
 
@@ -190,11 +194,8 @@ batch = ROIBatch(data, x_corners, y_corners, frames, camera)
 """
 function ROIBatch(data::AbstractArray{T,3}, x_corners::Vector, y_corners::Vector,
                   frame_indices::Vector, camera::C) where {T,C<:AbstractCamera}
-    n_rois = size(data, 3)
-    corners = Matrix{Int32}(undef, 2, n_rois)
-    corners[1, :] = Int32.(x_corners)
-    corners[2, :] = Int32.(y_corners)
-    ROIBatch(data, corners, Int32.(frame_indices), camera)
+    # Convert to Int32 and call inner constructor
+    ROIBatch(data, Int32.(x_corners), Int32.(y_corners), Int32.(frame_indices), camera)
 end
 
 """
@@ -219,7 +220,7 @@ batch = ROIBatch(rois, camera)
 function ROIBatch(rois::Vector{SingleROI{T}}, camera::C) where {T,C<:AbstractCamera}
     if isempty(rois)
         # Empty batch - use provided camera
-        return ROIBatch(zeros(T, 0, 0, 0), Matrix{Int32}(undef, 2, 0), Int32[], camera)
+        return ROIBatch(zeros(T, 0, 0, 0), Int32[], Int32[], Int32[], camera)
     end
 
     roi_size = size(first(rois).data, 1)
@@ -227,17 +228,19 @@ function ROIBatch(rois::Vector{SingleROI{T}}, camera::C) where {T,C<:AbstractCam
 
     # Pre-allocate arrays
     data = Array{T,3}(undef, roi_size, roi_size, n_rois)
-    corners = Matrix{Int32}(undef, 2, n_rois)
+    x_corners = Vector{Int32}(undef, n_rois)
+    y_corners = Vector{Int32}(undef, n_rois)
     frame_indices = Vector{Int32}(undef, n_rois)
 
     # Fill arrays
     for (i, roi) in enumerate(rois)
         data[:, :, i] = roi.data
-        corners[:, i] = roi.corner
+        x_corners[i] = roi.corner[1]
+        y_corners[i] = roi.corner[2]
         frame_indices[i] = roi.frame_idx
     end
 
-    ROIBatch(data, corners, frame_indices, camera)
+    ROIBatch(data, x_corners, y_corners, frame_indices, camera)
 end
 
 # ===== Indexing and Iteration =====
@@ -251,7 +254,7 @@ Returns a SingleROI containing the data, corner position, and frame index.
 """
 Base.getindex(batch::ROIBatch, i::Int) = SingleROI(
     batch.data[:, :, i],
-    SVector{2,Int32}(batch.corners[1, i], batch.corners[2, i]),
+    SVector{2,Int32}(batch.x_corners[i], batch.y_corners[i]),
     batch.frame_indices[i]
 )
 
@@ -290,7 +293,7 @@ Base.iterate(batch::ROIBatch, state=1) = state > length(batch) ? nothing : (batc
 
 Adapt ROIBatch for GPU execution via KernelAbstractions.jl/CUDA.jl.
 
-Transfers data, corners, and frame_indices to the target device.
+Transfers data, x_corners, y_corners, and frame_indices to the target device.
 Camera remains on the host (contains metadata and variance maps).
 
 # Example
@@ -304,7 +307,8 @@ batch_cpu = adapt(Array, batch_gpu)  # Transfer back
 function Adapt.adapt_structure(to, batch::ROIBatch)
     ROIBatch(
         Adapt.adapt(to, batch.data),
-        Adapt.adapt(to, batch.corners),
+        Adapt.adapt(to, batch.x_corners),
+        Adapt.adapt(to, batch.y_corners),
         Adapt.adapt(to, batch.frame_indices),
         batch.camera  # Camera stays on host
     )
@@ -318,7 +322,21 @@ end
 Compact display of SingleROI.
 """
 function Base.show(io::IO, roi::SingleROI{T}) where T
-    print(io, "SingleROI{$T}($(size(roi.data, 1))×$(size(roi.data, 2)), corner=$(roi.corner), frame=$(roi.frame_idx))")
+    print(io, "SingleROI{$T}($(size(roi.data, 1))×$(size(roi.data, 2)), ")
+    print(io, "corner=($(roi.corner[1]), $(roi.corner[2])), ")
+    print(io, "frame=$(roi.frame_idx))")
+end
+
+"""
+    show(io::IO, ::MIME"text/plain", roi::SingleROI)
+
+Detailed display of SingleROI.
+"""
+function Base.show(io::IO, ::MIME"text/plain", roi::SingleROI{T}) where T
+    println(io, "SingleROI{$T}:")
+    println(io, "  Size: $(size(roi.data, 1)) × $(size(roi.data, 2)) pixels")
+    println(io, "  Corner: ($(roi.corner[1]), $(roi.corner[2])) = (col, row)")
+    print(io, "  Frame: $(roi.frame_idx)")
 end
 
 """
@@ -346,7 +364,14 @@ function Base.show(io::IO, ::MIME"text/plain", batch::ROIBatch{T,N,A,C}) where {
     println(io, "  Camera: $C")
 
     if n_rois > 0
+        # Frame statistics
         frame_range = extrema(batch.frame_indices)
-        print(io, "  Frame range: $(frame_range[1]) to $(frame_range[2])")
+        n_frames = frame_range[2] - frame_range[1] + 1
+        println(io, "  Frames: $(frame_range[1]) to $(frame_range[2]) (spanning $n_frames frames)")
+
+        # Corner statistics
+        x_range = extrema(batch.x_corners)
+        y_range = extrema(batch.y_corners)
+        print(io, "  Corner range: x=$(x_range[1]) to $(x_range[2]), y=$(y_range[1]) to $(y_range[2])")
     end
 end

@@ -53,11 +53,12 @@ using MAT
 import Base: filter
 
 # Type definitions
-export 
+export
     # Abstract types
     AbstractEmitter,
     AbstractCamera,
-    SMLD,
+    AbstractSMLD,
+    SMLD,  # Deprecated alias for AbstractSMLD
 
     # Concrete emitter types
     Emitter2D,

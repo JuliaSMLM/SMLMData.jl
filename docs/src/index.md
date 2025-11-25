@@ -6,6 +6,19 @@ Data types and utilities for Single Molecule Localization Microscopy (SMLM) in J
 
 SMLMData.jl provides core data structures and operations for working with Single Molecule Localization Microscopy data. The package follows a type-based design that makes it easy to represent, manipulate, and analyze localization data.
 
+### Ecosystem Role
+
+SMLMData is the **core types package** for the [JuliaSMLM](https://github.com/JuliaSMLM) ecosystem. It defines the foundational types (emitters, cameras, SMLD containers) that all other packages share.
+
+**You rarely need to import SMLMData directly.** Packages like `GaussMLE`, `SMLMBoxer`, and `SMLMAnalysis` depend on SMLMData and re-export the types you need:
+
+```julia
+using GaussMLE      # Re-exports ROIBatch, camera types, etc.
+using SMLMAnalysis  # Re-exports all SMLMData types for analysis workflows
+```
+
+Direct `using SMLMData` is primarily for package developers, standalone data manipulation, or learning the type system.
+
 ## Emitters
 
 Emitters represent individual fluorophore localizations in single molecule localization microscopy. SMLMData provides several emitter types to accommodate different analysis needs.
@@ -236,7 +249,8 @@ A batch of ROIs for efficient parallel processing:
 ```julia
 struct ROIBatch{T,N,A<:AbstractArray{T,N},C<:AbstractCamera}
     data::A                      # ROI stack (roi_size × roi_size × n_rois)
-    corners::Matrix{Int32}       # 2×n_rois corner positions
+    x_corners::Vector{Int32}     # X (column) coordinates of ROI corners
+    y_corners::Vector{Int32}     # Y (row) coordinates of ROI corners
     frame_indices::Vector{Int32} # Frame number for each ROI
     camera::C                    # Camera object
     roi_size::Int                # Size of each ROI (square)

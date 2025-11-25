@@ -16,13 +16,24 @@ This guide provides a structured overview of the SMLMData.jl package designed fo
 - Offers **consistent examples** to learn from when generating code
 - Helps avoid **common pitfalls** or misunderstandings about the API
 
+## Ecosystem Role
+
+SMLMData is the **core types package** for the [JuliaSMLM](https://github.com/JuliaSMLM) ecosystem. Other packages depend on SMLMData and re-export its types, so **you rarely need to import SMLMData directly**:
+
+```julia
+using GaussMLE      # Re-exports ROIBatch, camera types, etc.
+using SMLMAnalysis  # Re-exports all SMLMData types for analysis workflows
+```
+
+Direct `using SMLMData` is primarily for package developers, standalone data manipulation, or learning the type system.
+
 ## Key Concepts
 
 - **Emitters**: Individual fluorophore localizations (2D or 3D)
 - **Camera**: Defines pixel geometry and coordinate system
-- **SMLD**: Container holding emitters and camera information
+- **AbstractSMLD**: Container holding emitters and camera information
 - **Coordinates**: All spatial coordinates are in **microns**
-- **Coordinate System**: 
+- **Coordinate System**:
   - Physical space: (0,0) at top-left corner of camera
   - Pixel space: (1,1) at center of top-left pixel
 
@@ -31,7 +42,7 @@ This guide provides a structured overview of the SMLMData.jl package designed fo
 ```
 AbstractEmitter                   # Base for all emitter types
 ├── Emitter2D{T}                  # Basic 2D emitters
-├── Emitter3D{T}                  # Basic 3D emitters  
+├── Emitter3D{T}                  # Basic 3D emitters
 ├── Emitter2DFit{T}               # 2D emitters with fit results
 └── Emitter3DFit{T}               # 3D emitters with fit results
 
@@ -43,7 +54,7 @@ ROI Batch Types                   # For batched ROI processing
 ├── SingleROI{T}                  # Single ROI with location context
 └── ROIBatch{T,N,A,C}             # Batch of ROIs for parallel processing
 
-SMLD                              # Base for data containers
+AbstractSMLD                      # Base for data containers
 ├── BasicSMLD{T,E}                # General-purpose container
 └── SmiteSMLD{T,E}                # SMITE-compatible container
 ```
@@ -211,7 +222,8 @@ end
 # Batch of ROIs for parallel processing
 struct ROIBatch{T,N,A<:AbstractArray{T,N},C<:AbstractCamera}
     data::A                      # ROI stack (roi_size × roi_size × n_rois)
-    corners::Matrix{Int32}       # 2×n_rois corner positions [x; y] = [col; row]
+    x_corners::Vector{Int32}     # X (column) coordinates of ROI corners
+    y_corners::Vector{Int32}     # Y (row) coordinates of ROI corners
     frame_indices::Vector{Int32} # Frame number for each ROI
     camera::C                    # Camera object (IdealCamera or SCMOSCamera)
     roi_size::Int                # Size of each ROI (square)
@@ -221,16 +233,12 @@ end
 #### ROI Batch Constructor Examples
 
 ```julia
-# From arrays (main constructor)
+# From separate x/y corner vectors (main constructor)
 camera = IdealCamera(512, 512, 0.1)
 data = rand(Float32, 11, 11, 100)  # 100 ROIs of 11×11 pixels
-corners = rand(Int32(1):Int32(500), 2, 100)
-frame_indices = rand(Int32(1):Int32(50), 100)
-batch = ROIBatch(data, corners, frame_indices, camera)
-
-# From separate x/y corner vectors
 x_corners = rand(Int32(1):Int32(500), 100)
 y_corners = rand(Int32(1):Int32(500), 100)
+frame_indices = rand(Int32(1):Int32(50), 100)
 batch = ROIBatch(data, x_corners, y_corners, frame_indices, camera)
 
 # From vector of SingleROI
@@ -264,7 +272,7 @@ batch_gpu = adapt(CuArray, batch)  # Transfer to GPU
 
 ```julia
 # Basic SMLD container
-struct BasicSMLD{T,E<:AbstractEmitter} <: SMLD
+struct BasicSMLD{T,E<:AbstractEmitter} <: AbstractSMLD
     emitters::Vector{E}        # Vector of emitters
     camera::AbstractCamera     # Camera information
     n_frames::Int              # Total number of frames
@@ -273,7 +281,7 @@ struct BasicSMLD{T,E<:AbstractEmitter} <: SMLD
 end
 
 # SMITE format compatible container
-struct SmiteSMLD{T,E<:AbstractEmitter} <: SMLD
+struct SmiteSMLD{T,E<:AbstractEmitter} <: AbstractSMLD
     emitters::Vector{E}        # Vector of emitters
     camera::AbstractCamera     # Camera information
     n_frames::Int              # Total number of frames
@@ -540,7 +548,7 @@ end
 ### Filtering
 - The `@filter` macro creates a **new SMLD object**; it doesn't modify the original
 - Filtering by frames with a vector uses `Set` internally for O(1) lookup performance
-- Applying a 3D ROI filter to 2D emitters will throw an error
+- Applying an ROI filter to incompatible emitter types will throw an error
 
 ### SMITE Format
 - Complex-valued fields in SMITE files are automatically handled by removing affected emitters

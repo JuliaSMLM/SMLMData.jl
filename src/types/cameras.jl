@@ -521,53 +521,6 @@ function _validate_camera_param(param::AbstractMatrix, nx, ny, name)
 end
 _validate_camera_param(param::Real, nx, ny, name) = nothing
 
-# Accessor functions (for use in other packages like GaussMLE)
-"""
-    get_offset(camera, i, j) -> T
-
-Get offset value at pixel (i,j), handling both scalar and matrix parameters.
-"""
-@inline function get_offset(cam::SCMOSCamera{T}, i::Int, j::Int) where T
-    cam.offset isa T ? cam.offset : cam.offset[i, j]
-end
-
-"""
-    get_gain(camera, i, j) -> T
-
-Get gain value at pixel (i,j), handling both scalar and matrix parameters.
-"""
-@inline function get_gain(cam::SCMOSCamera{T}, i::Int, j::Int) where T
-    cam.gain isa T ? cam.gain : cam.gain[i, j]
-end
-
-"""
-    get_readnoise(camera, i, j) -> T
-
-Get readnoise (e⁻ rms) at pixel (i,j), handling both scalar and matrix parameters.
-"""
-@inline function get_readnoise(cam::SCMOSCamera{T}, i::Int, j::Int) where T
-    cam.readnoise isa T ? cam.readnoise : cam.readnoise[i, j]
-end
-
-"""
-    get_qe(camera, i, j) -> T
-
-Get quantum efficiency at pixel (i,j), handling both scalar and matrix parameters.
-"""
-@inline function get_qe(cam::SCMOSCamera{T}, i::Int, j::Int) where T
-    cam.qe isa T ? cam.qe : cam.qe[i, j]
-end
-
-"""
-    get_readnoise_var(camera, i, j) -> T
-
-Get readnoise variance (e⁻²) at pixel (i,j), computed from readnoise rms.
-"""
-@inline function get_readnoise_var(cam::SCMOSCamera{T}, i::Int, j::Int) where T
-    rms = get_readnoise(cam, i, j)
-    return rms * rms
-end
-
 # Display methods
 function Base.show(io::IO, cam::SCMOSCamera{T}) where T
     nx = length(cam.pixel_edges_x) - 1
