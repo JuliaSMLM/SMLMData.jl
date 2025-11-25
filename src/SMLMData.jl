@@ -53,11 +53,12 @@ using MAT
 import Base: filter
 
 # Type definitions
-export 
+export
     # Abstract types
     AbstractEmitter,
     AbstractCamera,
-    SMLD,
+    AbstractSMLD,
+    SMLD,  # Deprecated alias for AbstractSMLD
 
     # Concrete emitter types
     Emitter2D,
@@ -68,6 +69,10 @@ export
     # Camera types
     IdealCamera,
     SCMOSCamera,
+
+    # ROI batch types
+    SingleROI,
+    ROIBatch,
 
     # SMLD types
     BasicSMLD,
@@ -98,7 +103,8 @@ export
 
 # Include all source files
 include("types/emitters.jl")  # Move from current location
-include("types/cameras.jl")   # Move from current location  
+include("types/cameras.jl")   # Move from current location
+include("types/roi_batch.jl") # ROI batch types for ecosystem interop
 include("types/smld.jl")      # Move from current location
 
 include("core/coordinates.jl") # Move from coordinates.jl

@@ -1,11 +1,11 @@
 """
-    SMLD
+    AbstractSMLD
 
 Abstract type representing Single Molecule Localization Data (SMLD).
 
 # Interface Requirements
 
-Any concrete subtype of SMLD must provide:
+Any concrete subtype of AbstractSMLD must provide:
 - `emitters::Vector{<:AbstractEmitter}`: Vector of localized emitters
 
 Additional fields may include:
@@ -15,10 +15,19 @@ Additional fields may include:
 
 Note: All emitter coordinates must be in physical units (microns).
 """
-abstract type SMLD end
+abstract type AbstractSMLD end
+
+# Backward compatibility alias
+"""
+    SMLD
+
+Deprecated alias for `AbstractSMLD`. Use `AbstractSMLD` instead.
+This alias is provided for backward compatibility and will be removed in v1.0.
+"""
+const SMLD = AbstractSMLD
 
 """
-    BasicSMLD{T,E<:AbstractEmitter} <: SMLD
+    BasicSMLD{T,E<:AbstractEmitter} <: AbstractSMLD
 
 Basic container for single molecule localization data.
 
@@ -55,7 +64,7 @@ metadata = Dict{String,Any}(
 data = BasicSMLD(emitters, cam, 2, 1, metadata)
 ```
 """
-struct BasicSMLD{T,E<:AbstractEmitter} <: SMLD
+struct BasicSMLD{T,E<:AbstractEmitter} <: AbstractSMLD
     emitters::Vector{E}
     camera::AbstractCamera
     n_frames::Int
@@ -100,21 +109,21 @@ end
 
 # Helper method to get the number of emitters
 """
-    Base.length(smld::SMLD)
+    Base.length(smld::AbstractSMLD)
 
 Return the number of emitters in the SMLD object.
 """
-Base.length(smld::SMLD) = length(smld.emitters)
+Base.length(smld::AbstractSMLD) = length(smld.emitters)
 
 # Helper method for iteration
 """
-    Base.iterate(smld::SMLD)
-    Base.iterate(smld::SMLD, state)
+    Base.iterate(smld::AbstractSMLD)
+    Base.iterate(smld::AbstractSMLD, state)
 
 Enable iteration over emitters in an SMLD object.
 """
-Base.iterate(smld::SMLD) = iterate(smld.emitters)
-Base.iterate(smld::SMLD, state) = iterate(smld.emitters, state)
+Base.iterate(smld::AbstractSMLD) = iterate(smld.emitters)
+Base.iterate(smld::AbstractSMLD, state) = iterate(smld.emitters, state)
 
 """
     format_with_commas(n::Integer)
@@ -127,15 +136,15 @@ end
 
 
 """
-    Base.show methods for SMLD types
+    Base.show methods for AbstractSMLD types
 
 These methods provide informative displays of SMLD data containers in both REPL and other contexts.
 """
 
-# --- Generic SMLD compact show method ---
-# This works for any concrete SMLD type
+# --- Generic AbstractSMLD compact show method ---
+# This works for any concrete AbstractSMLD type
 
-function Base.show(io::IO, smld::S) where {S<:SMLD}
+function Base.show(io::IO, smld::S) where {S<:AbstractSMLD}
     n_emitters = length(smld.emitters)
     emitter_type = eltype(smld.emitters)
     
@@ -185,9 +194,9 @@ function Base.show(io::IO, ::MIME"text/plain", smld::BasicSMLD{T,E}) where {T,E}
     print(io, "  Metadata keys: $meta_preview")
 end
 
-# --- Generic SMLD detailed show method for subtypes without specific methods ---
+# --- Generic AbstractSMLD detailed show method for subtypes without specific methods ---
 
-function Base.show(io::IO, ::MIME"text/plain", smld::S) where {S<:SMLD}
+function Base.show(io::IO, ::MIME"text/plain", smld::S) where {S<:AbstractSMLD}
     # Skip if a more specific method exists (to avoid method ambiguities)
     if S <: BasicSMLD || S <: SmiteSMLD
         return

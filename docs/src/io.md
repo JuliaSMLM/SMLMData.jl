@@ -20,7 +20,7 @@ end
 SmiteSMD(filepath::String, filename::String) = SmiteSMD(filepath, filename, "SMD")
 
 # SMLD type compatible with SMITE format
-struct SmiteSMLD{T,E<:AbstractEmitter} <: SMLD
+struct SmiteSMLD{T,E<:AbstractEmitter} <: AbstractSMLD
     emitters::Vector{E}
     camera::AbstractCamera
     n_frames::Int

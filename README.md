@@ -7,6 +7,22 @@ Data types and utilities for Single Molecule Localization Microscopy (SMLM) in J
 [![Build Status](https://github.com/JuliaSMLM/SMLMData.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/JuliaSMLM/SMLMData.jl/actions/workflows/CI.yml)
 [![Coverage](https://codecov.io/gh/JuliaSMLM/SMLMData.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/JuliaSMLM/SMLMData.jl)
 
+## Ecosystem Role
+
+SMLMData is the **core types package** for the [JuliaSMLM](https://github.com/JuliaSMLM) ecosystem. It defines the foundational types (emitters, cameras, SMLD containers) that all other packages share.
+
+**You rarely need to import SMLMData directly.** Packages like `GaussMLE`, `SMLMBoxer`, and `SMLMAnalysis` depend on SMLMData and re-export the types you need. For example:
+
+```julia
+using GaussMLE  # Re-exports ROIBatch, camera types, etc.
+using SMLMAnalysis  # Re-exports all SMLMData types for analysis workflows
+```
+
+Direct `using SMLMData` is primarily for:
+- Package developers building on the ecosystem
+- Standalone data manipulation without analysis packages
+- Learning the type system
+
 ## Quick Start
 
 ```julia
@@ -60,8 +76,13 @@ AbstractEmitter
  ├─ Emitter2DFit{T}
  └─ Emitter3DFit{T}
 
-SMLD
- └─ BasicSMLD{T,E}
+ROI Batch Types
+ ├─ SingleROI{T}
+ └─ ROIBatch{T,N,A,C}
+
+AbstractSMLD
+ ├─ BasicSMLD{T,E}
+ └─ SmiteSMLD{T,E}
  
 ```
 
@@ -106,11 +127,11 @@ merged = merge_smld([smld1, smld2], adjust_frames=true)
 
 SMLMData is built around three core abstract types that work together:
 
-- **SMLD**: Container type holding a vector of emitters and camera information
+- **AbstractSMLD**: Container type holding a vector of emitters and camera information
 - **AbstractEmitter**: Base type for individual localizations
 - **AbstractCamera**: Camera geometry and pixel coordinate handling
 
-Any concrete SMLD type must contain:
+Any concrete AbstractSMLD type must contain:
 ```julia
 emitters::Vector{<:AbstractEmitter}  # Vector of localizations
 camera::AbstractCamera               # Camera information
@@ -143,7 +164,7 @@ struct SCMOSCamera{T} <: AbstractCamera
 end
 
 # Basic SMLD implementation
-struct BasicSMLD{T,E<:AbstractEmitter} <: SMLD
+struct BasicSMLD{T,E<:AbstractEmitter} <: AbstractSMLD
     emitters::Vector{E}
     camera::AbstractCamera
     n_frames::Int

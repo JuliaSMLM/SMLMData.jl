@@ -51,17 +51,17 @@ macro filter(smld, expr)
 end
 
 """
-    filter_frames(smld::SMLD, frame::Integer)
-    filter_frames(smld::SMLD, frames::Union{AbstractVector,AbstractRange})
+    filter_frames(smld::AbstractSMLD, frame::Integer)
+    filter_frames(smld::AbstractSMLD, frames::Union{AbstractVector,AbstractRange})
 
 Efficiently select emitters from specified frames.
 
 # Arguments
-- `smld::SMLD`: Input SMLD structure
+- `smld::AbstractSMLD`: Input SMLD structure
 - `frames`: Single frame number, vector of frame numbers, or range of frames
 
 # Returns
-New SMLD containing only emitters from specified frames
+New AbstractSMLD containing only emitters from specified frames
 
 # Examples
 ```julia
@@ -75,7 +75,7 @@ early = filter_frames(smld, 1:10)
 selected = filter_frames(smld, [1,3,5,7])
 ```
 """
-function filter_frames(smld::SMLD, frame::Integer)
+function filter_frames(smld::AbstractSMLD, frame::Integer)
     keep = [e.frame == frame for e in smld.emitters]
     return typeof(smld)(
         smld.emitters[keep],
@@ -86,7 +86,7 @@ function filter_frames(smld::SMLD, frame::Integer)
     )
 end
 
-function filter_frames(smld::SMLD, frames::Union{AbstractVector,AbstractRange})
+function filter_frames(smld::AbstractSMLD, frames::Union{AbstractVector,AbstractRange})
     frame_set = Set(frames)  # Convert to Set for O(1) lookup
     keep = [e.frame ∈ frame_set for e in smld.emitters]
     return typeof(smld)(
@@ -99,19 +99,19 @@ function filter_frames(smld::SMLD, frames::Union{AbstractVector,AbstractRange})
 end
 
 """
-    filter_roi(smld::SMLD, x_range, y_range)
-    filter_roi(smld::SMLD, x_range, y_range, z_range)
+    filter_roi(smld::AbstractSMLD, x_range, y_range)
+    filter_roi(smld::AbstractSMLD, x_range, y_range, z_range)
 
 Efficiently select emitters within a region of interest.
 
 # Arguments
-- `smld::SMLD`: Input SMLD structure
+- `smld::AbstractSMLD`: Input SMLD structure
 - `x_range`: Range or tuple for x coordinates (microns)
 - `y_range`: Range or tuple for y coordinates (microns)
 - `z_range`: Optional range or tuple for z coordinates (microns)
 
 # Returns
-New SMLD containing only emitters within the specified ROI
+New AbstractSMLD containing only emitters within the specified ROI
 
 # Examples
 ```julia
@@ -123,10 +123,10 @@ region = filter_roi(smld, (1.0, 5.0), (2.0, 6.0))
 volume = filter_roi(smld, 1.0:5.0, 2.0:6.0, -1.0:1.0)
 ```
 """
-function filter_roi(smld::SMLD, x_range, y_range)
+function filter_roi(smld::AbstractSMLD, x_range, y_range)
     x_min, x_max = extrema(x_range)
     y_min, y_max = extrema(y_range)
-    
+
     if eltype(smld.emitters) <: Union{Emitter2D, Emitter2DFit}
         keep = [x_min ≤ e.x ≤ x_max && y_min ≤ e.y ≤ y_max for e in smld.emitters]
         return typeof(smld)(
@@ -141,7 +141,7 @@ function filter_roi(smld::SMLD, x_range, y_range)
     end
 end
 
-function filter_roi(smld::SMLD, x_range, y_range, z_range)
+function filter_roi(smld::AbstractSMLD, x_range, y_range, z_range)
     x_min, x_max = extrema(x_range)
     y_min, y_max = extrema(y_range)
     z_min, z_max = extrema(z_range)

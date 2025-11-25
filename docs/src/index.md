@@ -6,6 +6,19 @@ Data types and utilities for Single Molecule Localization Microscopy (SMLM) in J
 
 SMLMData.jl provides core data structures and operations for working with Single Molecule Localization Microscopy data. The package follows a type-based design that makes it easy to represent, manipulate, and analyze localization data.
 
+### Ecosystem Role
+
+SMLMData is the **core types package** for the [JuliaSMLM](https://github.com/JuliaSMLM) ecosystem. It defines the foundational types (emitters, cameras, SMLD containers) that all other packages share.
+
+**You rarely need to import SMLMData directly.** Packages like `GaussMLE`, `SMLMBoxer`, and `SMLMAnalysis` depend on SMLMData and re-export the types you need:
+
+```julia
+using GaussMLE      # Re-exports ROIBatch, camera types, etc.
+using SMLMAnalysis  # Re-exports all SMLMData types for analysis workflows
+```
+
+Direct `using SMLMData` is primarily for package developers, standalone data manipulation, or learning the type system.
+
 ## Emitters
 
 Emitters represent individual fluorophore localizations in single molecule localization microscopy. SMLMData provides several emitter types to accommodate different analysis needs.
@@ -208,6 +221,96 @@ Each parameter can be:
 x_physical, y_physical = pixel_to_physical(10.5, 15.5, 0.1)
 px, py = physical_to_pixel(1.05, 1.55, 0.1)
 ```
+
+## ROI Batch Types
+
+ROI (Region of Interest) batch types provide efficient storage and processing of image regions extracted from SMLM data. These types enable batched processing workflows across the JuliaSMLM ecosystem.
+
+### SingleROI
+
+A single region of interest with its location context:
+
+```julia
+struct SingleROI{T}
+    data::Matrix{T}              # ROI image data (roi_size × roi_size)
+    corner::SVector{2,Int32}     # (x, y) = (col, row) corner position
+    frame_idx::Int32             # Frame number (1-indexed)
+end
+
+# Example
+roi_data = rand(Float32, 11, 11)
+roi = SingleROI(roi_data, SVector{2,Int32}(100, 200), Int32(5))
+```
+
+### ROIBatch
+
+A batch of ROIs for efficient parallel processing:
+
+```julia
+struct ROIBatch{T,N,A<:AbstractArray{T,N},C<:AbstractCamera}
+    data::A                      # ROI stack (roi_size × roi_size × n_rois)
+    x_corners::Vector{Int32}     # X (column) coordinates of ROI corners
+    y_corners::Vector{Int32}     # Y (row) coordinates of ROI corners
+    frame_indices::Vector{Int32} # Frame number for each ROI
+    camera::C                    # Camera object
+    roi_size::Int                # Size of each ROI (square)
+end
+```
+
+#### Creating ROI Batches
+
+```julia
+# From arrays
+camera = IdealCamera(512, 512, 0.1)
+data = rand(Float32, 11, 11, 100)  # 100 ROIs of 11×11 pixels
+corners = rand(Int32(1):Int32(500), 2, 100)
+frames = rand(Int32(1):Int32(50), 100)
+batch = ROIBatch(data, corners, frames, camera)
+
+# From separate x/y corner vectors
+x_corners = rand(Int32(1):Int32(500), 100)
+y_corners = rand(Int32(1):Int32(500), 100)
+batch = ROIBatch(data, x_corners, y_corners, frames, camera)
+
+# From vector of SingleROI
+using StaticArrays
+rois = [SingleROI(rand(Float32, 11, 11), SVector{2,Int32}(i*10, i*10), Int32(i))
+        for i in 1:100]
+batch = ROIBatch(rois, camera)
+```
+
+#### Working with ROI Batches
+
+```julia
+# Indexing
+roi = batch[5]  # Returns SingleROI
+
+# Iteration
+for roi in batch
+    # Process each ROI
+    process(roi.data, roi.corner, roi.frame_idx)
+end
+
+# Length
+n_rois = length(batch)
+
+# GPU adaptation
+using CUDA
+batch_gpu = adapt(CuArray, batch)  # Transfer to GPU
+```
+
+#### Coordinate System
+
+- **Camera coordinates**: 1-indexed, (1,1) = top-left of full image
+- **ROI corners**: (x, y) = (col, row) position in camera coordinates
+- **ROI data**: Local coordinates, (1,1) = top-left within ROI
+- **Frame indices**: 1-indexed
+
+#### Typical Workflow
+
+1. **Extract ROIs**: Use SMLMBoxer.jl to detect and extract ROIs from image stack
+2. **Fit ROIs**: Use GaussMLE.jl to fit Gaussian PSFs to each ROI
+3. **Convert to SMLD**: Convert fit results to `BasicSMLD` for further analysis
 
 ## SMLD
 

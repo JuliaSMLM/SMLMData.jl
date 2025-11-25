@@ -1,14 +1,14 @@
 """
-    cat_smld(smlds::Vector{<:SMLD})
-    cat_smld(smlds::SMLD...)
+    cat_smld(smlds::Vector{<:AbstractSMLD})
+    cat_smld(smlds::AbstractSMLD...)
 
 Concatenate multiple SMLD objects into a single SMLD.
 
 # Arguments
-- `smlds`: Vector of SMLD objects or multiple SMLD arguments
+- `smlds`: Vector of AbstractSMLD objects or multiple AbstractSMLD arguments
 
 # Returns
-New SMLD containing all emitters from inputs
+New AbstractSMLD containing all emitters from inputs
 
 # Notes
 - Camera must be identical across all SMLDs
@@ -28,7 +28,7 @@ combined = cat_smld(smld1, smld2, smld3)
 combined = cat_smld([smld1, smld2, smld3])
 ```
 """
-function cat_smld(smlds::Vector{<:SMLD})
+function cat_smld(smlds::Vector{<:AbstractSMLD})
     # First check emptiness before any operations
     isempty(smlds) && error("No SMLDs to concatenate")
 
@@ -65,21 +65,21 @@ function cat_smld(smlds::Vector{<:SMLD})
 end
 
 # Varargs version
-cat_smld(smlds::SMLD...) = cat_smld(collect(smlds))
+cat_smld(smlds::AbstractSMLD...) = cat_smld(collect(smlds))
 
 """
-    merge_smld(smlds::Vector{<:SMLD}; adjust_frames=false, adjust_datasets=false)
-    merge_smld(smlds::SMLD...; adjust_frames=false, adjust_datasets=false)
+    merge_smld(smlds::Vector{<:AbstractSMLD}; adjust_frames=false, adjust_datasets=false)
+    merge_smld(smlds::AbstractSMLD...; adjust_frames=false, adjust_datasets=false)
 
 Merge multiple SMLD objects with options to adjust frame and dataset numbering.
 
 # Arguments
-- `smlds`: Vector of SMLD objects or multiple SMLD arguments
+- `smlds`: Vector of AbstractSMLD objects or multiple AbstractSMLD arguments
 - `adjust_frames`: If true, adjusts frame numbers to be sequential
 - `adjust_datasets`: If true, adjusts dataset numbers to be sequential
 
 # Returns
-New SMLD containing all emitters with adjusted numbering if requested
+New AbstractSMLD containing all emitters with adjusted numbering if requested
 
 # Notes
 - Camera must be identical across all SMLDs
@@ -101,7 +101,7 @@ merged = merge_smld([smld1, smld2, smld3],
                    adjust_datasets=true)
 ```
 """
-function merge_smld(smlds::Vector{<:SMLD};
+function merge_smld(smlds::Vector{<:AbstractSMLD};
     adjust_frames::Bool=false,
     adjust_datasets::Bool=false)
     isempty(smlds) && error("No SMLDs to merge")
@@ -187,7 +187,7 @@ end
 
 
 # Varargs version
-merge_smld(smlds::SMLD...; kwargs...) = merge_smld(collect(smlds); kwargs...)
+merge_smld(smlds::AbstractSMLD...; kwargs...) = merge_smld(collect(smlds); kwargs...)
 
 # Helper function to check camera compatibility
 function is_same_camera(cam1::AbstractCamera, cam2::AbstractCamera)

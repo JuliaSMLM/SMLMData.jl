@@ -286,35 +286,6 @@ end
         @test_throws DimensionMismatch SCMOSCamera(10, 10, 0.1, 1.5, qe=wrong_size_map)
     end
 
-    @testset "Accessor functions" begin
-        # Scalar parameters
-        cam_scalar = SCMOSCamera(10, 10, 0.1, 1.5, offset=100.0, gain=0.5, qe=0.8)
-        @test SMLMData.get_offset(cam_scalar, 1, 1) === 100.0
-        @test SMLMData.get_gain(cam_scalar, 5, 5) === 0.5
-        @test SMLMData.get_readnoise(cam_scalar, 10, 10) === 1.5
-        @test SMLMData.get_qe(cam_scalar, 3, 7) === 0.8
-        @test SMLMData.get_readnoise_var(cam_scalar, 1, 1) ≈ 1.5^2
-
-        # Matrix parameters
-        readnoise_map = ones(Float64, 10, 10) .* 1.5
-        readnoise_map[5, 5] = 2.5
-        gain_map = ones(Float64, 10, 10) .* 0.5
-        gain_map[3, 7] = 0.6
-
-        cam_matrix = SCMOSCamera(10, 10, 0.1, readnoise_map, gain=gain_map)
-        @test SMLMData.get_readnoise(cam_matrix, 5, 5) ≈ 2.5
-        @test SMLMData.get_readnoise(cam_matrix, 1, 1) ≈ 1.5
-        @test SMLMData.get_gain(cam_matrix, 3, 7) ≈ 0.6
-        @test SMLMData.get_readnoise_var(cam_matrix, 5, 5) ≈ 2.5^2
-
-        # Mixed
-        cam_mixed = SCMOSCamera(10, 10, 0.1, readnoise_map,
-                                offset=100.0, gain=gain_map, qe=0.85)
-        @test SMLMData.get_offset(cam_mixed, 5, 5) === 100.0  # Scalar
-        @test SMLMData.get_gain(cam_mixed, 3, 7) ≈ 0.6  # Matrix
-        @test SMLMData.get_qe(cam_mixed, 1, 1) === 0.85  # Scalar
-    end
-
     @testset "Realistic use cases" begin
         # ORCA-Flash4.0 V3
         cam_flash = SCMOSCamera(

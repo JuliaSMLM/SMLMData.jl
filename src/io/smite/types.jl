@@ -39,7 +39,7 @@ function Base.show(io::IO, ::MIME"text/plain", smd::SmiteSMD)
 end
 
 """
-    SmiteSMLD{T,E<:AbstractEmitter} <: SMLD
+    SmiteSMLD{T,E<:AbstractEmitter} <: AbstractSMLD
 
 SMLD type compatible with the Smite SMD (Single Molecule Data) format.
 
@@ -54,7 +54,7 @@ SMLD type compatible with the Smite SMD (Single Molecule Data) format.
 - `T`: Numeric type for coordinates (typically Float64)
 - `E`: Concrete emitter type (typically Emitter2DFit or Emitter3DFit)
 """
-struct SmiteSMLD{T,E<:AbstractEmitter} <: SMLD
+struct SmiteSMLD{T,E<:AbstractEmitter} <: AbstractSMLD
     emitters::Vector{E}
     camera::AbstractCamera
     n_frames::Int
