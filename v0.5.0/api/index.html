@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>API Reference · SMLMData.jl</title><meta name="title" content="API Reference · SMLMData.jl"/><meta property="og:title" content="API Reference · SMLMData.jl"/><meta property="twitter:title" content="API Reference · SMLMData.jl"/><meta name="description" content="Documentation for SMLMData.jl."/><meta property="og:description" content="Documentation for SMLMData.jl."/><meta property="twitter:description" content="Documentation for SMLMData.jl."/><meta property="og:url" content="https://JuliaSMLM.github.io/SMLMData.jl/api/"/><meta property="twitter:url" content="https://JuliaSMLM.github.io/SMLMData.jl/api/"/><link rel="canonical" href="https://JuliaSMLM.github.io/SMLMData.jl/api/"/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">SMLMData.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../io/">Saving and Loading</a></li><li class="is-active"><a class="tocitem" href>API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>API Reference</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>API Reference</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/JuliaSMLM/SMLMData.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/main/docs/src/api.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Library"><a class="docs-heading-anchor" href="#Library">Library</a><a id="Library-1"></a><a class="docs-heading-anchor-permalink" href="#Library" title="Permalink"></a></h1><ul><li><a href="#SMLMData.SMLMData"><code>SMLMData.SMLMData</code></a></li><li><a href="#SMLMData.AbstractCamera"><code>SMLMData.AbstractCamera</code></a></li><li><a href="#SMLMData.AbstractEmitter"><code>SMLMData.AbstractEmitter</code></a></li><li><a href="#SMLMData.AbstractSMLD"><code>SMLMData.AbstractSMLD</code></a></li><li><a href="#SMLMData.BasicSMLD-Union{Tuple{E}, Tuple{Vector{E}, AbstractCamera, Int64, Int64}, Tuple{Vector{E}, AbstractCamera, Int64, Int64, Dict{String, Any}}} where E&lt;:AbstractEmitter"><code>SMLMData.BasicSMLD</code></a></li><li><a href="#SMLMData.BasicSMLD"><code>SMLMData.BasicSMLD</code></a></li><li><a href="#SMLMData.Emitter2D"><code>SMLMData.Emitter2D</code></a></li><li><a href="#SMLMData.Emitter2DFit-Union{Tuple{T}, NTuple{8, T}} where T"><code>SMLMData.Emitter2DFit</code></a></li><li><a href="#SMLMData.Emitter2DFit"><code>SMLMData.Emitter2DFit</code></a></li><li><a href="#SMLMData.Emitter3D"><code>SMLMData.Emitter3D</code></a></li><li><a href="#SMLMData.Emitter3DFit"><code>SMLMData.Emitter3DFit</code></a></li><li><a href="#SMLMData.Emitter3DFit-Union{Tuple{T}, NTuple{10, T}} where T"><code>SMLMData.Emitter3DFit</code></a></li><li><a href="#SMLMData.IdealCamera"><code>SMLMData.IdealCamera</code></a></li><li><a href="#SMLMData.IdealCamera-Union{Tuple{T}, Tuple{AbstractUnitRange, AbstractUnitRange, T}} where T&lt;:Real"><code>SMLMData.IdealCamera</code></a></li><li><a href="#SMLMData.IdealCamera-Union{Tuple{T}, Tuple{Integer, Integer, Tuple{T, T}}} where T&lt;:Real"><code>SMLMData.IdealCamera</code></a></li><li><a href="#SMLMData.IdealCamera-Union{Tuple{T}, Tuple{AbstractUnitRange, AbstractUnitRange, Tuple{T, T}}} where T&lt;:Real"><code>SMLMData.IdealCamera</code></a></li><li><a href="#SMLMData.IdealCamera-Union{Tuple{T}, Tuple{Integer, Integer, T}} where T&lt;:Real"><code>SMLMData.IdealCamera</code></a></li><li><a href="#SMLMData.ROIBatch-Union{Tuple{C}, Tuple{T}, Tuple{Array{SingleROI{T}, 1}, C}} where {T, C&lt;:AbstractCamera}"><code>SMLMData.ROIBatch</code></a></li><li><a href="#SMLMData.ROIBatch"><code>SMLMData.ROIBatch</code></a></li><li><a href="#SMLMData.ROIBatch-Union{Tuple{C}, Tuple{T}, Tuple{AbstractArray{T, 3}, Vector, Vector, Vector, C}} where {T, C&lt;:AbstractCamera}"><code>SMLMData.ROIBatch</code></a></li><li><a href="#SMLMData.SCMOSCamera-Union{Tuple{T}, Tuple{Integer, Integer, Union{Tuple{T, T}, T}, Union{Matrix{T}, T}}} where T&lt;:Real"><code>SMLMData.SCMOSCamera</code></a></li><li><a href="#SMLMData.SCMOSCamera"><code>SMLMData.SCMOSCamera</code></a></li><li><a href="#SMLMData.SCMOSCamera-Union{Tuple{T}, Tuple{Vector{T}, Vector{T}}} where T&lt;:Real"><code>SMLMData.SCMOSCamera</code></a></li><li><a href="#SMLMData.SMLD"><code>SMLMData.SMLD</code></a></li><li><a href="#SMLMData.SingleROI"><code>SMLMData.SingleROI</code></a></li><li><a href="#SMLMData.SmiteSMD"><code>SMLMData.SmiteSMD</code></a></li><li><a href="#SMLMData.SmiteSMLD"><code>SMLMData.SmiteSMLD</code></a></li><li><a href="#Adapt.adapt_structure-Tuple{Any, ROIBatch}"><code>Adapt.adapt_structure</code></a></li><li><a href="#Base.getindex-Tuple{ROIBatch, Int64}"><code>Base.getindex</code></a></li><li><a href="#Base.iterate"><code>Base.iterate</code></a></li><li><a href="#Base.iterate-Tuple{AbstractSMLD}"><code>Base.iterate</code></a></li><li><a href="#Base.length-Tuple{ROIBatch}"><code>Base.length</code></a></li><li><a href="#Base.length-Tuple{AbstractSMLD}"><code>Base.length</code></a></li><li><a href="#Base.show-Union{Tuple{C}, Tuple{A}, Tuple{N}, Tuple{T}, Tuple{IO, MIME{Symbol(&quot;text/plain&quot;)}, ROIBatch{T, N, A, C}}} where {T, N, A, C}"><code>Base.show</code></a></li><li><a href="#Base.show-Union{Tuple{T}, Tuple{IO, SingleROI{T}}} where T"><code>Base.show</code></a></li><li><a href="#Base.show-Union{Tuple{T}, Tuple{IO, MIME{Symbol(&quot;text/plain&quot;)}, SingleROI{T}}} where T"><code>Base.show</code></a></li><li><a href="#Base.show-Union{Tuple{T}, Tuple{IO, ROIBatch{T, N, A} where {N, A&lt;:AbstractArray{T, N}}}} where T"><code>Base.show</code></a></li><li><a href="#Base.size-Tuple{ROIBatch}"><code>Base.size</code></a></li><li><a href="#SMLMData.api_overview-Tuple{}"><code>SMLMData.api_overview</code></a></li><li><a href="#SMLMData.cat_smld-Tuple{Vector{&lt;:AbstractSMLD}}"><code>SMLMData.cat_smld</code></a></li><li><a href="#SMLMData.check_complex_fields-Tuple{Any, Any}"><code>SMLMData.check_complex_fields</code></a></li><li><a href="#SMLMData.compute_bin_edges-Union{Tuple{T}, Tuple{AbstractUnitRange, AbstractUnitRange, T}} where T"><code>SMLMData.compute_bin_edges</code></a></li><li><a href="#SMLMData.compute_bin_edges-Tuple{AbstractUnitRange, AbstractUnitRange, Tuple{Real, Real}}"><code>SMLMData.compute_bin_edges</code></a></li><li><a href="#SMLMData.compute_edges_1d-Union{Tuple{T}, Tuple{AbstractUnitRange, T}} where T&lt;:Real"><code>SMLMData.compute_edges_1d</code></a></li><li><a href="#SMLMData.filter_frames-Tuple{AbstractSMLD, Integer}"><code>SMLMData.filter_frames</code></a></li><li><a href="#SMLMData.filter_roi-Tuple{AbstractSMLD, Any, Any}"><code>SMLMData.filter_roi</code></a></li><li><a href="#SMLMData.format_with_commas-Tuple{Integer}"><code>SMLMData.format_with_commas</code></a></li><li><a href="#SMLMData.get_pixel_centers-Tuple{AbstractCamera}"><code>SMLMData.get_pixel_centers</code></a></li><li><a href="#SMLMData.get_valid_indices-Tuple{Any, Any}"><code>SMLMData.get_valid_indices</code></a></li><li><a href="#SMLMData.has_nonzero_imag-Tuple{Any}"><code>SMLMData.has_nonzero_imag</code></a></li><li><a href="#SMLMData.load_smite_2d-Tuple{SmiteSMD}"><code>SMLMData.load_smite_2d</code></a></li><li><a href="#SMLMData.load_smite_3d-Tuple{SmiteSMD}"><code>SMLMData.load_smite_3d</code></a></li><li><a href="#SMLMData.merge_smld-Tuple{Vector{&lt;:AbstractSMLD}}"><code>SMLMData.merge_smld</code></a></li><li><a href="#SMLMData.physical_to_pixel-Tuple{Real, Real, Real}"><code>SMLMData.physical_to_pixel</code></a></li><li><a href="#SMLMData.physical_to_pixel_index-Tuple{Real, Real, Real}"><code>SMLMData.physical_to_pixel_index</code></a></li><li><a href="#SMLMData.pixel_to_physical-Union{Tuple{T}, Tuple{Real, Real, T}} where T"><code>SMLMData.pixel_to_physical</code></a></li><li><a href="#SMLMData.save_smite-Tuple{SmiteSMLD, String, String}"><code>SMLMData.save_smite</code></a></li><li><a href="#SMLMData.@filter-Tuple{Any, Any}"><code>SMLMData.@filter</code></a></li></ul><article><details class="docstring" open="true"><summary id="SMLMData.SMLMData"><a class="docstring-binding" href="#SMLMData.SMLMData"><code>SMLMData.SMLMData</code></a> — <span class="docstring-category">Module</span></summary><section><div><pre><code class="language-julia hljs">SMLMData</code></pre><p>A Julia package for working with Single Molecule Localization Microscopy (SMLM) data.</p><p><strong>Features</strong></p><ul><li>Type system for emitters, cameras, and localization data</li><li>Physical coordinate handling (microns) with camera pixel mappings</li><li>Filtering and ROI selection tools</li><li>SMITE format compatibility</li><li>Memory-efficient data structures</li></ul><p><strong>Basic Usage</strong></p><pre><code class="language-julia hljs">using SMLMData
+
+# Create a camera
+cam = IdealCamera(1:512, 1:512, 0.1)  # 512x512 camera with 0.1 micron pixels
+
+# Create some emitters
+emitters = [
+    Emitter2DFit{Float64}(1.0, 2.0, 1000.0, 10.0, 0.01, 0.01, 50.0, 2.0),
+    Emitter2DFit{Float64}(3.0, 4.0, 1200.0, 12.0, 0.01, 0.01, 60.0, 2.0)
+]
+
+# Create SMLD object
+smld = BasicSMLD(emitters, cam, 1, 1, Dict{String,Any}())
+
+# Filter operations
+roi = filter_roi(smld, 0.0:2.0, 1.0:3.0)
+bright = @filter(smld, photons &gt; 1000)</code></pre><p><strong>API Overview</strong></p><p>For a comprehensive overview of the API, use the help mode on <code>api</code>:</p><pre><code class="language-julia hljs">?api</code></pre><p>Or access the complete API documentation programmatically:</p><pre><code class="language-julia hljs">docs = SMLMData.api()</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/SMLMData.jl#L1-L46">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.AbstractCamera"><a class="docstring-binding" href="#SMLMData.AbstractCamera"><code>SMLMData.AbstractCamera</code></a> — <span class="docstring-category">Type</span></summary><section><div><pre><code class="language-julia hljs">AbstractCamera</code></pre><p>Abstract base type for all camera implementations in single molecule localization microscopy (SMLM).</p><p><strong>Interface Requirements</strong></p><p>Any concrete subtype of AbstractCamera must provide:</p><ol><li><p>Field Requirements:</p><ul><li><code>pixel_edges_x::Vector{&lt;:Real}</code>: Vector of pixel edge positions in x direction</li><li><code>pixel_edges_y::Vector{&lt;:Real}</code>: Vector of pixel edge positions in y direction</li></ul></li><li><p>Units:</p><ul><li>All edge positions must be in physical units (microns)</li><li>Origin (0,0) corresponds to the top-left corner of the camera</li><li>For a camera with N×M pixels, there will be N+1 x-edges and M+1 y-edges</li></ul></li><li><p>Coordinate Convention:</p><ul><li>Pixel (1,1) is centered at (pixel<em>size</em>x/2, pixel<em>size</em>y/2) microns</li><li>Edge positions define the boundaries of pixels in physical space</li><li>First edge position corresponds to the left/top edge of the first pixel</li><li>Last edge position corresponds to the right/bottom edge of the last pixel</li></ul></li></ol><p><strong>Notes</strong></p><ul><li>Edge positions must be monotonically increasing</li><li>The number of edges must be one more than the number of pixels in each dimension</li><li>While pixels are typically uniform in size, this is not a requirement of the interface</li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/cameras.jl#L1-L29">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.AbstractEmitter"><a class="docstring-binding" href="#SMLMData.AbstractEmitter"><code>SMLMData.AbstractEmitter</code></a> — <span class="docstring-category">Type</span></summary><section><div><pre><code class="language-julia hljs">AbstractEmitter</code></pre><p>Abstract supertype for all emitter types in single molecule localization microscopy (SMLM). All spatial coordinates are specified in physical units (microns).</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/emitters.jl#L1-L6">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.AbstractSMLD"><a class="docstring-binding" href="#SMLMData.AbstractSMLD"><code>SMLMData.AbstractSMLD</code></a> — <span class="docstring-category">Type</span></summary><section><div><pre><code class="language-julia hljs">AbstractSMLD</code></pre><p>Abstract type representing Single Molecule Localization Data (SMLD).</p><p><strong>Interface Requirements</strong></p><p>Any concrete subtype of AbstractSMLD must provide:</p><ul><li><code>emitters::Vector{&lt;:AbstractEmitter}</code>: Vector of localized emitters</li></ul><p>Additional fields may include:</p><ul><li>Camera information</li><li>Acquisition parameters</li><li>Analysis metadata</li></ul><p>Note: All emitter coordinates must be in physical units (microns).</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/smld.jl#L1-L17">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.BasicSMLD"><a class="docstring-binding" href="#SMLMData.BasicSMLD"><code>SMLMData.BasicSMLD</code></a> — <span class="docstring-category">Type</span></summary><section><div><pre><code class="language-julia hljs">BasicSMLD{T,E&lt;:AbstractEmitter} &lt;: AbstractSMLD</code></pre><p>Basic container for single molecule localization data.</p><p><strong>Fields</strong></p><ul><li><code>emitters::Vector{E}</code>: Vector of localized emitters</li><li><code>camera::AbstractCamera</code>: Camera used for acquisition</li><li><code>n_frames::Int</code>: Total number of frames in acquisition</li><li><code>n_datasets::Int</code>: Number of datasets in the acquisition</li><li><code>metadata::Dict{String,Any}</code>: Additional dataset information</li></ul><p><strong>Type Parameters</strong></p><ul><li><code>T</code>: Numeric type for coordinates (typically Float64)</li><li><code>E</code>: Concrete emitter type</li></ul><p><strong>Example</strong></p><pre><code class="language-julia hljs"># Create camera
+cam = IdealCamera(1:512, 1:512, 0.1)
+
+# Create some emitters
+emitters = [
+    Emitter2DFit{Float64}(1.0, 1.0, 1000.0, 10.0, 0.01, 0.01, 50.0, 2.0; frame=1),
+    Emitter2DFit{Float64}(5.0, 5.0, 1200.0, 12.0, 0.01, 0.01, 60.0, 2.0; frame=2)
+]
+
+# Create metadata
+metadata = Dict{String,Any}(
+    &quot;exposure_time&quot; =&gt; 0.1,
+    &quot;timestamp&quot; =&gt; now(),
+    &quot;sample&quot; =&gt; &quot;Test Sample&quot;
+)
+
+# Create SMLD object
+data = BasicSMLD(emitters, cam, 2, 1, metadata)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/smld.jl#L29-L66">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.BasicSMLD-Union{Tuple{E}, Tuple{Vector{E}, AbstractCamera, Int64, Int64}, Tuple{Vector{E}, AbstractCamera, Int64, Int64, Dict{String, Any}}} where E&lt;:AbstractEmitter"><a class="docstring-binding" href="#SMLMData.BasicSMLD-Union{Tuple{E}, Tuple{Vector{E}, AbstractCamera, Int64, Int64}, Tuple{Vector{E}, AbstractCamera, Int64, Int64, Dict{String, Any}}} where E&lt;:AbstractEmitter"><code>SMLMData.BasicSMLD</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">BasicSMLD(emitters::Vector{E}, camera::AbstractCamera,
+          n_frames::Int, n_datasets::Int,
+          metadata::Dict{String,Any}=Dict{String,Any}()) where E&lt;:AbstractEmitter</code></pre><p>Construct a BasicSMLD from a vector of emitters and required metadata.</p><p><strong>Arguments</strong></p><ul><li><code>emitters::Vector{E}</code>: Vector of localized emitters</li><li><code>camera::AbstractCamera</code>: Camera used for acquisition</li><li><code>n_frames::Int</code>: Total number of frames in acquisition</li><li><code>n_datasets::Int</code>: Number of datasets in acquisition</li><li><code>metadata::Dict{String,Any}=Dict{String,Any}()</code>: Optional additional information</li></ul><p>The numeric type T is inferred from the camera&#39;s pixel<em>edges</em>x type.</p><p><strong>Example</strong></p><pre><code class="language-julia hljs"># Create with minimal metadata
+data = BasicSMLD(emitters, camera, 10, 1)
+
+# Create with additional metadata
+data = BasicSMLD(emitters, camera, 10, 1, Dict(
+    &quot;exposure_time&quot; =&gt; 0.1,
+    &quot;timestamp&quot; =&gt; now()
+))</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/smld.jl#L75-L102">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.Emitter2D"><a class="docstring-binding" href="#SMLMData.Emitter2D"><code>SMLMData.Emitter2D</code></a> — <span class="docstring-category">Type</span></summary><section><div><pre><code class="language-julia hljs">Emitter2D{T} &lt;: AbstractEmitter</code></pre><p>Represents a 2D emitter for SMLM simulations with position and brightness.</p><p><strong>Fields</strong></p><ul><li><code>x::T</code>: x-coordinate in microns</li><li><code>y::T</code>: y-coordinate in microns</li><li><code>photons::T</code>: number of photons emitted by the fluorophore</li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/emitters.jl#L9-L18">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.Emitter2DFit"><a class="docstring-binding" href="#SMLMData.Emitter2DFit"><code>SMLMData.Emitter2DFit</code></a> — <span class="docstring-category">Type</span></summary><section><div><pre><code class="language-julia hljs">Emitter2DFit{T} &lt;: AbstractEmitter</code></pre><p>Represents fitted 2D localization results with uncertainties and temporal/tracking information.</p><p><strong>Fields</strong></p><ul><li><code>x::T</code>: fitted x-coordinate in microns</li><li><code>y::T</code>: fitted y-coordinate in microns</li><li><code>photons::T</code>: fitted number of photons</li><li><code>bg::T</code>: fitted background in photons/pixel</li><li><code>σ_x::T</code>: uncertainty in x position in microns</li><li><code>σ_y::T</code>: uncertainty in y position in microns</li><li><code>σ_photons::T</code>: uncertainty in photon count</li><li><code>σ_bg::T</code>: uncertainty in background in photons/pixel</li><li><code>frame::Int</code>: frame number in acquisition sequence</li><li><code>dataset::Int</code>: identifier for specific acquisition/dataset</li><li><code>track_id::Int</code>: identifier for linking localizations across frames (0 = unlinked)</li><li><code>id::Int</code>: unique identifier within dataset</li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/emitters.jl#L43-L61">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.Emitter2DFit-Union{Tuple{T}, NTuple{8, T}} where T"><a class="docstring-binding" href="#SMLMData.Emitter2DFit-Union{Tuple{T}, NTuple{8, T}} where T"><code>SMLMData.Emitter2DFit</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">Emitter2DFit{T}(x, y, photons, bg, σ_x, σ_y, σ_photons, σ_bg;
+                frame=0, dataset=1, track_id=0, id=0) where T</code></pre><p>Convenience constructor for 2D localization fit results with optional identification parameters.</p><p><strong>Arguments</strong></p><p><strong>Required</strong></p><ul><li><code>x::T</code>: fitted x-coordinate in microns</li><li><code>y::T</code>: fitted y-coordinate in microns</li><li><code>photons::T</code>: fitted number of photons</li><li><code>bg::T</code>: fitted background in photons/pixel</li><li><code>σ_x::T</code>: uncertainty in x position in microns</li><li><code>σ_y::T</code>: uncertainty in y position in microns</li><li><code>σ_photons::T</code>: uncertainty in photon count</li><li><code>σ_bg::T</code>: uncertainty in background level</li></ul><p><strong>Optional Keywords</strong></p><ul><li><code>frame::Int=1</code>: frame number in acquisition sequence</li><li><code>dataset::Int=1</code>: identifier for specific acquisition/dataset</li><li><code>track_id::Int=0</code>: identifier for linking localizations across frames</li><li><code>id::Int=0</code>: unique identifier within dataset</li></ul><p><strong>Example</strong></p><pre><code class="language-julia hljs"># Create emitter with just required parameters
+emitter = Emitter2DFit{Float64}(
+    1.0, 2.0,        # x, y
+    1000.0, 10.0,    # photons, background
+    0.01, 0.01,      # σ_x, σ_y
+    50.0, 2.0        # σ_photons, σ_bg
+)
+
+# Create emitter with specific frame and dataset
+emitter = Emitter2DFit{Float64}(
+    1.0, 2.0, 1000.0, 10.0, 0.01, 0.01, 50.0, 2.0;
+    frame=5, dataset=2
+)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/emitters.jl#L116-L155">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.Emitter3D"><a class="docstring-binding" href="#SMLMData.Emitter3D"><code>SMLMData.Emitter3D</code></a> — <span class="docstring-category">Type</span></summary><section><div><pre><code class="language-julia hljs">Emitter3D{T} &lt;: AbstractEmitter</code></pre><p>Represents a 3D emitter for SMLM simulations with position and brightness.</p><p><strong>Fields</strong></p><ul><li><code>x::T</code>: x-coordinate in microns</li><li><code>y::T</code>: y-coordinate in microns</li><li><code>z::T</code>: z-coordinate in microns (axial position)</li><li><code>photons::T</code>: number of photons emitted by the fluorophore</li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/emitters.jl#L25-L35">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.Emitter3DFit"><a class="docstring-binding" href="#SMLMData.Emitter3DFit"><code>SMLMData.Emitter3DFit</code></a> — <span class="docstring-category">Type</span></summary><section><div><pre><code class="language-julia hljs">Emitter3DFit{T} &lt;: AbstractEmitter</code></pre><p>Represents fitted 3D localization results with uncertainties and temporal/tracking information.</p><p><strong>Fields</strong></p><ul><li><code>x::T</code>: fitted x-coordinate in microns</li><li><code>y::T</code>: fitted y-coordinate in microns</li><li><code>z::T</code>: fitted z-coordinate in microns</li><li><code>photons::T</code>: fitted number of photons</li><li><code>bg::T</code>: fitted background in photons/pixel</li><li><code>σ_x::T</code>: uncertainty in x position in microns</li><li><code>σ_y::T</code>: uncertainty in y position in microns</li><li><code>σ_z::T</code>: uncertainty in z position in microns</li><li><code>σ_photons::T</code>: uncertainty in photon count</li><li><code>σ_bg::T</code>: uncertainty in background in photons/pixel</li><li><code>frame::Int</code>: frame number in acquisition sequence</li><li><code>dataset::Int</code>: identifier for specific acquisition/dataset</li><li><code>track_id::Int</code>: identifier for linking localizations across frames (0 = unlinked)</li><li><code>id::Int</code>: unique identifier within dataset</li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/emitters.jl#L77-L97">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.Emitter3DFit-Union{Tuple{T}, NTuple{10, T}} where T"><a class="docstring-binding" href="#SMLMData.Emitter3DFit-Union{Tuple{T}, NTuple{10, T}} where T"><code>SMLMData.Emitter3DFit</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">Emitter3DFit{T}(x, y, z, photons, bg, σ_x, σ_y, σ_z, σ_photons, σ_bg;
+                frame=0, dataset=1, track_id=0, id=0) where T</code></pre><p>Convenience constructor for 3D localization fit results with optional identification parameters.</p><p><strong>Arguments</strong></p><p><strong>Required</strong></p><ul><li><code>x::T</code>: fitted x-coordinate in microns</li><li><code>y::T</code>: fitted y-coordinate in microns</li><li><code>z::T</code>: fitted z-coordinate in microns</li><li><code>photons::T</code>: fitted number of photons</li><li><code>bg::T</code>: fitted background in photons/pixel</li><li><code>σ_x::T</code>: uncertainty in x position in microns</li><li><code>σ_y::T</code>: uncertainty in y position in microns</li><li><code>σ_z::T</code>: uncertainty in z position in microns</li><li><code>σ_photons::T</code>: uncertainty in photon count</li><li><code>σ_bg::T</code>: uncertainty in background level</li></ul><p><strong>Optional Keywords</strong></p><ul><li><code>frame::Int=1</code>: frame number in acquisition sequence</li><li><code>dataset::Int=1</code>: identifier for specific acquisition/dataset</li><li><code>track_id::Int=0</code>: identifier for linking localizations across frames</li><li><code>id::Int=0</code>: unique identifier within dataset</li></ul><p><strong>Example</strong></p><pre><code class="language-julia hljs"># Create emitter with just required parameters
+emitter = Emitter3DFit{Float64}(
+    1.0, 2.0, -0.5,  # x, y, z
+    1000.0, 10.0,    # photons, background
+    0.01, 0.01, 0.02,# σ_x, σ_y, σ_z
+    50.0, 2.0        # σ_photons, σ_bg
+)
+
+# Create emitter with specific frame and tracking
+emitter = Emitter3DFit{Float64}(
+    1.0, 2.0, -0.5, 1000.0, 10.0, 0.01, 0.01, 0.02, 50.0, 2.0;
+    frame=5, track_id=1
+)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/emitters.jl#L163-L204">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.IdealCamera"><a class="docstring-binding" href="#SMLMData.IdealCamera"><code>SMLMData.IdealCamera</code></a> — <span class="docstring-category">Type</span></summary><section><div><pre><code class="language-julia hljs">IdealCamera{T} &lt;: AbstractCamera</code></pre><p>Represents an ideal camera with regularly spaced pixels defined by their edges in physical units (microns).</p><p><strong>Fields</strong></p><ul><li><code>pixel_edges_x::Vector{T}</code>: Physical positions of pixel edges in x direction (microns)</li><li><code>pixel_edges_y::Vector{T}</code>: Physical positions of pixel edges in y direction (microns)</li></ul><p>The edges are computed from pixel centers, where pixel (1,1) is centered at  (pixel<em>size</em>x/2, pixel<em>size</em>y/2) in physical coordinates.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/cameras.jl#L90-L101">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.IdealCamera-Union{Tuple{T}, Tuple{AbstractUnitRange, AbstractUnitRange, Tuple{T, T}}} where T&lt;:Real"><a class="docstring-binding" href="#SMLMData.IdealCamera-Union{Tuple{T}, Tuple{AbstractUnitRange, AbstractUnitRange, Tuple{T, T}}} where T&lt;:Real"><code>SMLMData.IdealCamera</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">IdealCamera(pixel_centers_x::AbstractUnitRange, pixel_centers_y::AbstractUnitRange, 
+            pixel_size::Tuple{T, T}) where T&lt;:Real</code></pre><p>Construct an IdealCamera with rectangular pixels given pixel center positions and x,y pixel sizes.</p><p><strong>Arguments</strong></p><ul><li><code>pixel_centers_x::AbstractUnitRange</code>: Range of pixel center indices in x (typically 1:N)</li><li><code>pixel_centers_y::AbstractUnitRange</code>: Range of pixel center indices in y (typically 1:M)</li><li><code>pixel_size::Tuple{T, T}</code>: Tuple of (x<em>size, y</em>size) in microns</li></ul><p><strong>Returns</strong></p><p>IdealCamera{T} where T matches the type of the pixel sizes</p><p><strong>Type Parameters</strong></p><ul><li><code>T</code>: Numeric type for all spatial measurements (e.g., Float64, Float32)</li></ul><p><strong>Example</strong></p><pre><code class="language-julia hljs"># Create a 512x256 camera with rectangular pixels (0.1 x 0.15 microns)
+cam = IdealCamera(1:512, 1:256, (0.1, 0.15))
+
+# Create with Float32 precision
+cam32 = IdealCamera(1:512, 1:256, (0.1f0, 0.15f0))</code></pre><p>Note: Pixel (1,1) is centered at (pixel<em>size[1]/2, pixel</em>size[2]/2) in physical coordinates.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/cameras.jl#L141-L168">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.IdealCamera-Union{Tuple{T}, Tuple{AbstractUnitRange, AbstractUnitRange, T}} where T&lt;:Real"><a class="docstring-binding" href="#SMLMData.IdealCamera-Union{Tuple{T}, Tuple{AbstractUnitRange, AbstractUnitRange, T}} where T&lt;:Real"><code>SMLMData.IdealCamera</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">IdealCamera(pixel_centers_x::AbstractUnitRange, pixel_centers_y::AbstractUnitRange, pixel_size::T) where T&lt;:Real</code></pre><p>Construct an IdealCamera with square pixels given pixel center positions and a scalar pixel size.</p><p><strong>Arguments</strong></p><ul><li><code>pixel_centers_x::AbstractUnitRange</code>: Range of pixel center indices in x (typically 1:N)</li><li><code>pixel_centers_y::AbstractUnitRange</code>: Range of pixel center indices in y (typically 1:M)</li><li><code>pixel_size::Real</code>: Size of pixels in microns</li></ul><p><strong>Returns</strong></p><p>IdealCamera{T} where T matches the type of pixel_size</p><p><strong>Type Parameters</strong></p><ul><li><code>T</code>: Numeric type for all spatial measurements (e.g., Float64, Float32)</li></ul><p><strong>Example</strong></p><pre><code class="language-julia hljs"># Create a 512x512 camera with 0.1 micron square pixels
+cam = IdealCamera(1:512, 1:512, 0.1)
+
+# Create with Float32 precision
+cam32 = IdealCamera(1:512, 1:512, 0.1f0)</code></pre><p>Note: Pixel (1,1) is centered at (pixel<em>size/2, pixel</em>size/2) in physical coordinates.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/cameras.jl#L107-L133">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.IdealCamera-Union{Tuple{T}, Tuple{Integer, Integer, Tuple{T, T}}} where T&lt;:Real"><a class="docstring-binding" href="#SMLMData.IdealCamera-Union{Tuple{T}, Tuple{Integer, Integer, Tuple{T, T}}} where T&lt;:Real"><code>SMLMData.IdealCamera</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">IdealCamera(n_pixels_x::Integer, n_pixels_y::Integer, pixel_size::Tuple{T, T}) where T&lt;:Real</code></pre><p>Construct an IdealCamera with rectangular pixels directly from the number of pixels and x,y pixel sizes.</p><p><strong>Arguments</strong></p><ul><li><code>n_pixels_x::Integer</code>: Number of pixels in x dimension</li><li><code>n_pixels_y::Integer</code>: Number of pixels in y dimension</li><li><code>pixel_size::Tuple{T, T}</code>: Tuple of (x<em>size, y</em>size) in microns</li></ul><p><strong>Returns</strong></p><p>IdealCamera{T} where T matches the type of the pixel sizes</p><p><strong>Example</strong></p><pre><code class="language-julia hljs"># Create a 512x256 camera with rectangular pixels (0.1 x 0.15 microns)
+cam = IdealCamera(512, 256, (0.1, 0.15))
+
+# Create with Float32 precision
+cam32 = IdealCamera(512, 256, (0.1f0, 0.15f0))</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/cameras.jl#L205-L226">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.IdealCamera-Union{Tuple{T}, Tuple{Integer, Integer, T}} where T&lt;:Real"><a class="docstring-binding" href="#SMLMData.IdealCamera-Union{Tuple{T}, Tuple{Integer, Integer, T}} where T&lt;:Real"><code>SMLMData.IdealCamera</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">IdealCamera(n_pixels_x::Integer, n_pixels_y::Integer, pixel_size::T) where T&lt;:Real</code></pre><p>Construct an IdealCamera with square pixels directly from the number of pixels and pixel size.</p><p><strong>Arguments</strong></p><ul><li><code>n_pixels_x::Integer</code>: Number of pixels in x dimension</li><li><code>n_pixels_y::Integer</code>: Number of pixels in y dimension</li><li><code>pixel_size::Real</code>: Size of pixels in microns</li></ul><p><strong>Returns</strong></p><p>IdealCamera{T} where T matches the type of pixel_size</p><p><strong>Example</strong></p><pre><code class="language-julia hljs"># Create a 512x512 camera with 0.1 micron square pixels
+cam = IdealCamera(512, 512, 0.1)
+
+# Create with Float32 precision
+cam32 = IdealCamera(512, 512, 0.1f0)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/cameras.jl#L177-L198">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.ROIBatch"><a class="docstring-binding" href="#SMLMData.ROIBatch"><code>SMLMData.ROIBatch</code></a> — <span class="docstring-category">Type</span></summary><section><div><pre><code class="language-julia hljs">ROIBatch{T,N,A,C}</code></pre><p>Batch of regions of interest for efficient parallel processing with camera context.</p><p>This type serves as the standard interface for ROI-based processing across the JuliaSMLM ecosystem. ROIs are extracted by SMLMBoxer and consumed by fitting packages like GaussMLE.</p><p><strong>Type Parameters</strong></p><ul><li><code>T</code>: Element type of ROI data (typically Float32 or Float64)</li><li><code>N</code>: Dimension of data array (always 3 for ROI batches)</li><li><code>A</code>: Array type (e.g., Array, CuArray for GPU)</li><li><code>C</code>: Camera type (AbstractCamera subtype)</li></ul><p><strong>Fields</strong></p><ul><li><code>data::A</code> - ROI image stack (roi<em>size × roi</em>size × n_rois)</li><li><code>x_corners::Vector{Int32}</code> - X (column) coordinates of ROI corners in camera coordinates</li><li><code>y_corners::Vector{Int32}</code> - Y (row) coordinates of ROI corners in camera coordinates</li><li><code>frame_indices::Vector{Int32}</code> - Frame number for each ROI (1-indexed)</li><li><code>camera::C</code> - Camera object (IdealCamera or SCMOSCamera) representing full image</li><li><code>roi_size::Int</code> - Size of each ROI in pixels (assumed square)</li></ul><p><strong>Coordinate System</strong></p><ul><li><strong>Camera coordinates</strong>: 1-indexed, (1,1) = top-left of full image</li><li><strong>ROI corners</strong>: (x, y) = (col, row) position in camera coordinates</li><li><strong>ROI data</strong>: Local coordinates, (1,1) = top-left within ROI</li><li><strong>Frame indices</strong>: 1-indexed, matching camera frame numbering</li></ul><p><strong>Constructors</strong></p><p><strong>From arrays (main constructor)</strong></p><pre><code class="language-julia hljs">ROIBatch(data::AbstractArray{T,3}, x_corners::Vector{Int32}, y_corners::Vector{Int32},
+         frame_indices::Vector{Int32}, camera::AbstractCamera)</code></pre><p><strong>From separate x/y corner vectors</strong></p><pre><code class="language-julia hljs">ROIBatch(data::AbstractArray{T,3}, x_corners::Vector, y_corners::Vector,
+         frame_indices::Vector, camera::AbstractCamera)</code></pre><p><strong>From vector of SingleROI</strong></p><pre><code class="language-julia hljs">ROIBatch(rois::Vector{SingleROI{T}}, camera::AbstractCamera)</code></pre><p><strong>Validation</strong></p><ul><li>ROIs must be square (data dimensions 1 == dimension 2)</li><li>x<em>corners must have length n</em>rois</li><li>y<em>corners must have length n</em>rois</li><li>Frame indices must have length n_rois</li><li>All arrays must have consistent n_rois</li></ul><p><strong>Indexing and Iteration</strong></p><pre><code class="language-julia hljs">batch = ROIBatch(data, x_corners, y_corners, frames, camera)
+
+# Get single ROI
+roi = batch[5]  # Returns SingleROI{T}
+
+# Iterate over all ROIs
+for roi in batch
+    process(roi.data, roi.corner, roi.frame_idx)
+end
+
+# Length
+n = length(batch)  # Number of ROIs</code></pre><p><strong>GPU Support</strong></p><p>Supports GPU transfer via Adapt.jl (KernelAbstractions.jl):</p><pre><code class="language-julia hljs">using CUDA
+batch_gpu = adapt(CuArray, batch)  # Transfer data to GPU
+# Camera stays on host (contains metadata)</code></pre><p><strong>Example</strong></p><pre><code class="language-julia hljs">using SMLMData
+using StaticArrays
+
+# Create camera
+camera = IdealCamera(512, 512, 0.1)  # 512×512 pixels, 0.1μm/pixel
+
+# Create ROI batch (e.g., from SMLMBoxer.getboxes)
+n_rois = 100
+roi_size = 11
+data = rand(Float32, roi_size, roi_size, n_rois)
+x_corners = rand(Int32(1):Int32(500), n_rois)
+y_corners = rand(Int32(1):Int32(500), n_rois)
+frames = rand(Int32(1):Int32(10), n_rois)
+
+batch = ROIBatch(data, x_corners, y_corners, frames, camera)
+
+# Access
+println(&quot;Batch contains $(length(batch)) ROIs&quot;)
+first_roi = batch[1]
+println(&quot;First ROI at position: $(first_roi.corner)&quot;)</code></pre><p><strong>See Also</strong></p><ul><li><a href="../#SingleROI"><code>SingleROI</code></a> - Individual ROI type</li><li><a href="../#IdealCamera"><code>IdealCamera</code></a>, <a href="../#SCMOSCamera"><code>SCMOSCamera</code></a> - Camera types</li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/roi_batch.jl#L48-L154">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.ROIBatch-Union{Tuple{C}, Tuple{T}, Tuple{AbstractArray{T, 3}, Vector, Vector, Vector, C}} where {T, C&lt;:AbstractCamera}"><a class="docstring-binding" href="#SMLMData.ROIBatch-Union{Tuple{C}, Tuple{T}, Tuple{AbstractArray{T, 3}, Vector, Vector, Vector, C}} where {T, C&lt;:AbstractCamera}"><code>SMLMData.ROIBatch</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">ROIBatch(data, x_corners, y_corners, frame_indices, camera)</code></pre><p>Construct ROIBatch from separate x and y corner vectors.</p><p><strong>Arguments</strong></p><ul><li><code>data::AbstractArray{T,3}</code> - ROI stack (roi<em>size × roi</em>size × n_rois)</li><li><code>x_corners::Vector</code> - X (column) coordinates of ROI corners</li><li><code>y_corners::Vector</code> - Y (row) coordinates of ROI corners</li><li><code>frame_indices::Vector</code> - Frame number for each ROI</li><li><code>camera::AbstractCamera</code> - Camera object for full image</li></ul><p><strong>Example</strong></p><pre><code class="language-julia hljs">batch = ROIBatch(data, x_corners, y_corners, frames, camera)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/roi_batch.jl#L178-L194">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.ROIBatch-Union{Tuple{C}, Tuple{T}, Tuple{Array{SingleROI{T}, 1}, C}} where {T, C&lt;:AbstractCamera}"><a class="docstring-binding" href="#SMLMData.ROIBatch-Union{Tuple{C}, Tuple{T}, Tuple{Array{SingleROI{T}, 1}, C}} where {T, C&lt;:AbstractCamera}"><code>SMLMData.ROIBatch</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">ROIBatch(rois::Vector{SingleROI{T}}, camera)</code></pre><p>Construct ROIBatch from vector of SingleROI objects.</p><p><strong>Arguments</strong></p><ul><li><code>rois::Vector{SingleROI{T}}</code> - Vector of individual ROIs</li><li><code>camera::AbstractCamera</code> - Camera object for full image</li></ul><p><strong>Returns</strong></p><p>ROIBatch{T,3,Array{T,3},typeof(camera)}</p><p><strong>Example</strong></p><pre><code class="language-julia hljs">rois = [SingleROI(rand(Float32, 11, 11), SVector{2,Int32}(i*10, i*10), Int32(i))
+        for i in 1:100]
+batch = ROIBatch(rois, camera)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/roi_batch.jl#L201-L219">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.SCMOSCamera"><a class="docstring-binding" href="#SMLMData.SCMOSCamera"><code>SMLMData.SCMOSCamera</code></a> — <span class="docstring-category">Type</span></summary><section><div><pre><code class="language-julia hljs">SCMOSCamera{T&lt;:Real} &lt;: AbstractCamera</code></pre><p>sCMOS camera with pixel-dependent calibration parameters matching spec sheets.</p><p><strong>Fields</strong></p><ul><li><code>pixel_edges_x::Vector{T}</code>: Physical pixel edges in x (μm)</li><li><code>pixel_edges_y::Vector{T}</code>: Physical pixel edges in y (μm)</li><li><code>offset::Union{T, Matrix{T}}</code>: Dark level (ADU)</li><li><code>gain::Union{T, Matrix{T}}</code>: Conversion gain (e⁻/ADU)</li><li><code>readnoise::Union{T, Matrix{T}}</code>: Read noise (e⁻ rms)</li><li><code>qe::Union{T, Matrix{T}}</code>: Quantum efficiency (0-1)</li></ul><p><strong>Units</strong></p><p>Calibration parameters follow camera specification sheet conventions:</p><ul><li><p><strong>offset</strong>: ADU (analog-to-digital units)</p><ul><li>Typical values: 100-500 ADU</li><li>Dark level with no illumination</li></ul></li><li><p><strong>gain</strong>: e⁻/ADU (electrons per ADU)</p><ul><li>Typical values: 0.1-2.0 e⁻/ADU depending on readout mode</li><li>Example: ORCA-Flash4.0: 0.46 e⁻/ADU (12-bit), 0.11 e⁻/ADU (16-bit)</li></ul></li><li><p><strong>readnoise</strong>: e⁻ rms (electrons, root-mean-square)</p><ul><li>Typical values: 0.3-5.0 e⁻ rms</li><li>Example: ORCA-Flash4.0 V3: 1.6 e⁻ rms</li><li>Example: ORCA-Quest qCMOS: 0.27 e⁻ rms</li></ul></li><li><p><strong>qe</strong>: dimensionless (0 to 1)</p><ul><li>Typical values: 0.5-0.95 at peak wavelength</li><li>Example: ORCA-Flash4.0 V2: 0.72 at 550nm</li><li>Example: ORCA-Fusion BT: 0.95 (back-thinned)</li></ul></li></ul><p><strong>Physical Signal Chain</strong></p><p>Photons → Electrons → ADU:</p><pre><code class="nohighlight hljs">Incident photons (N)
+  ↓ [× QE]
+Photoelectrons (N × QE)
+  ↓ [+ readnoise (Gaussian)]
+Signal electrons (N × QE + ε), where ε ~ N(0, readnoise²)
+  ↓ [÷ gain, + offset]
+ADU readout = (N × QE + ε)/gain + offset</code></pre><p><strong>Scalar vs Matrix Parameters</strong></p><p>Each calibration parameter can be:</p><ul><li><strong>Scalar</strong> (T): Uniform across sensor (approximation or post-calibration)</li><li><strong>Matrix</strong> (Matrix{T}): Per-pixel calibration map (size must match pixel grid)</li></ul><p>Use matrices for:</p><ul><li>Precision SMLM (2-5% variations can affect results)</li><li>Quantitative imaging</li><li>Artifact correction</li></ul><p>Use scalars for:</p><ul><li>Quick analysis</li><li>Post-calibrated data</li><li>Uniform approximation</li></ul><p><strong>Constructors</strong></p><pre><code class="language-julia hljs"># Minimal - most common case (requires readnoise, others default to 0, 1, 1)
+cam = SCMOSCamera(512, 512, 0.1, 1.6)
+
+# With additional parameters
+cam = SCMOSCamera(512, 512, 0.1, readnoise_map,
+                  offset=100.0, gain=0.46, qe=0.72)
+
+# Custom edges (advanced)
+cam = SCMOSCamera(custom_edges_x, custom_edges_y,
+                  readnoise=noise_map, gain=gain_map)</code></pre><p><strong>Examples</strong></p><pre><code class="language-julia hljs"># Example 1: From spec sheet (ORCA-Flash4.0 V3, 12-bit mode)
+cam = SCMOSCamera(
+    2048, 2048, 0.065,  # 2048×2048 pixels, 65nm pixel size
+    1.6,                 # From spec: 1.6 e⁻ rms readnoise
+    offset = 100.0,      # Typical offset
+    gain = 0.46,         # From spec: 0.46 e⁻/ADU
+    qe = 0.72            # 72% QE at 550nm
+)
+
+# Example 2: With calibration maps (precision SMLM)
+readnoise_map = load(&quot;camera_noise.mat&quot;)  # 512×512 measured values
+gain_map = load(&quot;camera_gain.mat&quot;)
+qe_map = load(&quot;camera_qe.mat&quot;)
+
+cam = SCMOSCamera(
+    512, 512, 0.1, readnoise_map,
+    gain = gain_map,
+    qe = qe_map
+)
+
+# Example 3: Minimal (variance-only approximation)
+# Common when you only have noise map, assume ideal otherwise
+cam = SCMOSCamera(512, 512, 0.1, readnoise_map)
+
+# Example 4: Ultra-low noise camera (ORCA-Quest)
+cam = SCMOSCamera(
+    2304, 4096, 0.0044,  # 4.4μm pixels
+    0.27,                 # Incredible 0.27 e⁻ rms!
+    offset = 100.0,
+    gain = 0.5,
+    qe = 0.85
+)
+
+# Example 5: Rectangular pixels
+cam = SCMOSCamera(512, 256, (0.1, 0.15), 1.8)
+
+# Example 6: Mixed scalar/matrix parameters
+cam = SCMOSCamera(
+    512, 512, 0.1, readnoise_map,  # Per-pixel noise
+    offset = 100.0,                 # Uniform offset
+    gain = 0.5,                     # Uniform gain
+    qe = qe_map                     # Per-pixel QE
+)</code></pre><p><strong>See Also</strong></p><p><a href="../#IdealCamera"><code>IdealCamera</code></a> for Poisson-only noise (readnoise=0)</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/cameras.jl#L270-L399">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.SCMOSCamera-Union{Tuple{T}, Tuple{Integer, Integer, Union{Tuple{T, T}, T}, Union{Matrix{T}, T}}} where T&lt;:Real"><a class="docstring-binding" href="#SMLMData.SCMOSCamera-Union{Tuple{T}, Tuple{Integer, Integer, Union{Tuple{T, T}, T}, Union{Matrix{T}, T}}} where T&lt;:Real"><code>SMLMData.SCMOSCamera</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">SCMOSCamera(nx, ny, pixel_size, readnoise; offset=0, gain=1, qe=1)</code></pre><p>Construct sCMOS camera from pixel dimensions and calibration parameters.</p><p><strong>Arguments</strong></p><ul><li><code>nx::Integer</code>: Number of pixels in x</li><li><code>ny::Integer</code>: Number of pixels in y</li><li><code>pixel_size::Union{T, Tuple{T,T}}</code>: Pixel size in μm (scalar or (x<em>size, y</em>size))</li><li><code>readnoise::Union{T, Matrix{T}}</code>: Read noise in e⁻ rms (required)</li></ul><p><strong>Keywords</strong></p><ul><li><code>offset::Union{T, Matrix{T}} = 0</code>: Dark level in ADU</li><li><code>gain::Union{T, Matrix{T}} = 1</code>: Conversion gain in e⁻/ADU</li><li><code>qe::Union{T, Matrix{T}} = 1</code>: Quantum efficiency (0-1)</li></ul><p>Each parameter can be scalar (uniform) or Matrix{T} with size (nx, ny).</p><p><strong>Examples</strong></p><pre><code class="language-julia hljs"># Minimal: just readnoise (assumes calibrated data: offset=0, gain=1, qe=1)
+cam = SCMOSCamera(512, 512, 0.1, 1.6)
+
+# From spec sheet (ORCA-Flash4.0 V3)
+cam = SCMOSCamera(2048, 2048, 0.065, 1.6, offset=100.0, gain=0.46, qe=0.72)
+
+# With calibration maps
+cam = SCMOSCamera(512, 512, 0.1, readnoise_map,
+                  offset=offset_map, gain=gain_map, qe=qe_map)
+
+# Rectangular pixels
+cam = SCMOSCamera(512, 256, (0.1, 0.15), 1.8)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/cameras.jl#L409-L442">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.SCMOSCamera-Union{Tuple{T}, Tuple{Vector{T}, Vector{T}}} where T&lt;:Real"><a class="docstring-binding" href="#SMLMData.SCMOSCamera-Union{Tuple{T}, Tuple{Vector{T}, Vector{T}}} where T&lt;:Real"><code>SMLMData.SCMOSCamera</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">SCMOSCamera(pixel_edges_x, pixel_edges_y; offset=0, gain=1, readnoise, qe=1)</code></pre><p>Construct sCMOS camera with custom pixel edge positions.</p><p><strong>Arguments</strong></p><ul><li><code>pixel_edges_x::Vector{T}</code>: Pixel edge positions in x (μm), length nx+1</li><li><code>pixel_edges_y::Vector{T}</code>: Pixel edge positions in y (μm), length ny+1</li></ul><p><strong>Keywords</strong></p><ul><li><code>readnoise::Union{T, Matrix{T}}</code>: Read noise in e⁻ rms (required)</li><li><code>offset::Union{T, Matrix{T}} = 0</code>: Dark level in ADU</li><li><code>gain::Union{T, Matrix{T}} = 1</code>: Conversion gain in e⁻/ADU</li><li><code>qe::Union{T, Matrix{T}} = 1</code>: Quantum efficiency (0-1)</li></ul><p>Matrix parameters must have size (nx, ny) where nx = length(pixel<em>edges</em>x) - 1.</p><p><strong>Example</strong></p><pre><code class="language-julia hljs"># Custom non-uniform pixel grid
+edges_x = [0.0, 0.1, 0.21, 0.33, 0.46]  # Non-uniform spacing
+edges_y = [0.0, 0.1, 0.2, 0.3]
+cam = SCMOSCamera(edges_x, edges_y, readnoise=1.5, gain=0.5)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/cameras.jl#L471-L495">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.SMLD"><a class="docstring-binding" href="#SMLMData.SMLD"><code>SMLMData.SMLD</code></a> — <span class="docstring-category">Type</span></summary><section><div><pre><code class="language-julia hljs">SMLD</code></pre><p>Deprecated alias for <code>AbstractSMLD</code>. Use <code>AbstractSMLD</code> instead. This alias is provided for backward compatibility and will be removed in v1.0.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/smld.jl#L21-L26">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.SingleROI"><a class="docstring-binding" href="#SMLMData.SingleROI"><code>SMLMData.SingleROI</code></a> — <span class="docstring-category">Type</span></summary><section><div><pre><code class="language-julia hljs">SingleROI{T}</code></pre><p>Single region of interest (ROI) with location and frame context.</p><p><strong>Fields</strong></p><ul><li><code>data::Matrix{T}</code> - ROI image data (roi<em>size × roi</em>size pixels)</li><li><code>corner::SVector{2,Int32}</code> - ROI corner position (x, y) = (col, row) in camera pixels (1-indexed)</li><li><code>frame_idx::Int32</code> - Frame number in image stack (1-indexed)</li></ul><p><strong>Coordinate System</strong></p><ul><li><strong>Camera coordinates</strong>: 1-indexed, (1,1) is top-left pixel of full image</li><li><strong>Corner</strong>: (x, y) = (col, row) position where top-left of ROI starts</li><li><strong>ROI data</strong>: (1,1) is top-left pixel within the ROI itself</li></ul><p><strong>Example</strong></p><pre><code class="language-julia hljs"># Create single ROI
+roi_data = rand(Float32, 11, 11)  # 11×11 pixel ROI
+roi = SingleROI(roi_data, SVector{2,Int32}(100, 200), Int32(5))
+
+# Access fields
+println(&quot;ROI at camera position: &quot;, roi.corner)  # (100, 200) = (col, row)
+println(&quot;From frame: &quot;, roi.frame_idx)  # Frame 5</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/roi_batch.jl#L12-L37">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.SmiteSMD"><a class="docstring-binding" href="#SMLMData.SmiteSMD"><code>SMLMData.SmiteSMD</code></a> — <span class="docstring-category">Type</span></summary><section><div><pre><code class="language-julia hljs">SmiteSMD</code></pre><p>Helper structure for loading Smite SMD .mat files.</p><p><strong>Fields</strong></p><ul><li><code>filepath::String</code>: Path to the directory containing the .mat file</li><li><code>filename::String</code>: Name of the .mat file</li><li><code>varname::String</code>: Variable name in the .mat file (default: &quot;SMD&quot;)</li></ul><p><strong>Example</strong></p><pre><code class="language-julia hljs"># Load from default &quot;SMD&quot; variable
+smd = SmiteSMD(&quot;path/to/data&quot;, &quot;localizations.mat&quot;)
+
+# Load from custom variable name
+smd = SmiteSMD(&quot;path/to/data&quot;, &quot;localizations.mat&quot;, &quot;CustomSMD&quot;)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/io/smite/types.jl#L1-L19">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.SmiteSMLD"><a class="docstring-binding" href="#SMLMData.SmiteSMLD"><code>SMLMData.SmiteSMLD</code></a> — <span class="docstring-category">Type</span></summary><section><div><pre><code class="language-julia hljs">SmiteSMLD{T,E&lt;:AbstractEmitter} &lt;: AbstractSMLD</code></pre><p>SMLD type compatible with the Smite SMD (Single Molecule Data) format.</p><p><strong>Fields</strong></p><ul><li><code>emitters::Vector{E}</code>: Vector of localized emitters</li><li><code>camera::AbstractCamera</code>: Camera used for acquisition</li><li><code>n_frames::Int</code>: Total number of frames in acquisition</li><li><code>n_datasets::Int</code>: Number of datasets in the acquisition</li><li><code>metadata::Dict{String,Any}</code>: Additional dataset information</li></ul><p><strong>Type Parameters</strong></p><ul><li><code>T</code>: Numeric type for coordinates (typically Float64)</li><li><code>E</code>: Concrete emitter type (typically Emitter2DFit or Emitter3DFit)</li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/io/smite/types.jl#L41-L56">source</a></section></details></article><article><details class="docstring" open="true"><summary id="Adapt.adapt_structure-Tuple{Any, ROIBatch}"><a class="docstring-binding" href="#Adapt.adapt_structure-Tuple{Any, ROIBatch}"><code>Adapt.adapt_structure</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">Adapt.adapt_structure(to, batch::ROIBatch)</code></pre><p>Adapt ROIBatch for GPU execution via KernelAbstractions.jl/CUDA.jl.</p><p>Transfers data, x<em>corners, y</em>corners, and frame_indices to the target device. Camera remains on the host (contains metadata and variance maps).</p><p><strong>Example</strong></p><pre><code class="language-julia hljs">using CUDA
+batch_gpu = adapt(CuArray, batch)
+# Process on GPU...
+batch_cpu = adapt(Array, batch_gpu)  # Transfer back</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/roi_batch.jl#L291-L306">source</a></section></details></article><article><details class="docstring" open="true"><summary id="Base.getindex-Tuple{ROIBatch, Int64}"><a class="docstring-binding" href="#Base.getindex-Tuple{ROIBatch, Int64}"><code>Base.getindex</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">getindex(batch::ROIBatch, i::Int) -&gt; SingleROI</code></pre><p>Get the i-th ROI from the batch.</p><p>Returns a SingleROI containing the data, corner position, and frame index.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/roi_batch.jl#L248-L254">source</a></section></details></article><article><details class="docstring" open="true"><summary id="Base.iterate"><a class="docstring-binding" href="#Base.iterate"><code>Base.iterate</code></a> — <span class="docstring-category">Function</span></summary><section><div><pre><code class="language-julia hljs">iterate(batch::ROIBatch, [state]) -&gt; Union{Nothing, Tuple{SingleROI, Int}}</code></pre><p>Iterate over ROIs in the batch.</p><p><strong>Example</strong></p><pre><code class="language-julia hljs">for roi in batch
+    println(&quot;Processing ROI at &quot;, roi.corner)
+end</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/roi_batch.jl#L275-L286">source</a></section></details></article><article><details class="docstring" open="true"><summary id="Base.iterate-Tuple{AbstractSMLD}"><a class="docstring-binding" href="#Base.iterate-Tuple{AbstractSMLD}"><code>Base.iterate</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">Base.iterate(smld::AbstractSMLD)
+Base.iterate(smld::AbstractSMLD, state)</code></pre><p>Enable iteration over emitters in an SMLD object.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/smld.jl#L119-L124">source</a></section></details></article><article><details class="docstring" open="true"><summary id="Base.length-Tuple{AbstractSMLD}"><a class="docstring-binding" href="#Base.length-Tuple{AbstractSMLD}"><code>Base.length</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">Base.length(smld::AbstractSMLD)</code></pre><p>Return the number of emitters in the SMLD object.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/smld.jl#L111-L115">source</a></section></details></article><article><details class="docstring" open="true"><summary id="Base.length-Tuple{ROIBatch}"><a class="docstring-binding" href="#Base.length-Tuple{ROIBatch}"><code>Base.length</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">length(batch::ROIBatch) -&gt; Int</code></pre><p>Number of ROIs in the batch.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/roi_batch.jl#L261-L265">source</a></section></details></article><article><details class="docstring" open="true"><summary id="Base.show-Union{Tuple{C}, Tuple{A}, Tuple{N}, Tuple{T}, Tuple{IO, MIME{Symbol(&quot;text/plain&quot;)}, ROIBatch{T, N, A, C}}} where {T, N, A, C}"><a class="docstring-binding" href="#Base.show-Union{Tuple{C}, Tuple{A}, Tuple{N}, Tuple{T}, Tuple{IO, MIME{Symbol(&quot;text/plain&quot;)}, ROIBatch{T, N, A, C}}} where {T, N, A, C}"><code>Base.show</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">show(io::IO, ::MIME&quot;text/plain&quot;, batch::ROIBatch)</code></pre><p>Detailed display of ROIBatch.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/roi_batch.jl#L352-L356">source</a></section></details></article><article><details class="docstring" open="true"><summary id="Base.show-Union{Tuple{T}, Tuple{IO, MIME{Symbol(&quot;text/plain&quot;)}, SingleROI{T}}} where T"><a class="docstring-binding" href="#Base.show-Union{Tuple{T}, Tuple{IO, MIME{Symbol(&quot;text/plain&quot;)}, SingleROI{T}}} where T"><code>Base.show</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">show(io::IO, ::MIME&quot;text/plain&quot;, roi::SingleROI)</code></pre><p>Detailed display of SingleROI.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/roi_batch.jl#L330-L334">source</a></section></details></article><article><details class="docstring" open="true"><summary id="Base.show-Union{Tuple{T}, Tuple{IO, ROIBatch{T, N, A} where {N, A&lt;:AbstractArray{T, N}}}} where T"><a class="docstring-binding" href="#Base.show-Union{Tuple{T}, Tuple{IO, ROIBatch{T, N, A} where {N, A&lt;:AbstractArray{T, N}}}} where T"><code>Base.show</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">show(io::IO, batch::ROIBatch)</code></pre><p>Compact display of ROIBatch.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/roi_batch.jl#L342-L346">source</a></section></details></article><article><details class="docstring" open="true"><summary id="Base.show-Union{Tuple{T}, Tuple{IO, SingleROI{T}}} where T"><a class="docstring-binding" href="#Base.show-Union{Tuple{T}, Tuple{IO, SingleROI{T}}} where T"><code>Base.show</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">show(io::IO, roi::SingleROI)</code></pre><p>Compact display of SingleROI.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/roi_batch.jl#L319-L323">source</a></section></details></article><article><details class="docstring" open="true"><summary id="Base.size-Tuple{ROIBatch}"><a class="docstring-binding" href="#Base.size-Tuple{ROIBatch}"><code>Base.size</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">size(batch::ROIBatch) -&gt; Tuple{Int}</code></pre><p>Size of the batch (returns tuple for consistency with iteration protocol).</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/roi_batch.jl#L268-L272">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.api_overview-Tuple{}"><a class="docstring-binding" href="#SMLMData.api_overview-Tuple{}"><code>SMLMData.api_overview</code></a> — <span class="docstring-category">Method</span></summary><section><div><p><strong>SMLMData.jl API Overview</strong></p><p>This guide provides a structured overview of the SMLMData.jl package designed for Single Molecule Localization Microscopy (SMLM) data handling in Julia.</p><p><strong>Why This Overview Exists</strong></p><p><strong>For Humans</strong></p><ul><li>Provides a <strong>concise reference</strong> without diving into full documentation</li><li>Offers <strong>quick-start examples</strong> for common use cases</li><li>Shows <strong>relevant patterns</strong> more clearly than individual docstrings</li><li>Creates an <strong>at-a-glance understanding</strong> of package capabilities</li></ul><p><strong>For AI Assistants</strong></p><ul><li>Enables <strong>better code generation</strong> with correct API patterns</li><li>Provides <strong>structured context</strong> about type hierarchies and relationships</li><li>Offers <strong>consistent examples</strong> to learn from when generating code</li><li>Helps avoid <strong>common pitfalls</strong> or misunderstandings about the API</li></ul><p><strong>Ecosystem Role</strong></p><p>SMLMData is the <strong>core types package</strong> for the <a href="https://github.com/JuliaSMLM">JuliaSMLM</a> ecosystem. Other packages depend on SMLMData and re-export its types, so <strong>you rarely need to import SMLMData directly</strong>:</p><pre><code class="language-julia hljs">using GaussMLE      # Re-exports ROIBatch, camera types, etc.
+using SMLMAnalysis  # Re-exports all SMLMData types for analysis workflows</code></pre><p>Direct <code>using SMLMData</code> is primarily for package developers, standalone data manipulation, or learning the type system.</p><p><strong>Key Concepts</strong></p><ul><li><strong>Emitters</strong>: Individual fluorophore localizations (2D or 3D)</li><li><strong>Camera</strong>: Defines pixel geometry and coordinate system</li><li><strong>AbstractSMLD</strong>: Container holding emitters and camera information</li><li><strong>Coordinates</strong>: All spatial coordinates are in <strong>microns</strong></li><li><strong>Coordinate System</strong>:<ul><li>Physical space: (0,0) at top-left corner of camera</li><li>Pixel space: (1,1) at center of top-left pixel</li></ul></li></ul><p><strong>Type Hierarchy</strong></p><pre><code class="nohighlight hljs">AbstractEmitter                   # Base for all emitter types
+├── Emitter2D{T}                  # Basic 2D emitters
+├── Emitter3D{T}                  # Basic 3D emitters
+├── Emitter2DFit{T}               # 2D emitters with fit results
+└── Emitter3DFit{T}               # 3D emitters with fit results
+
+AbstractCamera                    # Base for all camera types
+├── IdealCamera{T}                # Camera with regular pixel grid (Poisson noise only)
+└── SCMOSCamera{T}                # sCMOS camera with pixel-dependent calibration
+
+ROI Batch Types                   # For batched ROI processing
+├── SingleROI{T}                  # Single ROI with location context
+└── ROIBatch{T,N,A,C}             # Batch of ROIs for parallel processing
+
+AbstractSMLD                      # Base for data containers
+├── BasicSMLD{T,E}                # General-purpose container
+└── SmiteSMLD{T,E}                # SMITE-compatible container</code></pre><p><strong>Essential Types</strong></p><p><strong>Emitter Types</strong></p><pre><code class="language-julia hljs"># Basic 2D emitter
+mutable struct Emitter2D{T} &lt;: AbstractEmitter
+    x::T           # x-coordinate in microns
+    y::T           # y-coordinate in microns
+    photons::T     # number of photons emitted
+end
+
+# Basic 3D emitter
+mutable struct Emitter3D{T} &lt;: AbstractEmitter
+    x::T           # x-coordinate in microns
+    y::T           # y-coordinate in microns
+    z::T           # z-coordinate in microns
+    photons::T     # number of photons emitted
+end
+
+# 2D emitter with fit results
+mutable struct Emitter2DFit{T} &lt;: AbstractEmitter
+    x::T           # fitted x-coordinate in microns
+    y::T           # fitted y-coordinate in microns
+    photons::T     # fitted number of photons
+    bg::T          # fitted background in photons/pixel
+    σ_x::T         # uncertainty in x position in microns
+    σ_y::T         # uncertainty in y position in microns
+    σ_photons::T   # uncertainty in photon count
+    σ_bg::T        # uncertainty in background level
+    frame::Int     # frame number in acquisition sequence
+    dataset::Int   # identifier for specific acquisition/dataset
+    track_id::Int  # identifier for linking localizations across frames
+    id::Int        # unique identifier within dataset
+end
+
+# 3D emitter with fit results
+mutable struct Emitter3DFit{T} &lt;: AbstractEmitter
+    x::T           # fitted x-coordinate in microns
+    y::T           # fitted y-coordinate in microns
+    z::T           # fitted z-coordinate in microns
+    photons::T     # fitted number of photons
+    bg::T          # fitted background in photons/pixel
+    σ_x::T         # uncertainty in x position in microns
+    σ_y::T         # uncertainty in y position in microns
+    σ_z::T         # uncertainty in z position in microns
+    σ_photons::T   # uncertainty in photon count
+    σ_bg::T        # uncertainty in background level
+    frame::Int     # frame number in acquisition sequence
+    dataset::Int   # identifier for specific acquisition/dataset
+    track_id::Int  # identifier for linking localizations across frames
+    id::Int        # unique identifier within dataset
+end</code></pre><p><strong>Emitter Constructor Examples</strong></p><pre><code class="language-julia hljs"># Basic 2D emitter
+emitter_2d = Emitter2D{Float64}(
+    1.5,      # x-coordinate in microns
+    2.3,      # y-coordinate in microns  
+    1000.0    # number of photons emitted
+)
+
+# Basic 3D emitter
+emitter_3d = Emitter3D{Float64}(
+    1.5,      # x-coordinate in microns
+    2.3,      # y-coordinate in microns
+    -0.5,     # z-coordinate in microns (negative = below focal plane)
+    1000.0    # number of photons emitted
+)
+
+# 2D emitter with fit results using convenience constructor
+emitter_2d_fit = Emitter2DFit{Float64}(
+    1.5, 2.3,        # x, y coordinates in microns
+    1000.0, 10.0,    # photons detected, background photons/pixel
+    0.01, 0.01,      # σ_x, σ_y: position uncertainties in microns
+    50.0, 2.0;       # σ_photons, σ_bg: photon count uncertainties
+    frame=5,         # frame number in acquisition (1-based, default=1)
+    dataset=1,       # dataset identifier for multi-acquisition experiments
+    track_id=2,      # tracking ID for linked localizations (default=0 = unlinked)
+    id=42            # unique identifier within this dataset (default=0)
+)</code></pre><p><strong>Camera Types</strong></p><pre><code class="language-julia hljs"># Ideal camera with uniform pixel grid (Poisson noise only)
+struct IdealCamera{T} &lt;: AbstractCamera
+    pixel_edges_x::Vector{T}  # pixel edges in x
+    pixel_edges_y::Vector{T}  # pixel edges in y
+end
+
+# sCMOS camera with pixel-dependent calibration parameters
+struct SCMOSCamera{T} &lt;: AbstractCamera
+    pixel_edges_x::Vector{T}      # pixel edges in x
+    pixel_edges_y::Vector{T}      # pixel edges in y
+    offset::Union{T, Matrix{T}}   # dark level (ADU)
+    gain::Union{T, Matrix{T}}     # conversion gain (e⁻/ADU)
+    readnoise::Union{T, Matrix{T}}  # read noise (e⁻ rms)
+    qe::Union{T, Matrix{T}}       # quantum efficiency (0-1)
+end</code></pre><p><strong>Camera Constructor Examples</strong></p><pre><code class="language-julia hljs"># IdealCamera: Create a camera with 512x512 pixels, each 100nm (0.1μm) in size
+# Convenience constructor (most common)
+cam = IdealCamera(512, 512, 0.1)
+
+# Explicit constructor using pixel center ranges
+cam_explicit = IdealCamera(1:512, 1:512, 0.1)
+
+# For non-square pixels, specify different x and y sizes
+cam_rect = IdealCamera(512, 512, (0.1, 0.12))
+
+# SCMOSCamera: Create with readnoise specification (matching spec sheets)
+# Minimal (uniform readnoise, assumes offset=0, gain=1, qe=1)
+cam_scmos = SCMOSCamera(512, 512, 0.1, 1.6)  # 1.6 e⁻ rms readnoise
+
+# From camera spec sheet (e.g., ORCA-Flash4.0 V3)
+cam_flash = SCMOSCamera(
+    2048, 2048, 0.065,  # 2048×2048 pixels, 65nm pixel size
+    1.6,                # 1.6 e⁻ rms readnoise from spec
+    offset = 100.0,     # typical dark level
+    gain = 0.46,        # 0.46 e⁻/ADU from spec
+    qe = 0.72           # 72% QE at 550nm
+)
+
+# With per-pixel calibration maps (precision SMLM)
+readnoise_map = load(&quot;camera_noise.mat&quot;)  # 512×512 measured values
+gain_map = load(&quot;camera_gain.mat&quot;)
+qe_map = load(&quot;camera_qe.mat&quot;)
+cam_calibrated = SCMOSCamera(512, 512, 0.1, readnoise_map,
+                              gain=gain_map, qe=qe_map)
+
+# Mixed scalar and matrix parameters
+cam_mixed = SCMOSCamera(
+    512, 512, 0.1, readnoise_map,  # Per-pixel noise
+    offset = 100.0,                 # Uniform offset
+    gain = 0.5,                     # Uniform gain
+    qe = qe_map                     # Per-pixel QE
+)</code></pre><p><strong>ROI Batch Types</strong></p><p>ROI batch types provide efficient storage and processing of image regions across the JuliaSMLM ecosystem.</p><pre><code class="language-julia hljs"># Single ROI with location context
+struct SingleROI{T}
+    data::Matrix{T}              # ROI image data (roi_size × roi_size)
+    corner::SVector{2,Int32}     # (x, y) = (col, row) corner position (1-indexed)
+    frame_idx::Int32             # Frame number (1-indexed)
+end
+
+# Batch of ROIs for parallel processing
+struct ROIBatch{T,N,A&lt;:AbstractArray{T,N},C&lt;:AbstractCamera}
+    data::A                      # ROI stack (roi_size × roi_size × n_rois)
+    x_corners::Vector{Int32}     # X (column) coordinates of ROI corners
+    y_corners::Vector{Int32}     # Y (row) coordinates of ROI corners
+    frame_indices::Vector{Int32} # Frame number for each ROI
+    camera::C                    # Camera object (IdealCamera or SCMOSCamera)
+    roi_size::Int                # Size of each ROI (square)
+end</code></pre><p><strong>ROI Batch Constructor Examples</strong></p><pre><code class="language-julia hljs"># From separate x/y corner vectors (main constructor)
+camera = IdealCamera(512, 512, 0.1)
+data = rand(Float32, 11, 11, 100)  # 100 ROIs of 11×11 pixels
+x_corners = rand(Int32(1):Int32(500), 100)
+y_corners = rand(Int32(1):Int32(500), 100)
+frame_indices = rand(Int32(1):Int32(50), 100)
+batch = ROIBatch(data, x_corners, y_corners, frame_indices, camera)
+
+# From vector of SingleROI
+rois = [SingleROI(rand(Float32, 11, 11), SVector{2,Int32}(i*10, i*10), Int32(i))
+        for i in 1:100]
+batch = ROIBatch(rois, camera)
+
+# Indexing and iteration
+roi = batch[5]              # Get single ROI
+for roi in batch
+    process(roi.data)       # Iterate over all ROIs
+end
+
+# GPU adaptation (via Adapt.jl)
+using CUDA
+batch_gpu = adapt(CuArray, batch)  # Transfer to GPU</code></pre><p><strong>Coordinate System:</strong></p><ul><li><strong>Camera coordinates</strong>: 1-indexed, (1,1) = top-left of full image</li><li><strong>ROI corners</strong>: (x, y) = (col, row) position in camera coordinates</li><li><strong>ROI data</strong>: Local coordinates, (1,1) = top-left within ROI</li><li><strong>Frame indices</strong>: 1-indexed, matching camera frame numbering</li></ul><p><strong>Typical Workflow:</strong></p><ol><li>SMLMBoxer extracts ROIs → <code>ROIBatch</code></li><li>GaussMLE fits ROIs → <code>LocalizationResult</code></li><li>Convert to <code>BasicSMLD</code> for analysis</li></ol><p><strong>SMLD Container Types</strong></p><pre><code class="language-julia hljs"># Basic SMLD container
+struct BasicSMLD{T,E&lt;:AbstractEmitter} &lt;: AbstractSMLD
+    emitters::Vector{E}        # Vector of emitters
+    camera::AbstractCamera     # Camera information
+    n_frames::Int              # Total number of frames
+    n_datasets::Int            # Number of datasets
+    metadata::Dict{String,Any} # Additional information
+end
+
+# SMITE format compatible container
+struct SmiteSMLD{T,E&lt;:AbstractEmitter} &lt;: AbstractSMLD
+    emitters::Vector{E}        # Vector of emitters
+    camera::AbstractCamera     # Camera information
+    n_frames::Int              # Total number of frames
+    n_datasets::Int            # Number of datasets
+    metadata::Dict{String,Any} # Additional information
+end</code></pre><p><strong>SMLD Constructor Examples</strong></p><pre><code class="language-julia hljs"># Create a vector of emitters
+emitters = [
+    Emitter2DFit{Float64}(1.0, 2.0, 1000.0, 10.0, 0.01, 0.01, 50.0, 2.0),
+    Emitter2DFit{Float64}(3.0, 4.0, 1200.0, 12.0, 0.01, 0.01, 60.0, 2.0)
+]
+
+# Create a BasicSMLD
+smld = BasicSMLD(emitters, camera, 1, 1, Dict{String,Any}())
+
+# Add metadata
+smld_with_metadata = BasicSMLD(
+    emitters, 
+    camera, 
+    10,  # number of frames
+    1,   # number of datasets
+    Dict{String,Any}(
+        &quot;exposure_time&quot; =&gt; 0.1,
+        &quot;sample&quot; =&gt; &quot;Test Sample&quot;
+    )
+)</code></pre><p><strong>Core Functions</strong></p><p><strong>Accessing the API Overview</strong></p><pre><code class="language-julia hljs"># Get this API overview as a string programmatically
+overview_text = api_overview()</code></pre><p><strong>Coordinate Conversions</strong></p><pre><code class="language-julia hljs"># Convert from pixel to physical coordinates (microns)
+x_physical, y_physical = pixel_to_physical(px, py, pixel_size)
+
+# Convert from physical to pixel coordinates
+px, py = physical_to_pixel(x, y, pixel_size)
+
+# Convert from physical to pixel indices (integers)
+px_idx, py_idx = physical_to_pixel_index(x, y, pixel_size)
+
+# Get physical coordinates of all pixel centers
+centers_x, centers_y = get_pixel_centers(camera)</code></pre><p><strong>Filtering Operations</strong></p><pre><code class="language-julia hljs"># Filter by emitter properties using @filter macro
+bright = @filter(smld, photons &gt; 1000)                     # Select bright emitters
+precise = @filter(smld, σ_x &lt; 0.02 &amp;&amp; σ_y &lt; 0.02)         # Select precisely localized emitters
+combined = @filter(smld, photons &gt; 1000 &amp;&amp; σ_x &lt; 0.02)     # Combine multiple criteria
+
+# The @filter macro supports any emitter property:
+# - Basic: x, y, z (for 3D), photons
+# - Fit results: bg, σ_x, σ_y, σ_z, σ_photons, σ_bg
+# - Metadata: frame, dataset, track_id, id
+
+# Select frames
+frame_5 = filter_frames(smld, 5)                  # Single frame
+early_frames = filter_frames(smld, 1:10)          # Range of frames (inclusive)
+specific_frames = filter_frames(smld, [1,3,5,7])  # Specific frames (uses Set for efficiency)
+
+# Select region of interest (ROI) - coordinates in microns
+# 2D ROI
+roi_2d = filter_roi(smld, 1.0:5.0, 2.0:6.0)       # x_range, y_range
+
+# 3D ROI (for 3D emitters only)
+roi_3d = filter_roi(smld, 1.0:5.0, 2.0:6.0, -1.0:1.0)  # x, y, z ranges</code></pre><p><strong>SMLD Operations</strong></p><pre><code class="language-julia hljs"># Concatenate multiple SMLDs
+combined = cat_smld(smld1, smld2)
+combined = cat_smld([smld1, smld2, smld3])
+
+# Merge with options to adjust frame and dataset numbering
+merged = merge_smld(smld1, smld2)
+merged = merge_smld([smld1, smld2, smld3])
+
+# Merge with sequential frame numbers
+sequential = merge_smld([smld1, smld2, smld3], adjust_frames=true)
+
+# Merge with sequential dataset numbers
+sequential_ds = merge_smld([smld1, smld2, smld3], adjust_datasets=true)</code></pre><p><strong>I/O Operations</strong></p><pre><code class="language-julia hljs"># Import from SMITE format (MATLAB)
+smd = SmiteSMD(&quot;path/to/data&quot;, &quot;localizations.mat&quot;)  # Default variable name &quot;SMD&quot;
+smd = SmiteSMD(&quot;path/to/data&quot;, &quot;localizations.mat&quot;, &quot;CustomSMD&quot;)  # Custom variable name
+
+# Load as 2D or 3D data
+smld_2d = load_smite_2d(smd)
+smld_3d = load_smite_3d(smd)
+
+# Export to SMITE format (saved as MATLAB v7.3 format)
+# Note: requires SmiteSMLD object, not BasicSMLD
+smite_smld = SmiteSMLD(smld.emitters, smld.camera, smld.n_frames, smld.n_datasets, smld.metadata)
+save_smite(smite_smld, &quot;output/directory&quot;, &quot;results.mat&quot;)</code></pre><p><strong>Note</strong>: The SMITE loader automatically handles complex-valued fields by removing emitters with non-zero imaginary components in key fields (X, Y, Z, Photons, background, and uncertainties). Information about removed emitters is stored in the metadata as <code>&quot;removed_complex_emitters&quot; =&gt; count</code>.</p><p><strong>Working with SMLD Objects</strong></p><pre><code class="language-julia hljs"># Get number of emitters
+n_emitters = length(smld)
+
+# Iterate over emitters
+for emitter in smld
+    println(&quot;Emitter at ($(emitter.x), $(emitter.y)) with $(emitter.photons) photons&quot;)
+end
+
+# Display formatted information
+show(smld)  # Compact view
+show(stdout, MIME(&quot;text/plain&quot;), smld)  # Detailed view</code></pre><p><strong>Common Workflows</strong></p><p><strong>Creating and Working with Emitters</strong></p><pre><code class="language-julia hljs"># Create emitters
+emitter1 = Emitter2DFit{Float64}(1.0, 2.0, 1000.0, 10.0, 0.01, 0.01, 50.0, 2.0)
+emitter2 = Emitter2DFit{Float64}(3.0, 4.0, 1200.0, 12.0, 0.01, 0.01, 60.0, 2.0)
+
+# Create camera
+cam = IdealCamera(512, 512, 0.1)  # 512x512 camera with 0.1 micron pixels
+
+# Create SMLD container
+emitters = [emitter1, emitter2]
+smld = BasicSMLD(emitters, cam, 1, 1, Dict{String,Any}())</code></pre><p><strong>Loading and Filtering Data</strong></p><pre><code class="language-julia hljs"># Load from SMITE format
+smd = SmiteSMD(&quot;data_directory&quot;, &quot;localizations.mat&quot;)
+smld = load_smite_2d(smd)
+
+# Filter by quality
+good_fits = @filter(smld, σ_x &lt; 0.02 &amp;&amp; σ_y &lt; 0.02 &amp;&amp; photons &gt; 500)
+
+# Filter by ROI
+roi = filter_roi(good_fits, 10.0:20.0, 10.0:20.0)
+
+# Filter by frames
+frames_1_10 = filter_frames(roi, 1:10)</code></pre><p><strong>Multi-Dataset Analysis</strong></p><pre><code class="language-julia hljs"># Load multiple datasets
+smd1 = SmiteSMD(&quot;experiment1&quot;, &quot;data.mat&quot;)
+smd2 = SmiteSMD(&quot;experiment2&quot;, &quot;data.mat&quot;)
+smld1 = load_smite_2d(smd1)
+smld2 = load_smite_2d(smd2)
+
+# Filter each dataset
+bright1 = @filter(smld1, photons &gt; 1000)
+bright2 = @filter(smld2, photons &gt; 1000)
+
+# Merge datasets with sequential frame numbering
+merged = merge_smld([bright1, bright2], adjust_frames=true)
+
+# Process the merged dataset
+result = @filter(merged, σ_x &lt; 0.02 &amp;&amp; σ_y &lt; 0.02)
+
+# Save the results (convert to SmiteSMLD first if needed)
+result_smite = SmiteSMLD(result.emitters, result.camera, result.n_frames, result.n_datasets, result.metadata)
+save_smite(result_smite, &quot;analysis_results&quot;, &quot;merged_filtered.mat&quot;)</code></pre><p><strong>Complete Example</strong></p><pre><code class="language-julia hljs">using SMLMData
+
+# 1. Create a camera with 100nm pixels
+# Camera has 512x512 pixels, each 0.1 microns (100nm) in size
+cam = IdealCamera(512, 512, 0.1)  # Using convenience constructor  
+
+# 2. Create emitters representing single molecule localizations
+emitters = [
+    # Emitter at (1.0, 2.0) μm with high precision
+    Emitter2DFit{Float64}(1.0, 2.0, 1000.0, 10.0, 0.01, 0.01, 50.0, 2.0),
+    
+    # Bright emitter at (3.0, 4.0) μm
+    Emitter2DFit{Float64}(3.0, 4.0, 1200.0, 12.0, 0.01, 0.01, 60.0, 2.0),
+    
+    # Dimmer emitter at (5.0, 6.0) μm with lower precision
+    Emitter2DFit{Float64}(5.0, 6.0, 800.0, 9.0, 0.03, 0.03, 40.0, 1.5)
+]
+
+# 3. Create SMLD container to hold all data
+smld = BasicSMLD(
+    emitters,                              # Vector of emitters
+    cam,                                   # Camera geometry
+    1,                                     # Number of frames
+    1,                                     # Number of datasets
+    Dict{String,Any}(&quot;sample&quot; =&gt; &quot;Test&quot;)   # Metadata
+)
+
+# 4. Filter by photons to select bright emitters
+bright = @filter(smld, photons &gt; 900)      # Creates new SMLD with filtered emitters
+
+# 5. Select region of interest (ROI)
+# Select emitters in rectangular region: x ∈ [0, 4] μm, y ∈ [1, 5] μm
+roi = filter_roi(bright, 0.0:4.0, 1.0:5.0)
+
+# 6. Examine the results
+println(&quot;Original dataset: $(length(smld)) emitters&quot;)
+println(&quot;After filtering by brightness: $(length(bright)) emitters&quot;)
+println(&quot;After ROI selection: $(length(roi)) emitters&quot;)
+
+# 7. Access individual emitters
+for (i, emitter) in enumerate(roi)
+    println(&quot;Emitter $i: position=($(emitter.x), $(emitter.y)) μm, photons=$(emitter.photons)&quot;)
+end
+
+# Output:
+# Original dataset: 3 emitters
+# After filtering by brightness: 2 emitters
+# After ROI selection: 2 emitters
+# Emitter 1: position=(1.0, 2.0) μm, photons=1000.0
+# Emitter 2: position=(3.0, 4.0) μm, photons=1200.0</code></pre><p><strong>Common Pitfalls and Important Notes</strong></p><p><strong>Coordinate System</strong></p><ul><li><strong>Physical coordinates are always in microns</strong>, not nanometers or pixels</li><li><strong>Pixel indices start at 1</strong> (Julia convention), not 0</li><li><strong>Frame numbers start at 1</strong> (default=1, following Julia&#39;s 1-based indexing convention)</li><li>The origin (0,0) in physical space is at the <strong>top-left corner</strong> of the camera</li></ul><p><strong>Type Stability</strong></p><ul><li>When creating emitters, ensure all numeric fields use the same type (e.g., all <code>Float64</code>)</li><li>The <code>BasicSMLD</code> constructor automatically infers type <code>T</code> from the camera&#39;s pixel edges</li><li>Mixing types (e.g., <code>Float32</code> and <code>Float64</code>) can lead to performance issues</li></ul><p><strong>Filtering</strong></p><ul><li>The <code>@filter</code> macro creates a <strong>new SMLD object</strong>; it doesn&#39;t modify the original</li><li>Filtering by frames with a vector uses <code>Set</code> internally for O(1) lookup performance</li><li>Applying an ROI filter to incompatible emitter types will throw an error</li></ul><p><strong>SMITE Format</strong></p><ul><li>Complex-valued fields in SMITE files are automatically handled by removing affected emitters</li><li>The loader adds metadata about removed emitters: <code>&quot;removed_complex_emitters&quot; =&gt; count</code></li><li>SMITE files are saved in MATLAB v7.3 format (HDF5-based)</li></ul><p><strong>Memory Considerations</strong></p><ul><li>Large datasets benefit from using appropriate numeric types (e.g., <code>Float32</code> vs <code>Float64</code>)</li><li>The <code>filter_frames</code> function with specific frame lists is optimized for sparse selections</li><li>Iterating over emitters is memory-efficient (doesn&#39;t create intermediate arrays)</li></ul><p><strong>Common Mistakes</strong></p><pre><code class="language-julia hljs"># WRONG: Using pixel units instead of microns
+emitter = Emitter2D{Float64}(100, 200, 1000.0)  # ❌ Likely pixel coordinates
+
+# CORRECT: Using micron coordinates
+emitter = Emitter2D{Float64}(10.0, 20.0, 1000.0)  # ✓ Physical coordinates
+
+# WRONG: Modifying original SMLD
+bright = @filter(smld, photons &gt; 1000)
+# smld is unchanged!
+
+# CORRECT: Working with the filtered result
+bright = @filter(smld, photons &gt; 1000)
+# Use &#39;bright&#39; for further analysis</code></pre><hr/><p><code>api_overview()</code> returns this documentation as a plain <code>String</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/api.jl#L26-L604">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.cat_smld-Tuple{Vector{&lt;:AbstractSMLD}}"><a class="docstring-binding" href="#SMLMData.cat_smld-Tuple{Vector{&lt;:AbstractSMLD}}"><code>SMLMData.cat_smld</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">cat_smld(smlds::Vector{&lt;:AbstractSMLD})
+cat_smld(smlds::AbstractSMLD...)</code></pre><p>Concatenate multiple SMLD objects into a single SMLD.</p><p><strong>Arguments</strong></p><ul><li><code>smlds</code>: Vector of AbstractSMLD objects or multiple AbstractSMLD arguments</li></ul><p><strong>Returns</strong></p><p>New AbstractSMLD containing all emitters from inputs</p><p><strong>Notes</strong></p><ul><li>Camera must be identical across all SMLDs</li><li>n_frames is set to maximum frame number across all inputs</li><li>n_datasets is set to maximum dataset number across all inputs</li><li>Metadata from first SMLD is used, with conflicts noted in metadata</li></ul><p><strong>Examples</strong></p><pre><code class="language-julia hljs"># Concatenate two SMLDs
+combined = cat_smld(smld1, smld2)
+
+# Concatenate multiple SMLDs
+combined = cat_smld(smld1, smld2, smld3)
+
+# Concatenate vector of SMLDs
+combined = cat_smld([smld1, smld2, smld3])</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/core/operations.jl#L1-L30">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.check_complex_fields-Tuple{Any, Any}"><a class="docstring-binding" href="#SMLMData.check_complex_fields-Tuple{Any, Any}"><code>SMLMData.check_complex_fields</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">check_complex_fields(s, fields)</code></pre><p>Check if any of the given fields in s are complex and have non-zero imaginary components. Returns a tuple with:</p><ol><li>Boolean indicating if any fields are complex with non-zero imaginary parts</li><li>Dict mapping field names to arrays of indices with non-zero imaginary parts</li></ol></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/io/smite/loading.jl#L20-L27">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.compute_bin_edges-Tuple{AbstractUnitRange, AbstractUnitRange, Tuple{Real, Real}}"><a class="docstring-binding" href="#SMLMData.compute_bin_edges-Tuple{AbstractUnitRange, AbstractUnitRange, Tuple{Real, Real}}"><code>SMLMData.compute_bin_edges</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">compute_bin_edges(centers_x::AbstractUnitRange, centers_y::AbstractUnitRange, pixel_size::Tuple{Real, Real})</code></pre><p>Compute pixel edges in both dimensions for rectangular pixels.</p><p><strong>Arguments</strong></p><ul><li><code>centers_x::AbstractUnitRange</code>: Range of pixel center indices in x</li><li><code>centers_y::AbstractUnitRange</code>: Range of pixel center indices in y</li><li><code>pixel_size::Tuple{Real, Real}</code>: Tuple of (x<em>size, y</em>size) in microns</li></ul><p><strong>Returns</strong></p><p>Tuple{Vector{Float64}, Vector{Float64}}: (edges<em>x, edges</em>y) in physical units (microns)</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/cameras.jl#L71-L83">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.compute_bin_edges-Union{Tuple{T}, Tuple{AbstractUnitRange, AbstractUnitRange, T}} where T"><a class="docstring-binding" href="#SMLMData.compute_bin_edges-Union{Tuple{T}, Tuple{AbstractUnitRange, AbstractUnitRange, T}} where T"><code>SMLMData.compute_bin_edges</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">compute_bin_edges(centers_x::AbstractUnitRange, centers_y::AbstractUnitRange, pixel_size::T) where T</code></pre><p>Compute pixel edges in both dimensions. Returns vectors with same type as pixel_size.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/cameras.jl#L60-L64">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.compute_edges_1d-Union{Tuple{T}, Tuple{AbstractUnitRange, T}} where T&lt;:Real"><a class="docstring-binding" href="#SMLMData.compute_edges_1d-Union{Tuple{T}, Tuple{AbstractUnitRange, T}} where T&lt;:Real"><code>SMLMData.compute_edges_1d</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">compute_edges_1d(centers::AbstractUnitRange, pixel_size::T) where T&lt;:Real</code></pre><p>Compute pixel edges in one dimension. Maintains the numeric type of pixel<em>size. The first edge starts at 0 and each pixel has width pixel</em>size.</p><p><strong>Arguments</strong></p><ul><li><code>centers::AbstractUnitRange</code>: Range of pixel center indices</li><li><code>pixel_size::T</code>: Size of pixels in microns</li></ul><p><strong>Returns</strong></p><p>Vector{T}: Edge positions in physical units (microns), starting at 0</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/cameras.jl#L32-L44">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.filter_frames-Tuple{AbstractSMLD, Integer}"><a class="docstring-binding" href="#SMLMData.filter_frames-Tuple{AbstractSMLD, Integer}"><code>SMLMData.filter_frames</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">filter_frames(smld::AbstractSMLD, frame::Integer)
+filter_frames(smld::AbstractSMLD, frames::Union{AbstractVector,AbstractRange})</code></pre><p>Efficiently select emitters from specified frames.</p><p><strong>Arguments</strong></p><ul><li><code>smld::AbstractSMLD</code>: Input SMLD structure</li><li><code>frames</code>: Single frame number, vector of frame numbers, or range of frames</li></ul><p><strong>Returns</strong></p><p>New AbstractSMLD containing only emitters from specified frames</p><p><strong>Examples</strong></p><pre><code class="language-julia hljs"># Single frame
+frame_5 = filter_frames(smld, 5)
+
+# Range of frames
+early = filter_frames(smld, 1:10)
+
+# Multiple specific frames
+selected = filter_frames(smld, [1,3,5,7])</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/core/filters.jl#L53-L77">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.filter_roi-Tuple{AbstractSMLD, Any, Any}"><a class="docstring-binding" href="#SMLMData.filter_roi-Tuple{AbstractSMLD, Any, Any}"><code>SMLMData.filter_roi</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">filter_roi(smld::AbstractSMLD, x_range, y_range)
+filter_roi(smld::AbstractSMLD, x_range, y_range, z_range)</code></pre><p>Efficiently select emitters within a region of interest.</p><p><strong>Arguments</strong></p><ul><li><code>smld::AbstractSMLD</code>: Input SMLD structure</li><li><code>x_range</code>: Range or tuple for x coordinates (microns)</li><li><code>y_range</code>: Range or tuple for y coordinates (microns)</li><li><code>z_range</code>: Optional range or tuple for z coordinates (microns)</li></ul><p><strong>Returns</strong></p><p>New AbstractSMLD containing only emitters within the specified ROI</p><p><strong>Examples</strong></p><pre><code class="language-julia hljs"># 2D ROI
+region = filter_roi(smld, 1.0:5.0, 2.0:6.0)
+region = filter_roi(smld, (1.0, 5.0), (2.0, 6.0))
+
+# 3D ROI
+volume = filter_roi(smld, 1.0:5.0, 2.0:6.0, -1.0:1.0)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/core/filters.jl#L101-L125">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.format_with_commas-Tuple{Integer}"><a class="docstring-binding" href="#SMLMData.format_with_commas-Tuple{Integer}"><code>SMLMData.format_with_commas</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">format_with_commas(n::Integer)</code></pre><p>Format an integer with thousands separators for better readability.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/types/smld.jl#L128-L132">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.get_pixel_centers-Tuple{AbstractCamera}"><a class="docstring-binding" href="#SMLMData.get_pixel_centers-Tuple{AbstractCamera}"><code>SMLMData.get_pixel_centers</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">get_pixel_centers(cam::AbstractCamera)</code></pre><p>Calculate the physical coordinates of all pixel centers for any camera type.</p><p>For each dimension, the center positions are computed as the midpoint between  consecutive edge positions. This works for both regular (uniform pixel size)  and irregular (varying pixel size) cameras.</p><p><strong>Arguments</strong></p><ul><li><code>cam::AbstractCamera</code>: Any camera type that implements the AbstractCamera interface with pixel<em>edges</em>x and pixel<em>edges</em>y fields in physical units (microns)</li></ul><p><strong>Returns</strong></p><p>Tuple{Vector, Vector}: (centers<em>x, centers</em>y) where each vector contains the physical  coordinates (in microns) of pixel centers along that dimension</p><p><strong>Example</strong></p><pre><code class="language-julia hljs"># For a 512x512 camera with 0.1 micron pixels
+cam = IdealCamera(1:512, 1:512, 0.1)
+centers_x, centers_y = get_pixel_centers(cam)
+
+# First pixel center should be at (0.05, 0.05) microns
+@assert centers_x[1] ≈ 0.05
+@assert centers_y[1] ≈ 0.05</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/core/coordinates.jl#L68-L95">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.get_valid_indices-Tuple{Any, Any}"><a class="docstring-binding" href="#SMLMData.get_valid_indices-Tuple{Any, Any}"><code>SMLMData.get_valid_indices</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">get_valid_indices(s, complex_indices)</code></pre><p>Get indices of elements that don&#39;t have complex values with non-zero imaginary parts in any field.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/io/smite/loading.jl#L47-L52">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.has_nonzero_imag-Tuple{Any}"><a class="docstring-binding" href="#SMLMData.has_nonzero_imag-Tuple{Any}"><code>SMLMData.has_nonzero_imag</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">has_nonzero_imag(value)</code></pre><p>Check if a value has a non-zero imaginary component. Works for both scalar values and arrays.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/io/smite/loading.jl#L1-L6">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.load_smite_2d-Tuple{SmiteSMD}"><a class="docstring-binding" href="#SMLMData.load_smite_2d-Tuple{SmiteSMD}"><code>SMLMData.load_smite_2d</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">load_smite_2d(smd::SmiteSMD)</code></pre><p>Load a 2D Smite SMD .mat file and convert it to SmiteSMLD format. Checks for complex fields and removes emitters with non-zero imaginary components.</p><p><strong>Arguments</strong></p><ul><li><code>smd::SmiteSMD</code>: SmiteSMD object specifying the file to load</li></ul><p><strong>Returns</strong></p><p>SmiteSMLD containing 2D localizations</p><p><strong>Notes</strong></p><ul><li>All spatial coordinates are converted to microns</li><li>If PixelSize is not specified in the file, defaults to 0.1 microns</li><li>Emitters with non-zero imaginary components will be excluded with a warning</li><li>Fields are converted from Float32 to Float64 as needed</li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/io/smite/loading.jl#L69-L86">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.load_smite_3d-Tuple{SmiteSMD}"><a class="docstring-binding" href="#SMLMData.load_smite_3d-Tuple{SmiteSMD}"><code>SMLMData.load_smite_3d</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">load_smite_3d(smd::SmiteSMD)</code></pre><p>Load a 3D Smite SMD .mat file and convert it to SmiteSMLD format. Checks for complex fields and removes emitters with non-zero imaginary components.</p><p><strong>Arguments</strong></p><ul><li><code>smd::SmiteSMD</code>: SmiteSMD object specifying the file to load</li></ul><p><strong>Returns</strong></p><p>SmiteSMLD containing 3D localizations</p><p><strong>Notes</strong></p><ul><li>All spatial coordinates are converted to microns</li><li>If PixelSize is not specified in the file, defaults to 0.1 microns</li><li>Emitters with non-zero imaginary components will be excluded with a warning</li><li>Fields are converted from Float32 to Float64 as needed</li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/io/smite/loading.jl#L174-L191">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.merge_smld-Tuple{Vector{&lt;:AbstractSMLD}}"><a class="docstring-binding" href="#SMLMData.merge_smld-Tuple{Vector{&lt;:AbstractSMLD}}"><code>SMLMData.merge_smld</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">merge_smld(smlds::Vector{&lt;:AbstractSMLD}; adjust_frames=false, adjust_datasets=false)
+merge_smld(smlds::AbstractSMLD...; adjust_frames=false, adjust_datasets=false)</code></pre><p>Merge multiple SMLD objects with options to adjust frame and dataset numbering.</p><p><strong>Arguments</strong></p><ul><li><code>smlds</code>: Vector of AbstractSMLD objects or multiple AbstractSMLD arguments</li><li><code>adjust_frames</code>: If true, adjusts frame numbers to be sequential</li><li><code>adjust_datasets</code>: If true, adjusts dataset numbers to be sequential</li></ul><p><strong>Returns</strong></p><p>New AbstractSMLD containing all emitters with adjusted numbering if requested</p><p><strong>Notes</strong></p><ul><li>Camera must be identical across all SMLDs</li><li>When adjust_frames=true, frame numbers are made sequential across all inputs</li><li>When adjust_datasets=true, dataset numbers are made sequential</li><li>Metadata includes information about the merge operation</li></ul><p><strong>Examples</strong></p><pre><code class="language-julia hljs"># Simple merge
+merged = merge_smld(smld1, smld2)
+
+# Merge with frame number adjustment
+merged = merge_smld(smld1, smld2, adjust_frames=true)
+
+# Merge multiple with both adjustments
+merged = merge_smld([smld1, smld2, smld3], 
+                   adjust_frames=true, 
+                   adjust_datasets=true)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/core/operations.jl#L70-L103">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.physical_to_pixel-Tuple{Real, Real, Real}"><a class="docstring-binding" href="#SMLMData.physical_to_pixel-Tuple{Real, Real, Real}"><code>SMLMData.physical_to_pixel</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">physical_to_pixel(x::Real, y::Real, pixel_size::Real)</code></pre><p>Convert physical coordinates (in microns) to pixel coordinates.</p><p><strong>Arguments</strong></p><ul><li><code>x::Real</code>: x coordinate in microns (0,0 is top-left of image)</li><li><code>y::Real</code>: y coordinate in microns (0,0 is top-left of image)</li><li><code>pixel_size::Real</code>: size of a pixel in microns</li></ul><p><strong>Returns</strong></p><p>Tuple{Float64, Float64}: (px,py) pixel coordinates where (1,1) is center of top-left pixel</p><p><strong>Example</strong></p><pre><code class="language-julia hljs"># For a camera with 0.1 micron pixels
+px, py = physical_to_pixel(0.05, 0.05, 0.1)  # Point 0.05,0.05 microns from origin
+# Returns (1.0, 1.0) - center of first pixel</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/core/coordinates.jl#L13-L32">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.physical_to_pixel_index-Tuple{Real, Real, Real}"><a class="docstring-binding" href="#SMLMData.physical_to_pixel_index-Tuple{Real, Real, Real}"><code>SMLMData.physical_to_pixel_index</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">physical_to_pixel_index(x::Real, y::Real, pixel_size::Real)</code></pre><p>Convert physical coordinates (in microns) to integer pixel indices. Returns the pixel that contains the given physical coordinate.</p><p><strong>Arguments</strong></p><ul><li><code>x::Real</code>: x coordinate in microns (0,0 is top-left of image)</li><li><code>y::Real</code>: y coordinate in microns (0,0 is top-left of image)</li><li><code>pixel_size::Real</code>: size of a pixel in microns</li></ul><p><strong>Returns</strong></p><p>Tuple{Int, Int}: (px,py) pixel indices where (1,1) is top-left pixel</p><p><strong>Example</strong></p><pre><code class="language-julia hljs"># For a camera with 0.1 micron pixels
+px, py = physical_to_pixel_index(0.05, 0.05, 0.1)  # Point at center of first pixel
+# Returns (1, 1)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/core/coordinates.jl#L42-L62">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.pixel_to_physical-Union{Tuple{T}, Tuple{Real, Real, T}} where T"><a class="docstring-binding" href="#SMLMData.pixel_to_physical-Union{Tuple{T}, Tuple{Real, Real, T}} where T"><code>SMLMData.pixel_to_physical</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">pixel_to_physical(px::Real, py::Real, pixel_size::T) where T</code></pre><p>Convert pixel coordinates to physical coordinates (in microns). Returns coordinates with the same type as pixel_size.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/core/coordinates.jl#L1-L6">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.save_smite-Tuple{SmiteSMLD, String, String}"><a class="docstring-binding" href="#SMLMData.save_smite-Tuple{SmiteSMLD, String, String}"><code>SMLMData.save_smite</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">save_smite(smld::SmiteSMLD, filepath::String, filename::String)</code></pre><p>Save SmiteSMLD data back to SMITE&#39;s SMD .mat format.</p><p><strong>Arguments</strong></p><ul><li><code>smld::SmiteSMLD</code>: SMLD object to save</li><li><code>filepath::String</code>: Directory path where to save the file</li><li><code>filename::String</code>: Name of the output .mat file</li></ul><p><strong>Notes</strong></p><ul><li>Saves in MATLAB v7.3 format</li><li>Preserves all metadata fields</li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/io/smite/saving.jl#L1-L14">source</a></section></details></article><article><details class="docstring" open="true"><summary id="SMLMData.@filter-Tuple{Any, Any}"><a class="docstring-binding" href="#SMLMData.@filter-Tuple{Any, Any}"><code>SMLMData.@filter</code></a> — <span class="docstring-category">Macro</span></summary><section><div><pre><code class="language-julia hljs">@filter(smld, condition)</code></pre><p>Filter SMLD emitters using a natural condition syntax. Transforms expressions at compile time into efficient filtering operations.</p><p><strong>Examples</strong></p><pre><code class="language-julia hljs"># Simple conditions
+bright = @filter(smld, photons &gt; 1000)
+early = @filter(smld, frame &lt; 10)
+
+# Compound conditions
+good_fits = @filter(smld, σ_x &lt; 0.02 &amp;&amp; σ_y &lt; 0.02)
+roi = @filter(smld, 1.0 &lt;= x &lt;= 5.0 &amp;&amp; 1.0 &lt;= y &lt;= 5.0)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaSMLM/SMLMData.jl/blob/e9cf0ac5b05be3f371240098539aca2a8f123211/src/core/filters.jl#L1-L17">source</a></section></details></article></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../io/">« Saving and Loading</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Tuesday 25 November 2025 17:35">Tuesday 25 November 2025</span>. Using Julia version 1.10.10.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
