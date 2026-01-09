@@ -422,7 +422,7 @@ Construct sCMOS camera from pixel dimensions and calibration parameters.
 - `gain::Union{T, Matrix{T}} = 1`: Conversion gain in e⁻/ADU
 - `qe::Union{T, Matrix{T}} = 1`: Quantum efficiency (0-1)
 
-Each parameter can be scalar (uniform) or Matrix{T} with size (nx, ny).
+Each parameter can be scalar (uniform) or Matrix{T} with size (ny, nx) following Julia's [row, col] convention.
 
 # Examples
 ```julia
@@ -483,7 +483,7 @@ Construct sCMOS camera with custom pixel edge positions.
 - `gain::Union{T, Matrix{T}} = 1`: Conversion gain in e⁻/ADU
 - `qe::Union{T, Matrix{T}} = 1`: Quantum efficiency (0-1)
 
-Matrix parameters must have size (nx, ny) where nx = length(pixel_edges_x) - 1.
+Matrix parameters must have size (ny, nx) following Julia's [row, col] convention, where nx = length(pixel_edges_x) - 1 and ny = length(pixel_edges_y) - 1.
 
 # Example
 ```julia
@@ -515,9 +515,11 @@ function SCMOSCamera(
 end
 
 # Validation helper
+# Matrix parameters use Julia standard (row, col) = (y, x) convention
+# So for a camera with nx columns and ny rows, matrices should be (ny, nx)
 function _validate_camera_param(param::AbstractMatrix, nx, ny, name)
-    size(param) == (nx, ny) ||
-        throw(DimensionMismatch("$name size $(size(param)) must match ($nx, $ny)"))
+    size(param) == (ny, nx) ||
+        throw(DimensionMismatch("$name size $(size(param)) must match ($ny, $nx) [rows, cols]"))
 end
 _validate_camera_param(param::Real, nx, ny, name) = nothing
 
