@@ -252,10 +252,12 @@ end
         @test cam.readnoise === 1.5
         @test cam.gain === 0.5
 
-        # Matrix parameters
-        noise_map = ones(Float64, 10, 5) .* 1.2
+        # Matrix parameters - size must be (ny, nx) = (rows, cols) following Julia convention
+        # edges_x has 11 elements → nx = 10 columns
+        # edges_y has 6 elements → ny = 5 rows
+        noise_map = ones(Float64, 5, 10) .* 1.2  # (ny, nx) = (5, 10)
         cam2 = SCMOSCamera(edges_x, edges_y, readnoise=noise_map)
-        @test size(cam2.readnoise) == (10, 5)
+        @test size(cam2.readnoise) == (5, 10)
     end
 
     @testset "Type stability" begin
@@ -284,6 +286,27 @@ end
         @test_throws DimensionMismatch SCMOSCamera(10, 10, 0.1, 1.5, gain=wrong_size_map)
         @test_throws DimensionMismatch SCMOSCamera(10, 10, 0.1, 1.5, offset=wrong_size_map)
         @test_throws DimensionMismatch SCMOSCamera(10, 10, 0.1, 1.5, qe=wrong_size_map)
+    end
+
+    @testset "Matrix convention (ny, nx) for rectangular cameras" begin
+        # Rectangular camera: 512 columns (x), 256 rows (y)
+        # Matrix must be (ny, nx) = (256, 512) following Julia [row, col] convention
+        nx, ny = 512, 256
+
+        # Create noise map with a marker at known position
+        noise_map = ones(Float64, ny, nx)  # (256, 512) = (rows, cols)
+        noise_map[100, 300] = 5.0  # row 100, col 300 → pixel (x=300, y=100)
+
+        cam = SCMOSCamera(nx, ny, 0.1, noise_map)
+        @test size(cam.readnoise) == (ny, nx)
+        @test size(cam.readnoise) == (256, 512)
+
+        # Verify semantic access: map[y, x] gives value for pixel at (x, y)
+        @test cam.readnoise[100, 300] == 5.0
+
+        # Transposed matrix should fail
+        wrong_map = ones(Float64, nx, ny)  # (512, 256) - WRONG
+        @test_throws DimensionMismatch SCMOSCamera(nx, ny, 0.1, wrong_map)
     end
 
     @testset "Realistic use cases" begin
