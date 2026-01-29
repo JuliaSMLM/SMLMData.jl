@@ -71,6 +71,7 @@ mutable struct Emitter2DFit{T} <: AbstractEmitter
     bg::T          # fitted background in photons/pixel
     σ_x::T         # uncertainty in x position in microns
     σ_y::T         # uncertainty in y position in microns
+    σ_xy::T        # covariance between x and y (microns², 0 = axis-aligned)
     σ_photons::T   # uncertainty in photon count
     σ_bg::T        # uncertainty in background level
     frame::Int     # frame number in acquisition sequence
@@ -88,6 +89,9 @@ mutable struct Emitter3DFit{T} <: AbstractEmitter
     σ_x::T         # uncertainty in x position in microns
     σ_y::T         # uncertainty in y position in microns
     σ_z::T         # uncertainty in z position in microns
+    σ_xy::T        # covariance between x and y (microns², 0 = uncorrelated)
+    σ_xz::T        # covariance between x and z (microns², 0 = uncorrelated)
+    σ_yz::T        # covariance between y and z (microns², 0 = uncorrelated)
     σ_photons::T   # uncertainty in photon count
     σ_bg::T        # uncertainty in background level
     frame::Int     # frame number in acquisition sequence
@@ -118,6 +122,7 @@ emitter_2d_fit = Emitter2DFit{Float64}(
     1000.0, 10.0,    # photons, background
     0.01, 0.01,      # σ_x, σ_y (uncertainties in μm)
     50.0, 2.0;       # σ_photons, σ_bg (uncertainties)
+    σ_xy=0.005,      # covariance (optional, 0 = axis-aligned)
     frame=5,         # frame number
     dataset=1,       # dataset identifier
     track_id=2,      # tracking identifier (0 = unlinked)
@@ -130,6 +135,7 @@ emitter_3d_fit = Emitter3DFit{Float64}(
     1000.0, 10.0,      # photons, background
     0.01, 0.01, 0.02,  # σ_x, σ_y, σ_z (uncertainties in μm)
     50.0, 2.0;         # σ_photons, σ_bg (uncertainties)
+    σ_xy=0.005, σ_xz=0.002, σ_yz=0.003,  # covariances (optional, 0 = uncorrelated)
     frame=5,           # frame number
     dataset=1,         # dataset identifier
     track_id=2,        # tracking identifier (0 = unlinked)

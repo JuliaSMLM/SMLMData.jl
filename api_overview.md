@@ -87,6 +87,7 @@ mutable struct Emitter2DFit{T} <: AbstractEmitter
     bg::T          # fitted background in photons/pixel
     σ_x::T         # uncertainty in x position in microns
     σ_y::T         # uncertainty in y position in microns
+    σ_xy::T        # covariance between x and y (microns², 0 = axis-aligned)
     σ_photons::T   # uncertainty in photon count
     σ_bg::T        # uncertainty in background level
     frame::Int     # frame number in acquisition sequence
@@ -105,6 +106,9 @@ mutable struct Emitter3DFit{T} <: AbstractEmitter
     σ_x::T         # uncertainty in x position in microns
     σ_y::T         # uncertainty in y position in microns
     σ_z::T         # uncertainty in z position in microns
+    σ_xy::T        # covariance between x and y (microns², 0 = uncorrelated)
+    σ_xz::T        # covariance between x and z (microns², 0 = uncorrelated)
+    σ_yz::T        # covariance between y and z (microns², 0 = uncorrelated)
     σ_photons::T   # uncertainty in photon count
     σ_bg::T        # uncertainty in background level
     frame::Int     # frame number in acquisition sequence
@@ -138,6 +142,7 @@ emitter_2d_fit = Emitter2DFit{Float64}(
     1000.0, 10.0,    # photons detected, background photons/pixel
     0.01, 0.01,      # σ_x, σ_y: position uncertainties in microns
     50.0, 2.0;       # σ_photons, σ_bg: photon count uncertainties
+    σ_xy=0.005,      # covariance (optional, default=0 for axis-aligned uncertainty)
     frame=5,         # frame number in acquisition (1-based, default=1)
     dataset=1,       # dataset identifier for multi-acquisition experiments
     track_id=2,      # tracking ID for linked localizations (default=0 = unlinked)
