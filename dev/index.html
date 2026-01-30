@@ -22,6 +22,7 @@ end</code></pre><p>These types are useful for:</p><ul><li>Simulating fluorophore
     bg::T          # fitted background in photons/pixel
     σ_x::T         # uncertainty in x position in microns
     σ_y::T         # uncertainty in y position in microns
+    σ_xy::T        # covariance between x and y (microns², 0 = axis-aligned)
     σ_photons::T   # uncertainty in photon count
     σ_bg::T        # uncertainty in background level
     frame::Int     # frame number in acquisition sequence
@@ -39,6 +40,9 @@ mutable struct Emitter3DFit{T} &lt;: AbstractEmitter
     σ_x::T         # uncertainty in x position in microns
     σ_y::T         # uncertainty in y position in microns
     σ_z::T         # uncertainty in z position in microns
+    σ_xy::T        # covariance between x and y (microns², 0 = uncorrelated)
+    σ_xz::T        # covariance between x and z (microns², 0 = uncorrelated)
+    σ_yz::T        # covariance between y and z (microns², 0 = uncorrelated)
     σ_photons::T   # uncertainty in photon count
     σ_bg::T        # uncertainty in background level
     frame::Int     # frame number in acquisition sequence
@@ -57,6 +61,7 @@ emitter_2d_fit = Emitter2DFit{Float64}(
     1000.0, 10.0,    # photons, background
     0.01, 0.01,      # σ_x, σ_y (uncertainties in μm)
     50.0, 2.0;       # σ_photons, σ_bg (uncertainties)
+    σ_xy=0.005,      # covariance (optional, 0 = axis-aligned)
     frame=5,         # frame number
     dataset=1,       # dataset identifier
     track_id=2,      # tracking identifier (0 = unlinked)
@@ -69,6 +74,7 @@ emitter_3d_fit = Emitter3DFit{Float64}(
     1000.0, 10.0,      # photons, background
     0.01, 0.01, 0.02,  # σ_x, σ_y, σ_z (uncertainties in μm)
     50.0, 2.0;         # σ_photons, σ_bg (uncertainties)
+    σ_xy=0.005, σ_xz=0.002, σ_yz=0.003,  # covariances (optional, 0 = uncorrelated)
     frame=5,           # frame number
     dataset=1,         # dataset identifier
     track_id=2,        # tracking identifier (0 = unlinked)
@@ -191,4 +197,4 @@ smld_3d = load_smite_3d(smd)
 
 # Export to SMITE format
 save_smite(smld, &quot;output/directory&quot;, &quot;results.mat&quot;)</code></pre><h2 id="Installation"><a class="docs-heading-anchor" href="#Installation">Installation</a><a id="Installation-1"></a><a class="docs-heading-anchor-permalink" href="#Installation" title="Permalink"></a></h2><pre><code class="language-julia hljs">using Pkg
-Pkg.add(&quot;SMLMData&quot;)</code></pre><p>For complete API documentation, see the <a href="api/">API Reference</a>.</p></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="io/">Saving and Loading »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Friday 9 January 2026 16:46">Friday 9 January 2026</span>. Using Julia version 1.10.10.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+Pkg.add(&quot;SMLMData&quot;)</code></pre><p>For complete API documentation, see the <a href="api/">API Reference</a>.</p></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="io/">Saving and Loading »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Friday 30 January 2026 14:35">Friday 30 January 2026</span>. Using Julia version 1.10.10.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
