@@ -52,6 +52,7 @@ Represents fitted 2D localization results with uncertainties and temporal/tracki
 - `bg::T`: fitted background in photons/pixel
 - `σ_x::T`: uncertainty in x position in microns
 - `σ_y::T`: uncertainty in y position in microns
+- `σ_xy::T`: covariance between x and y uncertainties (microns², 0 = axis-aligned)
 - `σ_photons::T`: uncertainty in photon count
 - `σ_bg::T`: uncertainty in background in photons/pixel
 - `frame::Int`: frame number in acquisition sequence
@@ -66,6 +67,7 @@ mutable struct Emitter2DFit{T} <: AbstractEmitter
     bg::T
     σ_x::T
     σ_y::T
+    σ_xy::T
     σ_photons::T
     σ_bg::T
     frame::Int
@@ -88,6 +90,9 @@ Represents fitted 3D localization results with uncertainties and temporal/tracki
 - `σ_x::T`: uncertainty in x position in microns
 - `σ_y::T`: uncertainty in y position in microns
 - `σ_z::T`: uncertainty in z position in microns
+- `σ_xy::T`: covariance between x and y (microns², 0 = uncorrelated)
+- `σ_xz::T`: covariance between x and z (microns², 0 = uncorrelated)
+- `σ_yz::T`: covariance between y and z (microns², 0 = uncorrelated)
 - `σ_photons::T`: uncertainty in photon count
 - `σ_bg::T`: uncertainty in background in photons/pixel
 - `frame::Int`: frame number in acquisition sequence
@@ -104,6 +109,9 @@ mutable struct Emitter3DFit{T} <: AbstractEmitter
     σ_x::T
     σ_y::T
     σ_z::T
+    σ_xy::T
+    σ_xz::T
+    σ_yz::T
     σ_photons::T
     σ_bg::T
     frame::Int
@@ -115,7 +123,7 @@ end
 
 """
     Emitter2DFit{T}(x, y, photons, bg, σ_x, σ_y, σ_photons, σ_bg;
-                    frame=0, dataset=1, track_id=0, id=0) where T
+                    σ_xy=zero(T), frame=1, dataset=1, track_id=0, id=0) where T
 
 Convenience constructor for 2D localization fit results with optional identification parameters.
 
@@ -131,6 +139,7 @@ Convenience constructor for 2D localization fit results with optional identifica
 - `σ_bg::T`: uncertainty in background level
 
 ## Optional Keywords
+- `σ_xy::T=0`: covariance between x and y uncertainties (microns², 0 = axis-aligned)
 - `frame::Int=1`: frame number in acquisition sequence
 - `dataset::Int=1`: identifier for specific acquisition/dataset
 - `track_id::Int=0`: identifier for linking localizations across frames
@@ -146,23 +155,24 @@ emitter = Emitter2DFit{Float64}(
     50.0, 2.0        # σ_photons, σ_bg
 )
 
-# Create emitter with specific frame and dataset
+# Create emitter with covariance for rotated uncertainty ellipse
 emitter = Emitter2DFit{Float64}(
     1.0, 2.0, 1000.0, 10.0, 0.01, 0.01, 50.0, 2.0;
-    frame=5, dataset=2
+    σ_xy=0.005, frame=5, dataset=2
 )
 ```
 """
-function Emitter2DFit{T}(x::T, y::T, photons::T, bg::T, 
+function Emitter2DFit{T}(x::T, y::T, photons::T, bg::T,
                         σ_x::T, σ_y::T, σ_photons::T, σ_bg::T;
-                        frame::Int=1, dataset::Int=1, track_id::Int=0, id::Int=0) where T
-    Emitter2DFit{T}(x, y, photons, bg, σ_x, σ_y, σ_photons, σ_bg, 
+                        σ_xy::T=zero(T), frame::Int=1, dataset::Int=1, track_id::Int=0, id::Int=0) where T
+    Emitter2DFit{T}(x, y, photons, bg, σ_x, σ_y, σ_xy, σ_photons, σ_bg,
                     frame, dataset, track_id, id)
 end
 
 """
     Emitter3DFit{T}(x, y, z, photons, bg, σ_x, σ_y, σ_z, σ_photons, σ_bg;
-                    frame=0, dataset=1, track_id=0, id=0) where T
+                    σ_xy=zero(T), σ_xz=zero(T), σ_yz=zero(T),
+                    frame=1, dataset=1, track_id=0, id=0) where T
 
 Convenience constructor for 3D localization fit results with optional identification parameters.
 
@@ -180,6 +190,9 @@ Convenience constructor for 3D localization fit results with optional identifica
 - `σ_bg::T`: uncertainty in background level
 
 ## Optional Keywords
+- `σ_xy::T=0`: covariance between x and y (microns², 0 = uncorrelated)
+- `σ_xz::T=0`: covariance between x and z (microns², 0 = uncorrelated)
+- `σ_yz::T=0`: covariance between y and z (microns², 0 = uncorrelated)
 - `frame::Int=1`: frame number in acquisition sequence
 - `dataset::Int=1`: identifier for specific acquisition/dataset
 - `track_id::Int=0`: identifier for linking localizations across frames
@@ -195,17 +208,18 @@ emitter = Emitter3DFit{Float64}(
     50.0, 2.0        # σ_photons, σ_bg
 )
 
-# Create emitter with specific frame and tracking
+# Create emitter with full 3D covariance
 emitter = Emitter3DFit{Float64}(
     1.0, 2.0, -0.5, 1000.0, 10.0, 0.01, 0.01, 0.02, 50.0, 2.0;
-    frame=5, track_id=1
+    σ_xy=0.005, σ_xz=0.002, σ_yz=0.003, frame=5, track_id=1
 )
 ```
 """
-function Emitter3DFit{T}(x::T, y::T, z::T, photons::T, bg::T, 
+function Emitter3DFit{T}(x::T, y::T, z::T, photons::T, bg::T,
                         σ_x::T, σ_y::T, σ_z::T, σ_photons::T, σ_bg::T;
+                        σ_xy::T=zero(T), σ_xz::T=zero(T), σ_yz::T=zero(T),
                         frame::Int=1, dataset::Int=1, track_id::Int=0, id::Int=0) where T
-    Emitter3DFit{T}(x, y, z, photons, bg, σ_x, σ_y, σ_z, σ_photons, σ_bg,
+    Emitter3DFit{T}(x, y, z, photons, bg, σ_x, σ_y, σ_z, σ_xy, σ_xz, σ_yz, σ_photons, σ_bg,
                     frame, dataset, track_id, id)
 end
 
@@ -263,6 +277,7 @@ function Base.show(io::IO, ::MIME"text/plain", e::Emitter2DFit{T}) where T
     println(io, "  Uncertainties:")
     println(io, "    σ_x: $(e.σ_x) μm")
     println(io, "    σ_y: $(e.σ_y) μm")
+    e.σ_xy != 0 && println(io, "    σ_xy: $(e.σ_xy) μm²")
     println(io, "    σ_photons: $(e.σ_photons)")
     println(io, "    σ_bg: $(e.σ_bg)")
     println(io, "  Frame: $(e.frame)")
@@ -289,6 +304,13 @@ function Base.show(io::IO, ::MIME"text/plain", e::Emitter3DFit{T}) where T
     println(io, "    σ_x: $(e.σ_x) μm")
     println(io, "    σ_y: $(e.σ_y) μm")
     println(io, "    σ_z: $(e.σ_z) μm")
+    has_cov = e.σ_xy != 0 || e.σ_xz != 0 || e.σ_yz != 0
+    if has_cov
+        println(io, "  Covariances:")
+        e.σ_xy != 0 && println(io, "    σ_xy: $(e.σ_xy) μm²")
+        e.σ_xz != 0 && println(io, "    σ_xz: $(e.σ_xz) μm²")
+        e.σ_yz != 0 && println(io, "    σ_yz: $(e.σ_yz) μm²")
+    end
     println(io, "    σ_photons: $(e.σ_photons)")
     println(io, "    σ_bg: $(e.σ_bg)")
     println(io, "  Frame: $(e.frame)")
