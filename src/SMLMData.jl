@@ -60,6 +60,10 @@ export
     AbstractSMLD,
     SMLD,  # Deprecated alias for AbstractSMLD
 
+    # Ecosystem abstract types (tuple pattern)
+    AbstractSMLMConfig,
+    AbstractSMLMInfo,
+
     # Concrete emitter types
     Emitter2D,
     Emitter3D,
@@ -100,6 +104,23 @@ export
     load_smite_2d,
     load_smite_3d,
     save_smite
+
+# Ecosystem abstract types for the (Config, Info, Data) tuple pattern
+"""
+    AbstractSMLMConfig
+
+Abstract supertype for configuration structs in the JuliaSMLM ecosystem.
+Subtypes hold algorithm parameters (e.g., fit settings, simulation parameters).
+"""
+abstract type AbstractSMLMConfig end
+
+"""
+    AbstractSMLMInfo
+
+Abstract supertype for information/results structs in the JuliaSMLM ecosystem.
+Subtypes hold computed metadata or diagnostic output from algorithms.
+"""
+abstract type AbstractSMLMInfo end
 
 # Include all source files
 include("types/emitters.jl")  # Move from current location
