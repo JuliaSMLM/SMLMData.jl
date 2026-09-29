@@ -106,6 +106,42 @@ mutable struct ForeignEmitter3DFit{T} <: SMLMData.AbstractEmitter   # for save_s
     frame::Int; dataset::Int; track_id::Int; id::Int
 end
 
+# Keeps z in a tuple and exposes it through getproperty, so it declares its dimension
+# through the emitter_ndims extension point.
+mutable struct ComputedZEmitter{T} <: SMLMData.AbstractEmitter
+    pos::NTuple{3,T}
+    photons::T
+    frame::Int
+    dataset::Int
+    track_id::Int
+    id::Int
+end
+function Base.getproperty(e::ComputedZEmitter, s::Symbol)
+    s === :x && return getfield(e, :pos)[1]
+    s === :y && return getfield(e, :pos)[2]
+    s === :z && return getfield(e, :pos)[3]
+    return getfield(e, s)
+end
+SMLMData.emitter_ndims(::Type{<:ComputedZEmitter}) = 3
+
+# Dimension as a type parameter: the documented pair of methods.
+mutable struct ParamDimEmitter{N,T} <: SMLMData.AbstractEmitter
+    pos::NTuple{N,T}
+    photons::T
+    frame::Int
+    dataset::Int
+    track_id::Int
+    id::Int
+end
+function Base.getproperty(e::ParamDimEmitter, s::Symbol)
+    s === :x && return getfield(e, :pos)[1]
+    s === :y && return getfield(e, :pos)[2]
+    s === :z && return getfield(e, :pos)[3]
+    return getfield(e, s)
+end
+SMLMData.emitter_ndims(::Type{<:ParamDimEmitter{N}}) where {N} = N
+SMLMData.emitter_ndims(::Type{<:ParamDimEmitter}) = nothing
+
 @testset "Dimension routing" begin
     cam = IdealCamera(1:512, 1:512, 0.1)
     xr, yr, zr = (0.0, 2.0), (0.0, 2.0), (-1.0, 1.0)
@@ -143,7 +179,7 @@ end
             @test r.metadata !== s.metadata
             @test_throws ErrorException(msg3on2) filter_roi(s, xr, yr, zr)
             @test occursin("2D", sprint(show, s))
-            @test occursin("2D", sprint(show, MIME("text/plain"), s))
+            @test occursin("2D localizations", sprint(show, MIME("text/plain"), s))
         end
     end
 
@@ -163,7 +199,7 @@ end
             @test r.metadata !== s.metadata
             @test_throws ErrorException(msg2on3) filter_roi(s, xr, yr)
             @test occursin("3D", sprint(show, s))
-            @test occursin("3D", sprint(show, MIME("text/plain"), s))
+            @test occursin("3D localizations", sprint(show, MIME("text/plain"), s))
         end
     end
 
@@ -187,7 +223,7 @@ end
         @test [e.x for e in r2.emitters] == xs[inside2d]
         @test_throws ErrorException(msg3on2) filter_roi(s2, xr, yr, zr)
         @test occursin("2D", sprint(show, s2))
-        @test occursin("2D", sprint(show, MIME("text/plain"), s2))
+        @test occursin("2D localizations", sprint(show, MIME("text/plain"), s2))
 
         e3 = [ForeignEmitter3D{Float64}(xs[i], ys[i], zs[i], 1000.0, i, 1, 0, i) for i in 1:5]
         s3 = BasicSMLD(e3, cam, 5, 1)
@@ -196,7 +232,7 @@ end
         @test [e.z for e in r3.emitters] == zs[inside3d]
         @test_throws ErrorException(msg2on3) filter_roi(s3, xr, yr)
         @test occursin("3D", sprint(show, s3))
-        @test occursin("3D", sprint(show, MIME("text/plain"), s3))
+        @test occursin("3D localizations", sprint(show, MIME("text/plain"), s3))
     end
 
     @testset "Non-concrete eltype" begin
@@ -273,5 +309,32 @@ end
         @test emitter_ndims(A) === nothing
         @test emitter_ndims(Union{Emitter2DFit{Float64}, Emitter3DFit{Float64}}) === nothing
         @test @inferred(emitter_ndims(Emitter2DFit{Float64}[])) == 2
+    end
+
+    @testset "emitter_ndims extension point" begin
+        cam = IdealCamera(1:64, 1:64, 0.1)
+        es = [ComputedZEmitter((1.0, 1.0, 0.0), 100.0, 1, 1, 0, 1),
+              ComputedZEmitter((5.0, 5.0, 0.0), 100.0, 1, 1, 0, 2)]
+        s = BasicSMLD(es, cam, 1, 1)
+        @test emitter_ndims(ComputedZEmitter{Float64}) == 3
+        @test emitter_ndims(es[1]) == 3
+        @test emitter_ndims(SMLMData.AbstractEmitter[es...]) == 3
+        @test emitter_ndims(s) == 3
+        @test length(filter_roi(s, (0.0, 2.0), (0.0, 2.0), (-1.0, 1.0)).emitters) == 1
+        @test_throws ErrorException("2D ROI cannot be applied to 3D emitter type") filter_roi(s, (0.0, 2.0), (0.0, 2.0))
+        @test occursin("3D", sprint(show, s))
+    end
+
+    @testset "emitter_ndims parametric extension point" begin
+        p2 = ParamDimEmitter((1.0, 1.0), 100.0, 1, 1, 0, 1)
+        p3 = ParamDimEmitter((1.0, 1.0, 0.0), 100.0, 1, 1, 0, 2)
+        @test emitter_ndims(ParamDimEmitter{3,Float64}) == 3
+        @test emitter_ndims(ParamDimEmitter{2}) == 2
+        @test emitter_ndims(ParamDimEmitter) === nothing
+        @test emitter_ndims(p3) == 3
+        @test emitter_ndims(ParamDimEmitter[p3, p3]) == 3
+        @test emitter_ndims(ParamDimEmitter[p2, p2]) == 2
+        @test emitter_ndims(ParamDimEmitter[p2, p3]) === nothing
+        @test emitter_ndims(ParamDimEmitter[]) === nothing
     end
 end

@@ -229,14 +229,23 @@ end
     emitter_ndims(e::AbstractEmitter)
     emitter_ndims(::Type{<:AbstractEmitter})
 
-Spatial dimension of emitters: `3` when the emitter type has a field `z`, otherwise `2`.
-Emitter types defined in other packages work as long as they subtype `AbstractEmitter`;
-nothing needs to be registered.
+Spatial dimension of emitters: `3` when the emitter type has a field named `z`, otherwise `2`.
+Emitter types defined in other packages work as long as they subtype `AbstractEmitter` and
+store `z` as a field; nothing needs to be registered.
+
+A type that computes `z` through `getproperty`, or keeps its dimension in a type parameter,
+declares it with a method on its type; every other method goes through that one. A type whose
+dimension is a parameter also declares that the type without it has no single dimension, so a
+vector of such emitters is checked element by element:
+
+    SMLMData.emitter_ndims(::Type{<:MyLocalization{N}}) where {N} = N
+    SMLMData.emitter_ndims(::Type{<:MyLocalization}) = nothing
 
 A vector or SMLD whose element type is concrete is decided from that type alone, even when empty.
 Otherwise every element is checked, and the result is `nothing` when there is no single answer:
-the elements mix 2D and 3D, or the vector is empty. A non-concrete type (`AbstractEmitter`, a
-`Union`) also gives `nothing`.
+the elements mix 2D and 3D, or the vector is empty. An abstract type (`AbstractEmitter`) or a
+`Union` also gives `nothing`; a parametric type written without its parameters (`Emitter2DFit`)
+is decided from its fields.
 
 A caller that needs a number must handle `nothing` itself, for example
 `d = emitter_ndims(smld); d === nothing && throw(ArgumentError("emitters are mixed 2D/3D or empty"))`,
