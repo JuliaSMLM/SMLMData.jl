@@ -264,9 +264,9 @@ function _save_smite_070(smld, filepath, filename)
 end
 
 # Saves smld with 0.7.0's body and with save_smite (warnings silenced). Returns the keys the
-# current save adds, or :changed if it drops or alters a 0.7.0 key. A throw from save_smite
-# propagates, failing the test.
-function _legacy_added_keys(smld)
+# current save adds, or :changed if it drops or alters a 0.7.0 key, and the current file's SMD.
+# A throw from save_smite propagates, failing the test.
+function _legacy_compare(smld)
     mktempdir() do dir
         _save_smite_070(smld, dir, "old.mat")
         old = SMLMData.MAT.matread(joinpath(dir, "old.mat"))["SMD"]
@@ -274,8 +274,8 @@ function _legacy_added_keys(smld)
             save_smite(smld, dir, "new.mat")
         end
         new = SMLMData.MAT.matread(joinpath(dir, "new.mat"))["SMD"]
-        all(k -> haskey(new, k) && isequal(new[k], old[k]), keys(old)) || return :changed
-        return sort!(collect(setdiff(keys(new), keys(old))))
+        all(k -> haskey(new, k) && isequal(new[k], old[k]), keys(old)) || return :changed, new
+        return sort!(collect(setdiff(keys(new), keys(old)))), new
     end
 end
 
@@ -743,19 +743,29 @@ end
         e3f = Emitter3DFit{Float32}(1.0f0, 1.5f0, 0.25f0, 1000.0f0, 10.0f0, 0.01f0, 0.01f0, 0.0625f0,
                                     50.0f0, 2.0f0)
         f3 = ForeignEmitter3DFit{Float64}(1.0, 1.5, 0.5, 1000.0, 10.0, 0.01, 0.01, 0.02, 50.0, 2.0, 1, 1, 0, 1)
+        f3b = ForeignEmitter3DFit{Float64}(2.0, 2.5, 0.75, 1000.0, 10.0, 0.01, 0.01, 0.04, 50.0, 2.0, 1, 1, 0, 2)
+        e3b = Emitter3DFit{Float64}(2.0, 2.5, 0.75, 1000.0, 10.0, 0.01, 0.01, 0.25, 50.0, 2.0)
         fz = ForeignZNoSigmaZ{Float64}(1.0, 1.5, 0.5, 1000.0, 10.0, 0.01, 0.01, 50.0, 2.0, 1, 1, 0, 1)
         hz = HiddenZLoc{Float64}(1.0, 1.5, 0.5, 1000.0, 10.0, 0.01, 0.01, 0.02, 50.0, 2.0, 1, 1, 0, 1)
         U3 = Union{Emitter3DFit{Float32}, Emitter3DFit{Float64}}
         unchanged = (sm([e2, e2]), sm([e3, e3]), sm([e3f, e3f]), sm(U3[]), sm(A[]), sm(A[e2, e3]),
                      sm([fz, fz]), sm([hz, hz]), sm([_oddz(missing, 0.02), _oddz(missing, 0.02)]),
                      sm([_oddz(Float16(0.5), Float16(0.02)), _oddz(Float16(0.5), Float16(0.02))]),
-                     sm(A[e3, _oddz(missing, 0.02)]))
+                     sm(A[e3, _oddz(missing, 0.02)]),
+                     # Float32 and Float64 z together make an AbstractFloat column, which MAT
+                     # would write as a cell: no Z.
+                     sm([_oddz(0.5, 0.02), _oddz(0.25f0, 0.03)]))
         for s in unchanged
-            @test _legacy_added_keys(s) == String[]
+            @test first(_legacy_compare(s)) == String[]
         end
-        widened = (sm(A[e3, e3]), sm([f3, f3]), sm([_oddz(0.5, 0.02), _oddz(0.25f0, 0.02)]))
+        widened = (sm(A[e3, e3b]), sm([f3, f3b]), sm([_oddz(0.5, 0.02), _oddz(0.25, 0.03)]),
+                   sm([_oddz(0.5f0, 0.02f0), _oddz(0.25f0, 0.03f0)]))
         for s in widened
-            @test _legacy_added_keys(s) == ["Z", "Z_SE"]
+            added, new = _legacy_compare(s)
+            @test added == ["Z", "Z_SE"]
+            @test vec(new["Z"]) == [e.z for e in s.emitters]
+            @test vec(new["Z_SE"]) == [e.σ_z for e in s.emitters]
+            @test eltype(new["Z"]) === typeof(first(s.emitters).z)
         end
     end
 
@@ -769,6 +779,7 @@ end
             @test_logs (:warn, r"mixed 2D/3D") save_smite(sm(A[e2, e3]), dir, "m.mat")
             @test_logs (:warn, r"3D emitters") save_smite(sm([_oddz(missing, 0.02)]), dir, "o.mat")
             @test_logs (:warn, r"3D emitters") save_smite(sm([_oddz(Float16(0.5), Float16(0.02))]), dir, "h.mat")
+            @test_logs (:warn, r"3D emitters") save_smite(sm([_oddz(0.5, 0.02), _oddz(0.25f0, 0.03)]), dir, "f.mat")
             @test !haskey(SMLMData.MAT.matread(joinpath(dir, "h.mat"))["SMD"], "Z")
             @test_logs save_smite(sm([e2, e2]), dir, "2.mat")   # 2D data lose nothing
             @test_logs save_smite(sm(A[e3, e3]), dir, "3.mat")  # widened: Z written
