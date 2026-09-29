@@ -105,6 +105,11 @@ mutable struct ForeignEmitter3DFit{T} <: SMLMData.AbstractEmitter   # for save_s
     x::T; y::T; z::T; photons::T; bg::T; σ_x::T; σ_y::T; σ_z::T; σ_photons::T; σ_bg::T
     frame::Int; dataset::Int; track_id::Int; id::Int
 end
+# Every field 0.7.0's save_smite reads, plus z, but no σ_z: 0.7.0 saved it without Z.
+mutable struct ForeignZNoSigmaZ{T} <: SMLMData.AbstractEmitter
+    x::T; y::T; z::T; photons::T; bg::T; σ_x::T; σ_y::T; σ_photons::T; σ_bg::T
+    frame::Int; dataset::Int; track_id::Int; id::Int
+end
 
 # Mimics SykTrack's Localization: position in a tuple, x/y/z computed in getproperty,
 # :z listed in propertynames only for N >= 3. No emitter_ndims method of its own.
@@ -342,15 +347,17 @@ _nd_alloc(v) = minimum(@allocated(emitter_ndims(v)) for _ in 1:5)
         @test isempty(filter_roi(empty_smld, xr, yr, zr).emitters)
     end
 
-    @testset "save_smite with foreign 3D emitters" begin
+    @testset "save_smite with foreign 3D emitters writes 0.7.0's columns" begin
         es = [ForeignEmitter3DFit{Float64}(xs[i], ys[i], zs[i], 1000.0, 10.0, 0.01, 0.01, 0.02 + i,
                                            50.0, 2.0, i, 1, 0, i) for i in 1:5]
         s = SmiteSMLD{Float64,ForeignEmitter3DFit{Float64}}(es, cam, 5, 1, Dict{String,Any}())
         mktempdir() do dir
             save_smite(s, dir, "foreign.mat")
             smd = SMLMData.MAT.matread(joinpath(dir, "foreign.mat"))["SMD"]
-            @test vec(smd["Z"]) == zs
-            @test vec(smd["Z_SE"]) == [0.02 + i for i in 1:5]
+            # Z columns are written only for Emitter3DFit data, as in 0.7.0.
+            @test vec(smd["X"]) == xs
+            @test !haskey(smd, "Z")
+            @test !haskey(smd, "Z_SE")
         end
     end
 
@@ -424,8 +431,9 @@ _nd_alloc(v) = minimum(@allocated(emitter_ndims(v)) for _ in 1:5)
             t3 = SmiteSMLD{Float64,PropZLoc{3,Float64}}(p3s, cam, 1, 1, Dict{String,Any}())
             save_smite(t3, dir, "p3.mat")
             smd = SMLMData.MAT.matread(joinpath(dir, "p3.mat"))["SMD"]
-            @test vec(smd["Z"]) == [p[3] for p in pts]
-            @test vec(smd["Z_SE"]) == [0.02 + i for i in 1:4]
+            # A foreign type gets 0.7.0's columns: no Z.
+            @test !haskey(smd, "Z")
+            @test !haskey(smd, "Z_SE")
             t2 = SmiteSMLD{Float64,PropZLoc{2,Float64}}(p2s, cam, 1, 1, Dict{String,Any}())
             save_smite(t2, dir, "p2.mat")
             smd = SMLMData.MAT.matread(joinpath(dir, "p2.mat"))["SMD"]
@@ -590,5 +598,37 @@ _nd_alloc(v) = minimum(@allocated(emitter_ndims(v)) for _ in 1:5)
         cam = IdealCamera(1:64, 1:64, 0.1)
         @test emitter_ndims(Union{}[]) === nothing
         @test emitter_ndims(BasicSMLD(Union{}[], cam, 1, 1)) === nothing
+    end
+
+    @testset "save_smite keeps 0.7.0's columns" begin
+        cam = IdealCamera(1:64, 1:64, 0.1)
+        A = SMLMData.AbstractEmitter
+        U3 = Union{Emitter3DFit{Float32}, Emitter3DFit{Float64}}
+        e3 = Emitter3DFit{Float64}(1.0, 1.0, 0.5, 1000.0, 10.0, 0.01, 0.01, 0.125, 50.0, 2.0)
+        e3b = Emitter3DFit{Float64}(2.0, 2.0, 0.75, 1000.0, 10.0, 0.01, 0.01, 0.5, 50.0, 2.0)
+        e3f = Emitter3DFit{Float32}(1.0f0, 1.0f0, 0.25f0, 1000.0f0, 10.0f0, 0.01f0, 0.01f0, 0.0625f0,
+                                    50.0f0, 2.0f0)
+        fz = ForeignZNoSigmaZ{Float64}(1.0, 1.0, 0.5, 1000.0, 10.0, 0.01, 0.01, 50.0, 2.0, 1, 1, 0, 1)
+        mktempdir() do dir
+            # 0.7.0 dropped Z for an abstract-typed vector of 3D fits; now every emitter being
+            # an Emitter3DFit writes it.
+            sa = SmiteSMLD{Float64,A}(A[e3, e3b], cam, 1, 1, Dict{String,Any}())
+            save_smite(sa, dir, "a3.mat")
+            smd = SMLMData.MAT.matread(joinpath(dir, "a3.mat"))["SMD"]
+            @test vec(smd["Z"]) == [0.5, 0.75]
+            @test vec(smd["Z_SE"]) == [0.125, 0.5]
+            su = SmiteSMLD{Float64,U3}(U3[e3, e3f], cam, 1, 1, Dict{String,Any}())
+            save_smite(su, dir, "u3.mat")
+            smd = SMLMData.MAT.matread(joinpath(dir, "u3.mat"))["SMD"]
+            @test Float64.(vec(smd["Z"])) == [0.5, 0.25]
+            @test Float64.(vec(smd["Z_SE"])) == [0.125, 0.0625]
+            # A foreign emitter with z but no σ_z saves as in 0.7.0: no error, no Z.
+            sf = SmiteSMLD{Float64,ForeignZNoSigmaZ{Float64}}([fz, fz], cam, 1, 1, Dict{String,Any}())
+            save_smite(sf, dir, "fz.mat")
+            smd = SMLMData.MAT.matread(joinpath(dir, "fz.mat"))["SMD"]
+            @test vec(smd["X"]) == [1.0, 1.0]
+            @test !haskey(smd, "Z")
+            @test !haskey(smd, "Z_SE")
+        end
     end
 end
