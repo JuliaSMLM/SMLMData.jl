@@ -92,6 +92,18 @@ _alloc_roi(smld, xr, yr, zr) = minimum((@allocated filter_roi(smld, xr, yr, zr))
 _alloc_ref(smld, xr, yr) = minimum((@allocated _roi2d_reference(smld, xr, yr)) for _ in 1:10)
 _alloc_ref(smld, xr, yr, zr) = minimum((@allocated _roi3d_reference(smld, xr, yr, zr)) for _ in 1:10)
 
+# Emitter types as another package would define them: subtypes of AbstractEmitter only
+mutable struct ForeignEmitter2D{T} <: SMLMData.AbstractEmitter
+    x::T; y::T; photons::T; frame::Int; dataset::Int; track_id::Int; id::Int
+end
+mutable struct ForeignEmitter3D{T} <: SMLMData.AbstractEmitter
+    x::T; y::T; z::T; photons::T; frame::Int; dataset::Int; track_id::Int; id::Int
+end
+mutable struct ForeignEmitter3DFit{T} <: SMLMData.AbstractEmitter   # for save_smite
+    x::T; y::T; z::T; photons::T; bg::T; σ_x::T; σ_y::T; σ_z::T; σ_photons::T; σ_bg::T
+    frame::Int; dataset::Int; track_id::Int; id::Int
+end
+
 @testset "Dimension routing" begin
     cam = IdealCamera(1:512, 1:512, 0.1)
     xr, yr, zr = (0.0, 2.0), (0.0, 2.0), (-1.0, 1.0)
@@ -159,10 +171,105 @@ _alloc_ref(smld, xr, yr, zr) = minimum((@allocated _roi3d_reference(smld, xr, yr
                         for _ in 1:n], cam, 1, 1)
         s3 = BasicSMLD([Emitter3DFit{Float64}(rand(), rand(), rand(), 1000.0, 10.0, 0.01, 0.01, 0.02, 50.0, 2.0)
                         for _ in 1:n], cam, 1, 1)
-        xr, yr, zr = (0.2, 0.8), (0.2, 0.8), (0.2, 0.8)
-        _alloc_roi(s2, xr, yr); _alloc_ref(s2, xr, yr)
-        _alloc_roi(s3, xr, yr, zr); _alloc_ref(s3, xr, yr, zr)
-        @test _alloc_roi(s2, xr, yr) == _alloc_ref(s2, xr, yr)
-        @test _alloc_roi(s3, xr, yr, zr) == _alloc_ref(s3, xr, yr, zr)
+        rx, ry, rz = (0.2, 0.8), (0.2, 0.8), (0.2, 0.8)
+        _alloc_roi(s2, rx, ry); _alloc_ref(s2, rx, ry)
+        _alloc_roi(s3, rx, ry, rz); _alloc_ref(s3, rx, ry, rz)
+        @test _alloc_roi(s2, rx, ry) == _alloc_ref(s2, rx, ry)
+        @test _alloc_roi(s3, rx, ry, rz) == _alloc_ref(s3, rx, ry, rz)
+    end
+
+    @testset "Foreign emitter types" begin
+        e2 = [ForeignEmitter2D{Float64}(xs[i], ys[i], 1000.0, i, 1, 0, i) for i in 1:5]
+        s2 = BasicSMLD(e2, cam, 5, 1)
+        r2 = filter_roi(s2, xr, yr)
+        @test [e.x for e in r2.emitters] == xs[inside2d]
+        @test_throws ErrorException(msg3on2) filter_roi(s2, xr, yr, zr)
+        @test occursin("2D", sprint(show, s2))
+        @test occursin("2D", sprint(show, MIME("text/plain"), s2))
+
+        e3 = [ForeignEmitter3D{Float64}(xs[i], ys[i], zs[i], 1000.0, i, 1, 0, i) for i in 1:5]
+        s3 = BasicSMLD(e3, cam, 5, 1)
+        r3 = filter_roi(s3, xr, yr, zr)
+        @test [e.x for e in r3.emitters] == xs[inside3d]
+        @test [e.z for e in r3.emitters] == zs[inside3d]
+        @test_throws ErrorException(msg2on3) filter_roi(s3, xr, yr)
+        @test occursin("3D", sprint(show, s3))
+        @test occursin("3D", sprint(show, MIME("text/plain"), s3))
+    end
+
+    @testset "Non-concrete eltype" begin
+        A = SMLMData.AbstractEmitter
+        e2 = A[Emitter2DFit{Float64}(xs[i], ys[i], 1000.0, 10.0, 0.01, 0.01, 50.0, 2.0) for i in 1:5]
+        e3 = A[Emitter3DFit{Float64}(xs[i], ys[i], zs[i], 1000.0, 10.0, 0.01, 0.01, 0.02, 50.0, 2.0) for i in 1:5]
+
+        s2 = BasicSMLD(e2, cam, 5, 1)
+        @test [e.x for e in filter_roi(s2, xr, yr).emitters] == xs[inside2d]
+        @test_throws ErrorException(msg3on2) filter_roi(s2, xr, yr, zr)
+
+        s3 = BasicSMLD(e3, cam, 5, 1)
+        @test [e.z for e in filter_roi(s3, xr, yr, zr).emitters] == zs[inside3d]
+        @test_throws ErrorException(msg2on3) filter_roi(s3, xr, yr)
+
+        mixed = BasicSMLD(A[e2[1], e3[1]], cam, 5, 1)
+        @test_throws ErrorException(msg2on3) filter_roi(mixed, xr, yr)
+        @test_throws ErrorException(msg3on2) filter_roi(mixed, xr, yr, zr)
+
+        U = Union{Emitter2DFit{Float64}, Emitter3DFit{Float64}}
+        union_smld = BasicSMLD(U[e2[1], e3[1]], cam, 5, 1)
+        @test_throws ErrorException(msg2on3) filter_roi(union_smld, xr, yr)
+        @test_throws ErrorException(msg3on2) filter_roi(union_smld, xr, yr, zr)
+
+        empty_smld = BasicSMLD(A[], cam, 5, 1)
+        @test isempty(filter_roi(empty_smld, xr, yr).emitters)
+        @test isempty(filter_roi(empty_smld, xr, yr, zr).emitters)
+    end
+
+    @testset "save_smite with foreign 3D emitters" begin
+        es = [ForeignEmitter3DFit{Float64}(xs[i], ys[i], zs[i], 1000.0, 10.0, 0.01, 0.01, 0.02 + i,
+                                           50.0, 2.0, i, 1, 0, i) for i in 1:5]
+        s = SmiteSMLD{Float64,ForeignEmitter3DFit{Float64}}(es, cam, 5, 1, Dict{String,Any}())
+        mktempdir() do dir
+            save_smite(s, dir, "foreign.mat")
+            smd = SMLMData.MAT.matread(joinpath(dir, "foreign.mat"))["SMD"]
+            @test vec(smd["Z"]) == zs
+            @test vec(smd["Z_SE"]) == [0.02 + i for i in 1:5]
+        end
+    end
+
+    @testset "emitter_ndims" begin
+        A = SMLMData.AbstractEmitter
+        mk = Dict(
+            Emitter2D => (Emitter2D{Float64}(1.0, 2.0, 1000.0), 2),
+            Emitter2DFit => (Emitter2DFit{Float64}(1.0, 2.0, 1000.0, 10.0, 0.01, 0.01, 50.0, 2.0), 2),
+            Emitter3D => (Emitter3D{Float64}(1.0, 2.0, 3.0, 1000.0), 3),
+            Emitter3DFit => (Emitter3DFit{Float64}(1.0, 2.0, 3.0, 1000.0, 10.0, 0.01, 0.01, 0.02, 50.0, 2.0), 3))
+        for (E, (e, d)) in mk
+            @test emitter_ndims(E) == d
+            @test emitter_ndims(E{Float64}) == d
+            @test emitter_ndims(e) == d
+            @test emitter_ndims([e]) == d
+            @test emitter_ndims(BasicSMLD([e], cam, 1, 1)) == d
+        end
+
+        f2 = ForeignEmitter2D{Float64}(1.0, 2.0, 1000.0, 1, 1, 0, 1)
+        f3 = ForeignEmitter3D{Float64}(1.0, 2.0, 3.0, 1000.0, 1, 1, 0, 1)
+        for (F, f, d) in ((ForeignEmitter2D, f2, 2), (ForeignEmitter3D, f3, 3))
+            @test emitter_ndims(F) == d
+            @test emitter_ndims(F{Float64}) == d
+            @test emitter_ndims(f) == d
+            @test emitter_ndims([f]) == d
+            @test emitter_ndims(BasicSMLD([f], cam, 1, 1)) == d
+        end
+
+        e2, e3 = mk[Emitter2D][1], mk[Emitter3D][1]
+        @test emitter_ndims(A[e2, e2]) == 2
+        @test emitter_ndims(A[e3, e3]) == 3
+        @test emitter_ndims(A[e2, e3]) === nothing
+        @test emitter_ndims(A[]) === nothing
+        @test emitter_ndims(Emitter3DFit{Float64}[]) == 3
+
+        @test emitter_ndims(A) === nothing
+        @test emitter_ndims(Union{Emitter2DFit{Float64}, Emitter3DFit{Float64}}) === nothing
+        @test @inferred(emitter_ndims(Emitter2DFit{Float64}[])) == 2
     end
 end

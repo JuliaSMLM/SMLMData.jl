@@ -224,6 +224,61 @@ function Emitter3DFit{T}(x::T, y::T, z::T, photons::T, bg::T,
 end
 
 """
+    emitter_ndims(smld::AbstractSMLD)
+    emitter_ndims(emitters::AbstractVector{<:AbstractEmitter})
+    emitter_ndims(e::AbstractEmitter)
+    emitter_ndims(::Type{<:AbstractEmitter})
+
+Spatial dimension of emitters: `3` when the emitter type has a field `z`, otherwise `2`.
+Emitter types defined in other packages work as long as they subtype `AbstractEmitter`;
+nothing needs to be registered.
+
+A vector or SMLD whose element type is concrete is decided from that type alone, even when empty.
+Otherwise every element is checked, and the result is `nothing` when there is no single answer:
+the elements mix 2D and 3D, or the vector is empty. A non-concrete type (`AbstractEmitter`, a
+`Union`) also gives `nothing`.
+
+A caller that needs a number must handle `nothing` itself, for example
+`d = emitter_ndims(smld); d === nothing && throw(ArgumentError("emitters are mixed 2D/3D or empty"))`,
+or treat an empty input as a no-op before asking. Do not compare the result with `<` or `>`
+without that check.
+
+# Examples
+```julia
+emitter_ndims(Emitter2DFit)   # 2
+emitter_ndims(smld_3d)        # 3 for an SMLD of Emitter3DFit
+
+# An emitter type defined in another package
+mutable struct MyEmitter{T} <: SMLMData.AbstractEmitter
+    x::T
+    y::T
+    photons::T
+    frame::Int
+    dataset::Int
+    track_id::Int
+    id::Int
+end
+emitter_ndims(MyEmitter(1.0, 2.0, 500.0, 1, 1, 0, 1))   # 2
+
+mixed = SMLMData.AbstractEmitter[Emitter2D{Float64}(1.0, 2.0, 500.0),
+                                 Emitter3D{Float64}(1.0, 2.0, 0.1, 500.0)]
+emitter_ndims(mixed)          # nothing
+```
+"""
+function emitter_ndims(::Type{E}) where {E<:AbstractEmitter}
+    B = Base.unwrap_unionall(E)
+    (B isa DataType && !isabstracttype(B)) || return nothing
+    return hasfield(B, :z) ? 3 : 2
+end
+emitter_ndims(e::AbstractEmitter) = emitter_ndims(typeof(e))
+function emitter_ndims(emitters::AbstractVector{<:AbstractEmitter})
+    d = emitter_ndims(eltype(emitters))
+    (d !== nothing || isempty(emitters)) && return d
+    d1 = emitter_ndims(first(emitters))   # single assignment: a reassigned d captured by the closure would box
+    return all(e -> emitter_ndims(e) == d1, emitters) ? d1 : nothing
+end
+
+"""
     Base.show methods for Emitter types
 
 These methods provide clean displays of all emitter types in both REPL and other contexts.

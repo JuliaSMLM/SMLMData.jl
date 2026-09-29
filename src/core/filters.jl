@@ -127,7 +127,8 @@ function filter_roi(smld::AbstractSMLD, x_range, y_range)
     x_min, x_max = extrema(x_range)
     y_min, y_max = extrema(y_range)
 
-    if eltype(smld.emitters) <: Union{Emitter2D, Emitter2DFit}
+    d = emitter_ndims(smld.emitters)
+    if d == 2 || (d === nothing && isempty(smld.emitters))
         keep = [x_min ≤ e.x ≤ x_max && y_min ≤ e.y ≤ y_max for e in smld.emitters]
         return typeof(smld)(
             smld.emitters[keep],
@@ -146,7 +147,8 @@ function filter_roi(smld::AbstractSMLD, x_range, y_range, z_range)
     y_min, y_max = extrema(y_range)
     z_min, z_max = extrema(z_range)
     
-    if eltype(smld.emitters) <: Union{Emitter3D, Emitter3DFit}
+    d = emitter_ndims(smld.emitters)
+    if d == 3 || (d === nothing && isempty(smld.emitters))
         keep = [x_min ≤ e.x ≤ x_max && 
                 y_min ≤ e.y ≤ y_max && 
                 z_min ≤ e.z ≤ z_max for e in smld.emitters]

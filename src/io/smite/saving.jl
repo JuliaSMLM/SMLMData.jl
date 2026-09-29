@@ -21,7 +21,7 @@ function save_smite(smld::SmiteSMLD, filepath::String, filename::String)
     # Extract arrays from emitters
     s["X"] = [e.x for e in smld.emitters]
     s["Y"] = [e.y for e in smld.emitters]
-    if eltype(smld.emitters) <: Emitter3DFit
+    if emitter_ndims(smld.emitters) == 3
         s["Z"] = [e.z for e in smld.emitters]
     end
     
@@ -30,7 +30,7 @@ function save_smite(smld::SmiteSMLD, filepath::String, filename::String)
     
     s["X_SE"] = [e.σ_x for e in smld.emitters]
     s["Y_SE"] = [e.σ_y for e in smld.emitters]
-    if eltype(smld.emitters) <: Emitter3DFit
+    if emitter_ndims(smld.emitters) == 3
         s["Z_SE"] = [e.σ_z for e in smld.emitters]
     end
     
