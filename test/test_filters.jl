@@ -290,23 +290,31 @@ _nd_alloc(v) = minimum(@allocated(emitter_ndims(v)) for _ in 1:5)
     end
 
     @testset "Allocation parity" begin
+        # Routing adds nothing for the four own types: the dimension query allocates 0 B and infers
+        # Int. filter_roi is compared with the copied 0.7.0 body within 128 B, not exactly, because
+        # @allocated differs by 32-64 B between two separately compiled functions even for identical
+        # code (0.7.0's own filter_roi misses exact equality with its copy on some random data).
         n = 10_000
+        rx, ry, rz = (0.2, 0.8), (0.2, 0.8), (0.2, 0.8)
         s2 = BasicSMLD([Emitter2DFit{Float64}(rand(), rand(), 1000.0, 10.0, 0.01, 0.01, 50.0, 2.0)
                         for _ in 1:n], cam, 1, 1)
         s3 = BasicSMLD([Emitter3DFit{Float64}(rand(), rand(), rand(), 1000.0, 10.0, 0.01, 0.01, 0.02, 50.0, 2.0)
                         for _ in 1:n], cam, 1, 1)
-        rx, ry, rz = (0.2, 0.8), (0.2, 0.8), (0.2, 0.8)
-        _alloc_roi(s2, rx, ry); _alloc_ref(s2, rx, ry)
-        _alloc_roi(s3, rx, ry, rz); _alloc_ref(s3, rx, ry, rz)
-        @test _alloc_roi(s2, rx, ry) == _alloc_ref(s2, rx, ry)
-        @test _alloc_roi(s3, rx, ry, rz) == _alloc_ref(s3, rx, ry, rz)
-
         t2 = BasicSMLD([Emitter2D{Float64}(rand(), rand(), 1000.0) for _ in 1:n], cam, 1, 1)
         t3 = BasicSMLD([Emitter3D{Float64}(rand(), rand(), rand(), 1000.0) for _ in 1:n], cam, 1, 1)
-        _alloc_roi(t2, rx, ry); _alloc_ref(t2, rx, ry)
-        _alloc_roi(t3, rx, ry, rz); _alloc_ref(t3, rx, ry, rz)
-        @test _alloc_roi(t2, rx, ry) == _alloc_ref(t2, rx, ry)
-        @test _alloc_roi(t3, rx, ry, rz) == _alloc_ref(t3, rx, ry, rz)
+        for (s, d) in ((s2, 2), (t2, 2), (s3, 3), (t3, 3))
+            _nd_alloc(s.emitters)   # warm up
+            @test _nd_alloc(s.emitters) == 0
+            @test @inferred(emitter_ndims(s.emitters)) == d
+        end
+        for s in (s2, t2)
+            _alloc_roi(s, rx, ry); _alloc_ref(s, rx, ry)
+            @test abs(_alloc_roi(s, rx, ry) - _alloc_ref(s, rx, ry)) <= 128
+        end
+        for s in (s3, t3)
+            _alloc_roi(s, rx, ry, rz); _alloc_ref(s, rx, ry, rz)
+            @test abs(_alloc_roi(s, rx, ry, rz) - _alloc_ref(s, rx, ry, rz)) <= 128
+        end
     end
 
     @testset "Foreign emitter types" begin
