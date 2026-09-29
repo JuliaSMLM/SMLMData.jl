@@ -1,3 +1,5 @@
+using SMLMData, Test
+
 @testset "Filtering" begin
     # Create test data with known values
     cam = IdealCamera(1:512, 1:512, 0.1)

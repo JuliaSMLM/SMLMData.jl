@@ -1,3 +1,5 @@
+using SMLMData, Test
+
 @testset "Coordinate Conversion" begin
     @testset "Basic Conversions" begin
         pixel_size = 0.1  # 100nm pixels

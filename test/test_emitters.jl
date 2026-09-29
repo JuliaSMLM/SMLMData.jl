@@ -1,3 +1,5 @@
+using SMLMData, Test
+
 @testset "Basic Emitters" begin
     @testset "2D Emitter" begin
         # Test construction

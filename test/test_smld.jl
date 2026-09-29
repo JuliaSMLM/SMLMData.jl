@@ -1,3 +1,5 @@
+using SMLMData, Test
+
 @testset "Basic SMLD" begin
     @testset "Construction" begin
         # Create test data
