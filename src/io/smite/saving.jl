@@ -11,31 +11,38 @@ Save SmiteSMLD data back to SMITE's SMD .mat format.
 # Notes
 - Saves in MATLAB v7.3 format
 - Preserves all metadata fields
-- Writes `Z` and `Z_SE` when the element type is an `Emitter3DFit` (as v0.7.0 did), or when the
-  emitters are not empty, their dimension (`emitter_ndims`) is 3 and every one has the
-  properties `z` and `σ_z`; otherwise it writes neither. A type whose `propertynames` lists a
-  property that `getproperty` refuses breaks Julia's property interface and is not supported.
-
-# Throws
-- `ArgumentError` if the emitters are not empty and their dimension is `nothing`, that is, they
-  mix 2D and 3D: a SMITE SMD file has one `Z` column for all localizations, so save the 2D and
-  the 3D emitters as separate files.
+- Writes `Z` and `Z_SE` for an `Emitter3DFit` element type (as v0.7.0 did), or for non-empty 3D
+  data (`emitter_ndims`) whose every emitter has properties `z` and `σ_z` holding `Float32` or
+  `Float64` values. Otherwise it writes v0.7.0's columns, with no `Z`, and warns when non-empty
+  3D or mixed 2D/3D data lose `Z` (a SMITE SMD file has one `Z` column for all localizations, so
+  save 2D and 3D data separately to keep it). It never throws where v0.7.0 saved.
+- Only `Float32` and `Float64` widen the columns, because MATLAB stores those as single and
+  double: MAT.jl writes `Float64`, `Float32`, `Int` and `Bool` vectors but throws on `Float16`,
+  `Rational`, `BigFloat` and `missing`.
+- A type whose `propertynames` lists a property that `getproperty` refuses breaks Julia's
+  property interface and is not supported.
 """
+# True when MAT can write the emitter's z and σ_z as MATLAB single or double.
+_mat_float_z(e) = hasproperty(e, :z) && hasproperty(e, :σ_z) &&
+                  e.z isa Union{Float32,Float64} && e.σ_z isa Union{Float32,Float64}
+
 function save_smite(smld::SmiteSMLD, filepath::String, filename::String)
     # Create SMD structure
     s = Dict{String,Any}()
     
     n = length(smld.emitters)
 
+    # Z columns for v0.7.0's rule (an Emitter3DFit element type), or for non-empty 3D data whose
+    # z and σ_z MAT can write. Anything else gets v0.7.0's columns and never throws where v0.7.0
+    # saved; non-empty 3D or mixed data that lose Z get a warning.
     d = emitter_ndims(smld.emitters)
-    d === nothing && !isempty(smld.emitters) && throw(ArgumentError(
-        "save_smite: emitters mix 2D and 3D; SMITE stores one Z column, so save 2D and 3D data separately"))
-    # Z columns: 0.7.0's rule (an Emitter3DFit element type), or non-empty 3D data whose every emitter
-    # has the properties z and σ_z. Anything else keeps 0.7.0's columns, so nothing 0.7.0 saved
-    # throws or loses a column.
     has_z = eltype(smld.emitters) <: Emitter3DFit ||
-            (d == 3 && !isempty(smld.emitters) &&
-             all(e -> hasproperty(e, :z) && hasproperty(e, :σ_z), smld.emitters))
+            (d == 3 && !isempty(smld.emitters) && all(_mat_float_z, smld.emitters))
+    if !has_z && !isempty(smld.emitters)
+        d === nothing && @warn("save_smite: mixed 2D/3D emitters: Z not saved; " *
+                               "save 2D and 3D data separately")
+        d == 3 && @warn("save_smite: 3D emitters without Float32/Float64 z and σ_z: Z not saved")
+    end
     
     # Extract arrays from emitters
     s["X"] = [e.x for e in smld.emitters]

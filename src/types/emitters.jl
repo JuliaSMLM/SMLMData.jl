@@ -251,9 +251,10 @@ type, for its elements (whatever their properties) and for empty vectors of it:
     SMLMData.emitter_ndims(::Type{<:MyLocalization{N}}) where {N} = N
 
 A collection whose element type declares a dimension is answered from the type; otherwise every
-element is checked. The scan calls `propertynames` on each element, twice on the first, and stops
-at the first element that differs from it; it allocates nothing itself, so a `propertynames` that
-allocates makes the scan allocate.
+element is checked, stopping at the first element that differs from the first. The scan asks each
+element's type first and calls `propertynames` only on elements whose type declares nothing
+(twice on the first element); it allocates nothing itself, so a `propertynames` that allocates
+makes the scan allocate.
 
 A caller that needs a number must handle `nothing` itself, for example
 `d = emitter_ndims(smld); d === nothing && throw(ArgumentError("emitters are mixed 2D/3D or empty"))`,
@@ -284,20 +285,19 @@ emitter_ndims(mixed)          # nothing
 ```
 """
 function emitter_ndims(::Type{E}) where {E<:AbstractEmitter}
-    E === Union{} && return nothing   # a subtype of every type, so it declares nothing
     E <: Union{Emitter2D, Emitter2DFit} && return 2
     E <: Union{Emitter3D, Emitter3DFit} && return 3
     return nothing
 end
+# Union{} is a subtype of every emitter type, so without its own method it would match every
+# declared method at once (ambiguous) and take the 2D branch above.
+emitter_ndims(::Type{Union{}}) = nothing
 function emitter_ndims(e::AbstractEmitter)
     d = emitter_ndims(typeof(e))
     return d === nothing ? (hasproperty(e, :z) ? 3 : 2) : d
 end
 function emitter_ndims(emitters::AbstractVector{<:AbstractEmitter})
-    E = eltype(emitters)
-    # Asking Union{} (a subtype of every emitter type) would be ambiguous between declared methods.
-    E === Union{} && return nothing
-    d = emitter_ndims(E)
+    d = emitter_ndims(eltype(emitters))
     (d === nothing && !isempty(emitters)) || return d
     d1 = emitter_ndims(first(emitters))
     return all(e -> emitter_ndims(e) == d1, emitters) ? d1 : nothing

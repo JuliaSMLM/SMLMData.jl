@@ -113,6 +113,14 @@ Efficiently select emitters within a region of interest.
 # Returns
 New AbstractSMLD containing only emitters within the specified ROI
 
+# Dimension
+The emitters' dimension ([`emitter_ndims`](@ref)) picks the form: the 2D form needs dimension 2
+and the 3D form dimension 3, for SMLMData's emitter types and for emitter types from other
+packages alike. Empty data whose dimension is `nothing` give an empty result from either form.
+Otherwise an `ErrorException` is thrown: "2D ROI cannot be applied to 3D emitter type" (or its
+3D counterpart) for data of the other dimension, and "2D ROI cannot be applied to mixed 2D/3D
+emitters" (or its 3D counterpart) for mixed data.
+
 # Examples
 ```julia
 # 2D ROI
@@ -137,6 +145,8 @@ function filter_roi(smld::AbstractSMLD, x_range, y_range)
             smld.n_datasets,
             copy(smld.metadata)
         )
+    elseif d === nothing
+        error("2D ROI cannot be applied to mixed 2D/3D emitters")
     else
         error("2D ROI cannot be applied to 3D emitter type")
     end
@@ -159,6 +169,8 @@ function filter_roi(smld::AbstractSMLD, x_range, y_range, z_range)
             smld.n_datasets,
             copy(smld.metadata)
         )
+    elseif d === nothing
+        error("3D ROI cannot be applied to mixed 2D/3D emitters")
     else
         error("3D ROI cannot be applied to 2D emitter type")
     end
