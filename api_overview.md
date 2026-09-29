@@ -370,9 +370,10 @@ roi_2d = filter_roi(smld, 1.0:5.0, 2.0:6.0)       # x_range, y_range
 # 3D ROI (for 3D emitters only)
 roi_3d = filter_roi(smld, 1.0:5.0, 2.0:6.0, -1.0:1.0)  # x, y, z ranges
 
-# Spatial dimension of emitters: 3 if an emitter has a property z (a field, or a computed z listed in propertynames), else 2
-# (nothing for mixed elements, or an empty vector whose element type is abstract or a Union). Works for any AbstractEmitter subtype,
-# including types defined in other packages.
+# Spatial dimension of emitters: what the type declares (SMLMData's emitter types declare 2 or 3), else 3 if an
+# emitter has a property z (hasproperty(e, :z)) and 2 if not. A collection takes its element type's declaration, else
+# the dimension all its elements share; nothing when they disagree, or when empty and the element type declares none.
+# Works for any AbstractEmitter subtype, including types defined in other packages.
 emitter_ndims(smld)                                # 2 or 3
 emitter_ndims(Emitter3DFit)                        # 3
 emitter_ndims(MyPackage.MyEmitter2D(1.0, 2.0))     # 2, a foreign type

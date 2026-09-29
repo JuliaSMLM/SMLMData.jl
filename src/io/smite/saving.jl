@@ -11,12 +11,15 @@ Save SmiteSMLD data back to SMITE's SMD .mat format.
 # Notes
 - Saves in MATLAB v7.3 format
 - Preserves all metadata fields
-- Writes `Z` and `Z_SE` when the element type is an `Emitter3DFit`, or the emitters are 3D and
-  every one has a property `σ_z`; other data are saved without them, as in v0.7.0
+- Writes `Z` and `Z_SE` when the element type is an `Emitter3DFit` (as v0.7.0 did), or when the
+  emitters are not empty, their dimension (`emitter_ndims`) is 3 and every one has the
+  properties `z` and `σ_z`; otherwise it writes neither. A type whose `propertynames` lists a
+  property that `getproperty` refuses breaks Julia's property interface and is not supported.
 
 # Throws
-- `ArgumentError` if the emitters mix 2D and 3D: a SMITE SMD file has one `Z` column for all
-  localizations, so save the 2D and the 3D emitters as separate files.
+- `ArgumentError` if the emitters are not empty and their dimension is `nothing`, that is, they
+  mix 2D and 3D: a SMITE SMD file has one `Z` column for all localizations, so save the 2D and
+  the 3D emitters as separate files.
 """
 function save_smite(smld::SmiteSMLD, filepath::String, filename::String)
     # Create SMD structure
@@ -27,11 +30,12 @@ function save_smite(smld::SmiteSMLD, filepath::String, filename::String)
     d = emitter_ndims(smld.emitters)
     d === nothing && !isempty(smld.emitters) && throw(ArgumentError(
         "save_smite: emitters mix 2D and 3D; SMITE stores one Z column, so save 2D and 3D data separately"))
-    # Z columns: 0.7.0's rule (an Emitter3DFit element type), or 3D data whose every emitter has σ_z
-    # (which includes data made only of Emitter3DFit). Anything else keeps 0.7.0's columns, so
-    # nothing 0.7.0 saved throws or loses a column.
+    # Z columns: 0.7.0's rule (an Emitter3DFit element type), or non-empty 3D data whose every emitter
+    # has the properties z and σ_z. Anything else keeps 0.7.0's columns, so nothing 0.7.0 saved
+    # throws or loses a column.
     has_z = eltype(smld.emitters) <: Emitter3DFit ||
-            (d == 3 && !isempty(smld.emitters) && all(e -> hasproperty(e, :σ_z), smld.emitters))
+            (d == 3 && !isempty(smld.emitters) &&
+             all(e -> hasproperty(e, :z) && hasproperty(e, :σ_z), smld.emitters))
     
     # Extract arrays from emitters
     s["X"] = [e.x for e in smld.emitters]

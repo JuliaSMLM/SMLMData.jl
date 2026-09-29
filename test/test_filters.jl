@@ -110,6 +110,14 @@ mutable struct ForeignZNoSigmaZ{T} <: SMLMData.AbstractEmitter
     x::T; y::T; z::T; photons::T; bg::T; σ_x::T; σ_y::T; σ_photons::T; σ_bg::T
     frame::Int; dataset::Int; track_id::Int; id::Int
 end
+# Stores z but hides it: not in propertynames, refused by getproperty. Exposes σ_z. 0.7.0 saved it without Z.
+mutable struct HiddenZLoc{T} <: SMLMData.AbstractEmitter
+    x::T; y::T; z::T; photons::T; bg::T; σ_x::T; σ_y::T; σ_z::T; σ_photons::T; σ_bg::T
+    frame::Int; dataset::Int; track_id::Int; id::Int
+end
+Base.propertynames(::HiddenZLoc) = Tuple(f for f in fieldnames(HiddenZLoc) if f !== :z)
+Base.getproperty(e::HiddenZLoc, s::Symbol) =
+    s === :z ? throw(ArgumentError("HiddenZLoc keeps z private")) : getfield(e, s)
 
 # Mimics SykTrack's Localization: position in a tuple, x/y/z computed in getproperty,
 # :z listed in propertynames only for N >= 3. No emitter_ndims method of its own.
@@ -204,7 +212,7 @@ end
 SMLMData.emitter_ndims(::Type{<:DeclaredOnlyLoc{N}}) where {N} = N
 SMLMData.emitter_ndims(::Type{<:DeclaredOnlyLoc}) = nothing
 
-# Has a field z but its type declares 2: a property z always wins for elements.
+# Has a field z but its type declares 2: the declaration decides, for the type and its elements.
 struct ZFieldDeclared2 <: SMLMData.AbstractEmitter
     x::Float64
     y::Float64
@@ -377,8 +385,9 @@ _nd_alloc(v) = minimum(@allocated(emitter_ndims(v)) for _ in 1:5)
         f2 = ForeignEmitter2D{Float64}(1.0, 2.0, 1000.0, 1, 1, 0, 1)
         f3 = ForeignEmitter3D{Float64}(1.0, 2.0, 3.0, 1000.0, 1, 1, 0, 1)
         for (F, f, d) in ((ForeignEmitter2D, f2, 2), (ForeignEmitter3D, f3, 3))
-            @test emitter_ndims(F) == d
-            @test emitter_ndims(F{Float64}) == d
+            # An undeclared type has no type-level answer; its emitters decide by their properties.
+            @test emitter_ndims(F) === nothing
+            @test emitter_ndims(F{Float64}) === nothing
             @test emitter_ndims(f) == d
             @test emitter_ndims([f]) == d
             @test emitter_ndims(BasicSMLD([f], cam, 1, 1)) == d
@@ -443,9 +452,12 @@ _nd_alloc(v) = minimum(@allocated(emitter_ndims(v)) for _ in 1:5)
         @test occursin("2D localizations", sprint(show, MIME("text/plain"), s2))
         @test occursin("3D localizations", sprint(show, MIME("text/plain"), s3))
 
-        # Documented limit: without an element only the fields are visible, so a computed z reads as 2.
-        @test emitter_ndims(PropZLoc{3,Float64}) == 2
-        @test emitter_ndims(PropZLoc{3,Float64}[]) == 2
+        # Without an element an undeclared type gives no answer, so an ROI on empty data is a no-op.
+        @test emitter_ndims(PropZLoc{3,Float64}) === nothing
+        @test emitter_ndims(PropZLoc{3,Float64}[]) === nothing
+        empty3 = BasicSMLD(PropZLoc{3,Float64}[], cam, 1, 1)
+        @test isempty(filter_roi(empty3, (0.0, 2.0), (0.0, 2.0), (-1.0, 1.0)).emitters)
+        @test isempty(filter_roi(empty3, (0.0, 2.0), (0.0, 2.0)).emitters)
     end
 
     @testset "emitter_ndims: declared type-only answer" begin
@@ -485,8 +497,8 @@ _nd_alloc(v) = minimum(@allocated(emitter_ndims(v)) for _ in 1:5)
 
         zf = ZFieldDeclared2(1.0, 1.0, 0.0, 100.0, 1, 1, 0, 1)
         @test emitter_ndims(ZFieldDeclared2) == 2
-        @test emitter_ndims(zf) == 3
-        @test emitter_ndims([zf, zf]) == 3
+        @test emitter_ndims(zf) == 2
+        @test emitter_ndims([zf, zf]) == 2
 
         e2 = Emitter2DFit{Float64}(1.0, 1.0, 100.0, 1.0, 0.01, 0.01, 1.0, 1.0, frame=1)
         @test emitter_ndims(SMLMData.AbstractEmitter[e2, e2]) == 2
@@ -513,16 +525,20 @@ _nd_alloc(v) = minimum(@allocated(emitter_ndims(v)) for _ in 1:5)
     end
 
     @testset "empty Union of one dimension" begin
+        # A Union of SMLMData's same-dimension types declares that dimension, so ROIs behave as in
+        # 0.7.0, which checked eltype <: Union{Emitter2D, Emitter2DFit} (or the 3D pair).
         cam = IdealCamera(1:64, 1:64, 0.1)
         E2 = Union{Emitter2D{Float64}, Emitter2DFit{Float64}}
         E3 = Union{Emitter3D{Float64}, Emitter3DFit{Float64}}
-        @test emitter_ndims(E2[]) === nothing
-        @test emitter_ndims(E3[]) === nothing
-        for v in (E2[], E3[])
-            s = BasicSMLD(v, cam, 1, 1)
-            @test isempty(filter_roi(s, (0.0, 1.0), (0.0, 1.0)).emitters)
-            @test isempty(filter_roi(s, (0.0, 1.0), (0.0, 1.0), (-1.0, 1.0)).emitters)
-        end
+        @test emitter_ndims(E2[]) == 2
+        @test emitter_ndims(E3[]) == 3
+        s2, s3 = BasicSMLD(E2[], cam, 1, 1), BasicSMLD(E3[], cam, 1, 1)
+        @test isempty(filter_roi(s2, (0.0, 1.0), (0.0, 1.0)).emitters)
+        @test_throws ErrorException("3D ROI cannot be applied to 2D emitter type") filter_roi(
+            s2, (0.0, 1.0), (0.0, 1.0), (-1.0, 1.0))
+        @test isempty(filter_roi(s3, (0.0, 1.0), (0.0, 1.0), (-1.0, 1.0)).emitters)
+        @test_throws ErrorException("2D ROI cannot be applied to 3D emitter type") filter_roi(
+            s3, (0.0, 1.0), (0.0, 1.0))
         @test emitter_ndims(Emitter2DFit{Float64}[]) == 2
         @test emitter_ndims(Emitter3DFit{Float64}[]) == 3
     end
@@ -634,6 +650,16 @@ _nd_alloc(v) = minimum(@allocated(emitter_ndims(v)) for _ in 1:5)
                                                               Dict{String,Any}())
             save_smite(se, dir, "ez.mat")
             @test !haskey(SMLMData.MAT.matread(joinpath(dir, "ez.mat"))["SMD"], "Z")
+            # A stored z hidden from the properties, with σ_z exposed, is 2D and saves as in 0.7.0: no Z.
+            hz = HiddenZLoc{Float64}(1.0, 1.0, 0.5, 1000.0, 10.0, 0.01, 0.01, 0.02, 50.0, 2.0, 1, 1, 0, 1)
+            @test emitter_ndims(hz) == 2
+            @test emitter_ndims([hz, hz]) == 2
+            sh = SmiteSMLD{Float64,HiddenZLoc{Float64}}([hz, hz], cam, 1, 1, Dict{String,Any}())
+            save_smite(sh, dir, "hz.mat")
+            smd = SMLMData.MAT.matread(joinpath(dir, "hz.mat"))["SMD"]
+            @test vec(smd["X"]) == [1.0, 1.0]
+            @test !haskey(smd, "Z")
+            @test !haskey(smd, "Z_SE")
         end
     end
 end
