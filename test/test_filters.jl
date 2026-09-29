@@ -148,8 +148,10 @@ function Base.getproperty(e::VarDimLoc, s::Symbol)
     s === :z && return length(getfield(e, :position)) >= 3 ? getfield(e, :position)[3] : 0.0
     return getfield(e, s)
 end
-Base.propertynames(e::VarDimLoc) =
-    (fieldnames(VarDimLoc)..., (length(getfield(e, :position)) >= 3 ? (:x, :y, :z) : (:x, :y))...)
+# Two constant tuples: splatting a runtime-chosen tuple here would allocate on every call.
+Base.propertynames(e::VarDimLoc) = length(getfield(e, :position)) >= 3 ?
+    (:position, :photons, :frame, :dataset, :track_id, :id, :x, :y, :z) :
+    (:position, :photons, :frame, :dataset, :track_id, :id, :x, :y)
 
 # Same as PropZLoc, plus the documented type-only declaration.
 struct DeclaredZLoc{N,T} <: SMLMData.AbstractEmitter
@@ -209,6 +211,9 @@ struct ZFieldDeclared2 <: SMLMData.AbstractEmitter
     id::Int
 end
 SMLMData.emitter_ndims(::Type{ZFieldDeclared2}) = 2
+
+# Function barrier so the allocation count is the scan's own.
+_nd_alloc(v) = minimum(@allocated(emitter_ndims(v)) for _ in 1:5)
 
 @testset "Dimension routing" begin
     cam = IdealCamera(1:512, 1:512, 0.1)
@@ -500,6 +505,39 @@ SMLMData.emitter_ndims(::Type{ZFieldDeclared2}) = 2
         @test length(r3.emitters) == 2
         r2 = filter_roi(BasicSMLD([a2, a2], cam, 1, 1), xr, yr)
         @test length(r2.emitters) == 2
+    end
+
+    @testset "empty Union of one dimension" begin
+        cam = IdealCamera(1:64, 1:64, 0.1)
+        E2 = Union{Emitter2D{Float64}, Emitter2DFit{Float64}}
+        E3 = Union{Emitter3D{Float64}, Emitter3DFit{Float64}}
+        @test emitter_ndims(E2[]) === nothing
+        @test emitter_ndims(E3[]) === nothing
+        for v in (E2[], E3[])
+            s = BasicSMLD(v, cam, 1, 1)
+            @test isempty(filter_roi(s, (0.0, 1.0), (0.0, 1.0)).emitters)
+            @test isempty(filter_roi(s, (0.0, 1.0), (0.0, 1.0), (-1.0, 1.0)).emitters)
+        end
+        @test emitter_ndims(Emitter2DFit{Float64}[]) == 2
+        @test emitter_ndims(Emitter3DFit{Float64}[]) == 3
+    end
+
+    @testset "foreign element scan allocates nothing" begin
+        n = 10_000
+        mkp2(i) = PropZLoc{2,Float64}((1.0, 2.0), (0.01, 0.01), 100.0, 5.0, 1.0, 1.0, 1, 1, 0, i)
+        mkp3(i) = PropZLoc{3,Float64}((1.0, 2.0, 3.0), (0.01, 0.01, 0.02), 100.0, 5.0, 1.0, 1.0, 1, 1, 0, i)
+        vs = (
+            [ForeignEmitter2D{Float64}(1.0, 2.0, 1000.0, 1, 1, 0, i) for i in 1:n],
+            [ForeignEmitter3D{Float64}(1.0, 2.0, 3.0, 1000.0, 1, 1, 0, i) for i in 1:n],
+            [mkp2(i) for i in 1:n],
+            [mkp3(i) for i in 1:n],
+            [VarDimLoc([1.0, 1.0], 100.0, 1, 1, 0, i) for i in 1:n],
+            [VarDimLoc([1.0, 1.0, 0.0], 100.0, 1, 1, 0, i) for i in 1:n],
+        )
+        for v in vs
+            _nd_alloc(v)   # warm up
+            @test _nd_alloc(v) == 0
+        end
     end
 
     @testset "save_smite rejects mixed dimensions" begin

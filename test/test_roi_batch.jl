@@ -3,10 +3,11 @@ using SMLMData
 using StaticArrays
 using Adapt
 
-# Converts Float32 arrays to Float64 and leaves everything else alone, so an adapted ROIBatch
-# shows whether each field went through Adapt.
+# Converts Float32 arrays to Float64 and returns Int32 vectors as fresh copies, so an adapted
+# ROIBatch shows whether each field went through Adapt.
 struct Float64Adaptor end
 Adapt.adapt_storage(::Float64Adaptor, x::AbstractArray{Float32}) = Float64.(x)
+Adapt.adapt_storage(::Float64Adaptor, x::Vector{Int32}) = copy(x)   # a fresh copy shows the field was adapted
 
 @testset "SingleROI" begin
     @testset "Construction" begin
@@ -377,8 +378,11 @@ end
         @test adapted.data isa Array{Float64,3}
         @test adapted.data == Float64.(batch.data)
         @test adapted.x_corners == batch.x_corners
+        @test adapted.x_corners !== batch.x_corners
         @test adapted.y_corners == batch.y_corners
+        @test adapted.y_corners !== batch.y_corners
         @test adapted.frame_indices == batch.frame_indices
+        @test adapted.frame_indices !== batch.frame_indices
         @test adapted.x_corners isa Vector{Int32}
         @test adapted.y_corners isa Vector{Int32}
         @test adapted.frame_indices isa Vector{Int32}

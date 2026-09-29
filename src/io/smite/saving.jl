@@ -11,6 +11,10 @@ Save SmiteSMLD data back to SMITE's SMD .mat format.
 # Notes
 - Saves in MATLAB v7.3 format
 - Preserves all metadata fields
+
+# Throws
+- `ArgumentError` if the emitters mix 2D and 3D: a SMITE SMD file has one `Z` column for all
+  localizations, so save the 2D and the 3D emitters as separate files.
 """
 function save_smite(smld::SmiteSMLD, filepath::String, filename::String)
     # Create SMD structure
