@@ -25,11 +25,13 @@ function save_smite(smld::SmiteSMLD, filepath::String, filename::String)
     d = emitter_ndims(smld.emitters)
     d === nothing && !isempty(smld.emitters) && throw(ArgumentError(
         "save_smite: emitters mix 2D and 3D; SMITE stores one Z column, so save 2D and 3D data separately"))
+    # 0.7.0's type rule, kept for an empty Union of 3D fit types, where emitter_ndims gives nothing.
+    has_z = d == 3 || eltype(smld.emitters) <: Emitter3DFit
     
     # Extract arrays from emitters
     s["X"] = [e.x for e in smld.emitters]
     s["Y"] = [e.y for e in smld.emitters]
-    if d == 3
+    if has_z
         s["Z"] = [e.z for e in smld.emitters]
     end
     
@@ -38,7 +40,7 @@ function save_smite(smld::SmiteSMLD, filepath::String, filename::String)
     
     s["X_SE"] = [e.σ_x for e in smld.emitters]
     s["Y_SE"] = [e.σ_y for e in smld.emitters]
-    if d == 3
+    if has_z
         s["Z_SE"] = [e.σ_z for e in smld.emitters]
     end
     

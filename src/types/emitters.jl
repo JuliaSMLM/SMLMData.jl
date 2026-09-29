@@ -237,9 +237,10 @@ below), else `2`. For an ordinary struct that is a field named `z`. A type that 
 
 Data are decided from their elements: every element is checked, since elements of one type can
 differ (SMLMData's own four types are decided from the type, whose dimension is fixed). The scan
-calls `propertynames` once per element and allocates nothing itself, so a `propertynames` that
-allocates makes the scan allocate. The result is `nothing` when there is no single answer: the
-elements mix 2D and 3D, or the vector is empty and its element type is abstract or a `Union`.
+calls `propertynames` on each element, twice on the first, and stops at the first element that
+differs from it; it allocates nothing itself, so a `propertynames` that allocates makes the scan
+allocate. The result is `nothing` when there is no single answer: the elements mix 2D and 3D, or
+the vector is empty and its element type is abstract, a `Union` or `Union{}`.
 
 Without an element (a type, or an empty vector with a concrete element type) only the type's fields
 can be read, so a computed `z` is not visible there and such a type reads as `2`. So, for example,
@@ -289,8 +290,10 @@ emitter_ndims(e::AbstractEmitter) = hasproperty(e, :z) ? 3 : something(emitter_n
 _fixed_ndims(E) = E <: Union{Emitter2D, Emitter2DFit} ? 2 :
                   E <: Union{Emitter3D, Emitter3DFit} ? 3 : nothing
 function emitter_ndims(emitters::AbstractVector{<:AbstractEmitter})
-    isempty(emitters) && return emitter_ndims(eltype(emitters))
-    d = _fixed_ndims(eltype(emitters))
+    E = eltype(emitters)
+    # Asking Union{} (a subtype of every emitter type) would be ambiguous between declared methods.
+    isempty(emitters) && return E === Union{} ? nothing : emitter_ndims(E)
+    d = _fixed_ndims(E)
     d === nothing || return d
     d1 = emitter_ndims(first(emitters))
     return all(e -> emitter_ndims(e) == d1, emitters) ? d1 : nothing

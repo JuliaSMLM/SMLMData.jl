@@ -567,4 +567,28 @@ _nd_alloc(v) = minimum(@allocated(emitter_ndims(v)) for _ in 1:5)
         ms = SmiteSMLD{Float64,A}(A[e2, e3], cam, 1, 1, Dict{String,Any}())
         @test occursin("mixed 2D/3D", sprint(show, MIME("text/plain"), ms))
     end
+
+    @testset "save_smite on an empty Union of fit types" begin
+        # 0.7.0 wrote Z and Z_SE whenever the element type was a subtype of Emitter3DFit.
+        cam = IdealCamera(1:64, 1:64, 0.1)
+        U3 = Union{Emitter3DFit{Float32}, Emitter3DFit{Float64}}
+        U2 = Union{Emitter2DFit{Float32}, Emitter2DFit{Float64}}
+        mktempdir() do dir
+            save_smite(SmiteSMLD{Float64,U3}(U3[], cam, 1, 1, Dict{String,Any}()), dir, "u3.mat")
+            smd = SMLMData.MAT.matread(joinpath(dir, "u3.mat"))["SMD"]
+            @test haskey(smd, "Z")
+            @test haskey(smd, "Z_SE")
+            save_smite(SmiteSMLD{Float64,U2}(U2[], cam, 1, 1, Dict{String,Any}()), dir, "u2.mat")
+            smd = SMLMData.MAT.matread(joinpath(dir, "u2.mat"))["SMD"]
+            @test !haskey(smd, "Z")
+            @test !haskey(smd, "Z_SE")
+        end
+    end
+
+    @testset "bottom element type" begin
+        # Union{} is a subtype of every type declared in this file, so asking its type is ambiguous.
+        cam = IdealCamera(1:64, 1:64, 0.1)
+        @test emitter_ndims(Union{}[]) === nothing
+        @test emitter_ndims(BasicSMLD(Union{}[], cam, 1, 1)) === nothing
+    end
 end
