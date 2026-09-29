@@ -159,6 +159,38 @@ Base.propertynames(::DeclaredZLoc{N,T}) where {N,T} =
 SMLMData.emitter_ndims(::Type{<:DeclaredZLoc{N}}) where {N} = N
 SMLMData.emitter_ndims(::Type{<:DeclaredZLoc}) = nothing
 
+# Computes z in getproperty but does not list it in propertynames; declares its
+# dimension on its type instead.
+struct DeclaredOnlyLoc{N,T} <: SMLMData.AbstractEmitter
+    position::NTuple{N,T}
+    photons::T
+    frame::Int
+    dataset::Int
+    track_id::Int
+    id::Int
+end
+function Base.getproperty(e::DeclaredOnlyLoc{N,T}, s::Symbol) where {N,T}
+    s === :x && return getfield(e, :position)[1]
+    s === :y && return getfield(e, :position)[2]
+    s === :z && return N >= 3 ? getfield(e, :position)[3] : zero(T)
+    return getfield(e, s)
+end
+SMLMData.emitter_ndims(::Type{<:DeclaredOnlyLoc{N}}) where {N} = N
+SMLMData.emitter_ndims(::Type{<:DeclaredOnlyLoc}) = nothing
+
+# Has a field z but its type declares 2: a property z always wins for elements.
+struct ZFieldDeclared2 <: SMLMData.AbstractEmitter
+    x::Float64
+    y::Float64
+    z::Float64
+    photons::Float64
+    frame::Int
+    dataset::Int
+    track_id::Int
+    id::Int
+end
+SMLMData.emitter_ndims(::Type{ZFieldDeclared2}) = 2
+
 @testset "Dimension routing" begin
     cam = IdealCamera(1:512, 1:512, 0.1)
     xr, yr, zr = (0.0, 2.0), (0.0, 2.0), (-1.0, 1.0)
@@ -391,5 +423,36 @@ SMLMData.emitter_ndims(::Type{<:DeclaredZLoc}) = nothing
         @test emitter_ndims(DeclaredZLoc[d2, d3]) === nothing
         empty_s = BasicSMLD(DeclaredZLoc{3,Float64}[], cam, 1, 1)
         @test isempty(filter_roi(empty_s, (0.0, 2.0), (0.0, 2.0), (-1.0, 1.0)).emitters)
+    end
+
+    @testset "emitter_ndims: precedence" begin
+        cam = IdealCamera(1:64, 1:64, 0.1)
+        in2 = DeclaredOnlyLoc{2,Float64}((1.0, 1.0), 100.0, 1, 1, 0, 1)
+        out2 = DeclaredOnlyLoc{2,Float64}((5.0, 5.0), 100.0, 1, 1, 0, 2)
+        in3 = DeclaredOnlyLoc{3,Float64}((1.0, 1.0, 0.0), 100.0, 1, 1, 0, 3)
+        out3 = DeclaredOnlyLoc{3,Float64}((5.0, 5.0, 5.0), 100.0, 1, 1, 0, 4)
+        @test emitter_ndims(in2) == 2
+        @test emitter_ndims(in3) == 3
+        @test emitter_ndims([in3, out3]) == 3
+        @test emitter_ndims(DeclaredOnlyLoc{3,Float64}[]) == 3
+        @test emitter_ndims(DeclaredOnlyLoc[in3, out3]) == 3
+        @test emitter_ndims(DeclaredOnlyLoc[in2, in3]) === nothing
+        @test emitter_ndims(DeclaredOnlyLoc{2}) == 2
+        s3 = BasicSMLD([in3, out3], cam, 1, 1)
+        r3 = filter_roi(s3, (0.0, 2.0), (0.0, 2.0), (-1.0, 1.0))
+        @test length(r3.emitters) == 1
+        @test r3.emitters[1].id == 3
+        s2 = BasicSMLD([in2, out2], cam, 1, 1)
+        r2 = filter_roi(s2, (0.0, 2.0), (0.0, 2.0))
+        @test length(r2.emitters) == 1
+        @test r2.emitters[1].id == 1
+
+        zf = ZFieldDeclared2(1.0, 1.0, 0.0, 100.0, 1, 1, 0, 1)
+        @test emitter_ndims(ZFieldDeclared2) == 2
+        @test emitter_ndims(zf) == 3
+        @test emitter_ndims([zf, zf]) == 3
+
+        e2 = Emitter2DFit{Float64}(1.0, 1.0, 100.0, 1.0, 0.01, 0.01, 1.0, 1.0, frame=1)
+        @test emitter_ndims(SMLMData.AbstractEmitter[e2, e2]) == 2
     end
 end
