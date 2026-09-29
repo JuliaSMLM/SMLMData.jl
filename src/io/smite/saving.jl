@@ -17,11 +17,15 @@ function save_smite(smld::SmiteSMLD, filepath::String, filename::String)
     s = Dict{String,Any}()
     
     n = length(smld.emitters)
+
+    d = emitter_ndims(smld.emitters)
+    d === nothing && !isempty(smld.emitters) && throw(ArgumentError(
+        "save_smite: emitters mix 2D and 3D; SMITE stores one Z column, so save 2D and 3D data separately"))
     
     # Extract arrays from emitters
     s["X"] = [e.x for e in smld.emitters]
     s["Y"] = [e.y for e in smld.emitters]
-    if emitter_ndims(smld.emitters) == 3
+    if d == 3
         s["Z"] = [e.z for e in smld.emitters]
     end
     
@@ -30,7 +34,7 @@ function save_smite(smld::SmiteSMLD, filepath::String, filename::String)
     
     s["X_SE"] = [e.σ_x for e in smld.emitters]
     s["Y_SE"] = [e.σ_y for e in smld.emitters]
-    if emitter_ndims(smld.emitters) == 3
+    if d == 3
         s["Z_SE"] = [e.σ_z for e in smld.emitters]
     end
     

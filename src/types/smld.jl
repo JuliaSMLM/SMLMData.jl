@@ -19,6 +19,13 @@ abstract type AbstractSMLD end
 
 emitter_ndims(smld::AbstractSMLD) = emitter_ndims(smld.emitters)
 
+# Dimension word for display; mixed or empty non-concrete data are labelled as such rather than as 3D.
+function _dim_label(emitters)
+    d = emitter_ndims(emitters)
+    d === nothing && return isempty(emitters) ? "unknown-dimension" : "mixed 2D/3D"
+    return string(d, "D")
+end
+
 # Backward compatibility alias
 """
     SMLD
@@ -150,7 +157,7 @@ function Base.show(io::IO, smld::S) where {S<:AbstractSMLD}
     n_emitters = length(smld.emitters)
     
     # Determine localization dimension
-    dim_str = emitter_ndims(smld.emitters) == 2 ? "2D" : "3D"
+    dim_str = _dim_label(smld.emitters)
     
     # Get a cleaner type name without parameters
     type_name = string(S.name.name)
@@ -184,7 +191,7 @@ function Base.show(io::IO, ::MIME"text/plain", smld::BasicSMLD{T,E}) where {T,E}
     end
     
     # Get localization dimensions
-    dim_str = emitter_ndims(smld.emitters) == 2 ? "2D" : "3D"
+    dim_str = _dim_label(smld.emitters)
     
     println(io, "BasicSMLD{$T,$E}:")
     println(io, "  Emitters: $(format_with_commas(n_emitters)) $dim_str localizations")
@@ -225,7 +232,7 @@ function Base.show(io::IO, ::MIME"text/plain", smld::S) where {S<:AbstractSMLD}
     end
     
     # Get localization dimensions
-    dim_str = emitter_ndims(smld.emitters) == 2 ? "2D" : "3D"
+    dim_str = _dim_label(smld.emitters)
     
     # Get type name without parameters
     type_name = string(S.name.name)

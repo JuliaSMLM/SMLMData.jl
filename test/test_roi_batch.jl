@@ -1,6 +1,12 @@
 using Test
 using SMLMData
 using StaticArrays
+using Adapt
+
+# Converts Float32 arrays to Float64 and leaves everything else alone, so an adapted ROIBatch
+# shows whether each field went through Adapt.
+struct Float64Adaptor end
+Adapt.adapt_storage(::Float64Adaptor, x::AbstractArray{Float32}) = Float64.(x)
 
 @testset "SingleROI" begin
     @testset "Construction" begin
@@ -365,9 +371,19 @@ end
 
     batch = ROIBatch(data, x_corners, y_corners, frames, camera)
 
-    @testset "Adapt.adapt_structure defined" begin
-        # Test that adapt_structure is defined
-        @test hasmethod(Adapt.adapt_structure, Tuple{Type{Array}, ROIBatch})
+    @testset "Adapt.adapt_structure transforms storage" begin
+        adapted = adapt(Float64Adaptor(), batch)
+        @test adapted isa ROIBatch
+        @test adapted.data isa Array{Float64,3}
+        @test adapted.data == Float64.(batch.data)
+        @test adapted.x_corners == batch.x_corners
+        @test adapted.y_corners == batch.y_corners
+        @test adapted.frame_indices == batch.frame_indices
+        @test adapted.x_corners isa Vector{Int32}
+        @test adapted.y_corners isa Vector{Int32}
+        @test adapted.frame_indices isa Vector{Int32}
+        @test adapted.camera === batch.camera
+        @test adapted.roi_size == batch.roi_size
     end
 
     @testset "Mock GPU adaptation (Array -> Array)" begin

@@ -235,16 +235,18 @@ below), else `2`. For an ordinary struct that is a field named `z`. A type that 
 `getproperty` is seen as long as its `propertynames` lists `:z`, as Julia's convention for
 `getproperty` asks. Emitter types from other packages need nothing else.
 
-Data are decided from their elements: a vector or SMLD with a concrete element type from its first
-element, otherwise from every element. The result is `nothing` when there is no single answer: the
-elements mix 2D and 3D, or the vector is empty and its element type is abstract or a `Union`.
+Data are decided from their elements: every element is checked, since elements of one type can
+differ (SMLMData's own four types are decided from the type, whose dimension is fixed). The
+result is `nothing` when there is no single answer: the elements mix 2D and 3D, or the vector is
+empty and its element type is abstract or a `Union`.
 
 Without an element (a type, or an empty vector with a concrete element type) only the type's fields
-can be read, so a computed `z` is not visible there and such a type reads as `2`. An abstract type or
-a `Union` gives `nothing`; a parametric type written without its parameters (`Emitter2DFit`) is
-decided from its fields. A type with a computed `z` that needs the type-only answer declares it with
-a method on its type. Such a method also decides for elements that do not list `:z` in
-`propertynames`; an element that does list `:z` is always `3`:
+can be read, so a computed `z` is not visible there and such a type reads as `2`. So, for example,
+a 3D `filter_roi` on an empty vector of such a type throws unless the type declares its dimension.
+An abstract type or a `Union` gives `nothing`; a parametric type written without its parameters
+(`Emitter2DFit`) is decided from its fields. A type with a computed `z` that needs the type-only
+answer declares it with a method on its type. Such a method also decides for elements that do not
+list `:z` in `propertynames`; an element that does list `:z` is always `3`:
 
     SMLMData.emitter_ndims(::Type{<:MyLocalization{N}}) where {N} = N
     SMLMData.emitter_ndims(::Type{<:MyLocalization}) = nothing
@@ -282,10 +284,14 @@ function emitter_ndims(::Type{E}) where {E<:AbstractEmitter}
     return hasfield(B, :z) ? 3 : 2
 end
 emitter_ndims(e::AbstractEmitter) = hasproperty(e, :z) ? 3 : something(emitter_ndims(typeof(e)), 2)
+# SMLMData's own emitter types have a dimension fixed by the type, so they skip the element scan.
+_fixed_ndims(E) = E <: Union{Emitter2D, Emitter2DFit} ? 2 :
+                  E <: Union{Emitter3D, Emitter3DFit} ? 3 : nothing
 function emitter_ndims(emitters::AbstractVector{<:AbstractEmitter})
+    d = _fixed_ndims(eltype(emitters))
+    d === nothing || return d
     isempty(emitters) && return emitter_ndims(eltype(emitters))
     d1 = emitter_ndims(first(emitters))
-    isconcretetype(eltype(emitters)) && return d1
     return all(e -> emitter_ndims(e) == d1, emitters) ? d1 : nothing
 end
 

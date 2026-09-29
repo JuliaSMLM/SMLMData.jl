@@ -132,6 +132,25 @@ end
 Base.propertynames(::PropZLoc{N,T}) where {N,T} =
     (fieldnames(PropZLoc{N,T})..., (N >= 3 ? (:x, :y, :z, :σ_x, :σ_y, :σ_z) : (:x, :y, :σ_x, :σ_y))...)
 
+# One concrete type whose instances differ in dimension: :z is listed only when the
+# position has three entries.
+struct VarDimLoc <: SMLMData.AbstractEmitter
+    position::Vector{Float64}
+    photons::Float64
+    frame::Int
+    dataset::Int
+    track_id::Int
+    id::Int
+end
+function Base.getproperty(e::VarDimLoc, s::Symbol)
+    s === :x && return getfield(e, :position)[1]
+    s === :y && return getfield(e, :position)[2]
+    s === :z && return length(getfield(e, :position)) >= 3 ? getfield(e, :position)[3] : 0.0
+    return getfield(e, s)
+end
+Base.propertynames(e::VarDimLoc) =
+    (fieldnames(VarDimLoc)..., (length(getfield(e, :position)) >= 3 ? (:x, :y, :z) : (:x, :y))...)
+
 # Same as PropZLoc, plus the documented type-only declaration.
 struct DeclaredZLoc{N,T} <: SMLMData.AbstractEmitter
     position::NTuple{N,T}
@@ -263,6 +282,13 @@ SMLMData.emitter_ndims(::Type{ZFieldDeclared2}) = 2
         _alloc_roi(s3, rx, ry, rz); _alloc_ref(s3, rx, ry, rz)
         @test _alloc_roi(s2, rx, ry) == _alloc_ref(s2, rx, ry)
         @test _alloc_roi(s3, rx, ry, rz) == _alloc_ref(s3, rx, ry, rz)
+
+        t2 = BasicSMLD([Emitter2D{Float64}(rand(), rand(), 1000.0) for _ in 1:n], cam, 1, 1)
+        t3 = BasicSMLD([Emitter3D{Float64}(rand(), rand(), rand(), 1000.0) for _ in 1:n], cam, 1, 1)
+        _alloc_roi(t2, rx, ry); _alloc_ref(t2, rx, ry)
+        _alloc_roi(t3, rx, ry, rz); _alloc_ref(t3, rx, ry, rz)
+        @test _alloc_roi(t2, rx, ry) == _alloc_ref(t2, rx, ry)
+        @test _alloc_roi(t3, rx, ry, rz) == _alloc_ref(t3, rx, ry, rz)
     end
 
     @testset "Foreign emitter types" begin
@@ -454,5 +480,53 @@ SMLMData.emitter_ndims(::Type{ZFieldDeclared2}) = 2
 
         e2 = Emitter2DFit{Float64}(1.0, 1.0, 100.0, 1.0, 0.01, 0.01, 1.0, 1.0, frame=1)
         @test emitter_ndims(SMLMData.AbstractEmitter[e2, e2]) == 2
+    end
+    @testset "emitter_ndims: instances of one type that differ" begin
+        cam = IdealCamera(1:64, 1:64, 0.1)
+        a2 = VarDimLoc([1.0, 1.0], 100.0, 1, 1, 0, 1)
+        a3 = VarDimLoc([1.0, 1.0, 0.0], 100.0, 1, 1, 0, 2)
+        for order in ([a2, a3], [a3, a2])
+            @test order isa Vector{VarDimLoc}
+            @test emitter_ndims(order) === nothing
+            s = BasicSMLD(order, cam, 1, 1)
+            @test emitter_ndims(s) === nothing
+            @test_throws ErrorException(msg2on3) filter_roi(s, xr, yr)
+            @test_throws ErrorException(msg3on2) filter_roi(s, xr, yr, zr)
+            @test occursin("mixed 2D/3D", sprint(show, s))
+        end
+        @test emitter_ndims([a3, a3]) == 3
+        @test emitter_ndims([a2, a2]) == 2
+        r3 = filter_roi(BasicSMLD([a3, a3], cam, 1, 1), xr, yr, zr)
+        @test length(r3.emitters) == 2
+        r2 = filter_roi(BasicSMLD([a2, a2], cam, 1, 1), xr, yr)
+        @test length(r2.emitters) == 2
+    end
+
+    @testset "save_smite rejects mixed dimensions" begin
+        cam = IdealCamera(1:64, 1:64, 0.1)
+        A = SMLMData.AbstractEmitter
+        e2 = Emitter2DFit{Float64}(1.0, 1.0, 1000.0, 10.0, 0.01, 0.01, 50.0, 2.0)
+        e3 = Emitter3DFit{Float64}(1.0, 1.0, 0.0, 1000.0, 10.0, 0.01, 0.01, 0.02, 50.0, 2.0)
+        mixed = SmiteSMLD{Float64,A}(A[e2, e3], cam, 1, 1, Dict{String,Any}())
+        empty_s = SmiteSMLD{Float64,A}(A[], cam, 1, 1, Dict{String,Any}())
+        mktempdir() do dir
+            @test_throws ArgumentError save_smite(mixed, dir, "mixed.mat")
+            save_smite(empty_s, dir, "empty.mat")
+            smd = SMLMData.MAT.matread(joinpath(dir, "empty.mat"))["SMD"]
+            @test !haskey(smd, "Z")
+        end
+    end
+
+    @testset "show labels mixed and unknown dimensions" begin
+        cam = IdealCamera(1:64, 1:64, 0.1)
+        A = SMLMData.AbstractEmitter
+        e2 = Emitter2DFit{Float64}(1.0, 1.0, 1000.0, 10.0, 0.01, 0.01, 50.0, 2.0)
+        e3 = Emitter3DFit{Float64}(1.0, 1.0, 0.0, 1000.0, 10.0, 0.01, 0.01, 0.02, 50.0, 2.0)
+        s = BasicSMLD(A[e2, e3], cam, 1, 1)
+        @test occursin("mixed 2D/3D", sprint(show, s))
+        @test occursin("mixed 2D/3D localizations", sprint(show, MIME("text/plain"), s))
+        @test occursin("unknown-dimension", sprint(show, BasicSMLD(A[], cam, 1, 1)))
+        ms = SmiteSMLD{Float64,A}(A[e2, e3], cam, 1, 1, Dict{String,Any}())
+        @test occursin("mixed 2D/3D", sprint(show, MIME("text/plain"), ms))
     end
 end
