@@ -370,7 +370,7 @@ roi_2d = filter_roi(smld, 1.0:5.0, 2.0:6.0)       # x_range, y_range
 # 3D ROI (for 3D emitters only)
 roi_3d = filter_roi(smld, 1.0:5.0, 2.0:6.0, -1.0:1.0)  # x, y, z ranges
 
-# Spatial dimension of emitters: 3 if the type has a field z, else 2
+# Spatial dimension of emitters: 3 if an emitter has a property z (a field, or a computed z listed in propertynames), else 2
 # (nothing for mixed or empty non-concrete vectors). Works for any AbstractEmitter subtype,
 # including types defined in other packages.
 emitter_ndims(smld)                                # 2 or 3

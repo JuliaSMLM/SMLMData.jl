@@ -106,41 +106,58 @@ mutable struct ForeignEmitter3DFit{T} <: SMLMData.AbstractEmitter   # for save_s
     frame::Int; dataset::Int; track_id::Int; id::Int
 end
 
-# Keeps z in a tuple and exposes it through getproperty, so it declares its dimension
-# through the emitter_ndims extension point.
-mutable struct ComputedZEmitter{T} <: SMLMData.AbstractEmitter
-    pos::NTuple{3,T}
+# Mimics SykTrack's Localization: position in a tuple, x/y/z computed in getproperty,
+# :z listed in propertynames only for N >= 3. No emitter_ndims method of its own.
+struct PropZLoc{N,T} <: SMLMData.AbstractEmitter
+    position::NTuple{N,T}
+    uncertainty::NTuple{N,T}
     photons::T
+    bg::T
+    σ_photons::T
+    σ_bg::T
     frame::Int
     dataset::Int
     track_id::Int
     id::Int
 end
-function Base.getproperty(e::ComputedZEmitter, s::Symbol)
-    s === :x && return getfield(e, :pos)[1]
-    s === :y && return getfield(e, :pos)[2]
-    s === :z && return getfield(e, :pos)[3]
+function Base.getproperty(e::PropZLoc{N,T}, s::Symbol) where {N,T}
+    s === :x && return getfield(e, :position)[1]
+    s === :y && return getfield(e, :position)[2]
+    s === :z && return N >= 3 ? getfield(e, :position)[3] : zero(T)
+    s === :σ_x && return getfield(e, :uncertainty)[1]
+    s === :σ_y && return getfield(e, :uncertainty)[2]
+    s === :σ_z && return N >= 3 ? getfield(e, :uncertainty)[3] : zero(T)
     return getfield(e, s)
 end
-SMLMData.emitter_ndims(::Type{<:ComputedZEmitter}) = 3
+Base.propertynames(::PropZLoc{N,T}) where {N,T} =
+    (fieldnames(PropZLoc{N,T})..., (N >= 3 ? (:x, :y, :z, :σ_x, :σ_y, :σ_z) : (:x, :y, :σ_x, :σ_y))...)
 
-# Dimension as a type parameter: the documented pair of methods.
-mutable struct ParamDimEmitter{N,T} <: SMLMData.AbstractEmitter
-    pos::NTuple{N,T}
+# Same as PropZLoc, plus the documented type-only declaration.
+struct DeclaredZLoc{N,T} <: SMLMData.AbstractEmitter
+    position::NTuple{N,T}
+    uncertainty::NTuple{N,T}
     photons::T
+    bg::T
+    σ_photons::T
+    σ_bg::T
     frame::Int
     dataset::Int
     track_id::Int
     id::Int
 end
-function Base.getproperty(e::ParamDimEmitter, s::Symbol)
-    s === :x && return getfield(e, :pos)[1]
-    s === :y && return getfield(e, :pos)[2]
-    s === :z && return getfield(e, :pos)[3]
+function Base.getproperty(e::DeclaredZLoc{N,T}, s::Symbol) where {N,T}
+    s === :x && return getfield(e, :position)[1]
+    s === :y && return getfield(e, :position)[2]
+    s === :z && return N >= 3 ? getfield(e, :position)[3] : zero(T)
+    s === :σ_x && return getfield(e, :uncertainty)[1]
+    s === :σ_y && return getfield(e, :uncertainty)[2]
+    s === :σ_z && return N >= 3 ? getfield(e, :uncertainty)[3] : zero(T)
     return getfield(e, s)
 end
-SMLMData.emitter_ndims(::Type{<:ParamDimEmitter{N}}) where {N} = N
-SMLMData.emitter_ndims(::Type{<:ParamDimEmitter}) = nothing
+Base.propertynames(::DeclaredZLoc{N,T}) where {N,T} =
+    (fieldnames(DeclaredZLoc{N,T})..., (N >= 3 ? (:x, :y, :z, :σ_x, :σ_y, :σ_z) : (:x, :y, :σ_x, :σ_y))...)
+SMLMData.emitter_ndims(::Type{<:DeclaredZLoc{N}}) where {N} = N
+SMLMData.emitter_ndims(::Type{<:DeclaredZLoc}) = nothing
 
 @testset "Dimension routing" begin
     cam = IdealCamera(1:512, 1:512, 0.1)
@@ -309,32 +326,70 @@ SMLMData.emitter_ndims(::Type{<:ParamDimEmitter}) = nothing
         @test emitter_ndims(A) === nothing
         @test emitter_ndims(Union{Emitter2DFit{Float64}, Emitter3DFit{Float64}}) === nothing
         @test @inferred(emitter_ndims(Emitter2DFit{Float64}[])) == 2
+        @test @inferred(emitter_ndims([mk[Emitter2DFit][1]])) == 2
+        @test @inferred(emitter_ndims([mk[Emitter3DFit][1]])) == 3
     end
 
-    @testset "emitter_ndims extension point" begin
+    @testset "emitter_ndims: computed z via propertynames" begin
         cam = IdealCamera(1:64, 1:64, 0.1)
-        es = [ComputedZEmitter((1.0, 1.0, 0.0), 100.0, 1, 1, 0, 1),
-              ComputedZEmitter((5.0, 5.0, 0.0), 100.0, 1, 1, 0, 2)]
-        s = BasicSMLD(es, cam, 1, 1)
-        @test emitter_ndims(ComputedZEmitter{Float64}) == 3
-        @test emitter_ndims(es[1]) == 3
-        @test emitter_ndims(SMLMData.AbstractEmitter[es...]) == 3
-        @test emitter_ndims(s) == 3
-        @test length(filter_roi(s, (0.0, 2.0), (0.0, 2.0), (-1.0, 1.0)).emitters) == 1
-        @test_throws ErrorException("2D ROI cannot be applied to 3D emitter type") filter_roi(s, (0.0, 2.0), (0.0, 2.0))
-        @test occursin("3D", sprint(show, s))
+        mk2(x, y, i) = PropZLoc{2,Float64}((x, y), (0.01, 0.01), 100.0, 5.0, 1.0, 1.0, 1, 1, 0, i)
+        mk3(x, y, z, i) = PropZLoc{3,Float64}((x, y, z), (0.01, 0.01, 0.02 + i), 100.0, 5.0, 1.0, 1.0, 1, 1, 0, i)
+        pts = [(0.5, 0.5, 0.0), (1.5, 1.0, 0.5), (5.0, 1.0, 0.0), (1.0, 1.0, 3.0)]   # first two inside the box
+        p2s = [mk2(p[1], p[2], i) for (i, p) in enumerate(pts)]
+        p3s = [mk3(p..., i) for (i, p) in enumerate(pts)]
+        p2, p3 = p2s[1], p3s[1]
+
+        @test emitter_ndims(p2) == 2
+        @test emitter_ndims(p3) == 3
+        @test emitter_ndims(p3s) == 3
+        @test emitter_ndims(p2s) == 2
+        s2 = BasicSMLD(p2s, cam, 1, 1)
+        s3 = BasicSMLD(p3s, cam, 1, 1)
+        @test emitter_ndims(s2) == 2
+        @test emitter_ndims(s3) == 3
+        @test emitter_ndims(PropZLoc[p3, p3]) == 3
+        @test emitter_ndims(SMLMData.AbstractEmitter[p2, p3]) === nothing
+
+        r3 = filter_roi(s3, (0.0, 2.0), (0.0, 2.0), (-1.0, 1.0))
+        @test [e.id for e in r3.emitters] == [1, 2]
+        @test_throws ErrorException("2D ROI cannot be applied to 3D emitter type") filter_roi(s3, (0.0, 2.0), (0.0, 2.0))
+        r2 = filter_roi(s2, (0.0, 2.0), (0.0, 2.0))
+        @test [e.id for e in r2.emitters] == [1, 2, 4]
+        @test_throws ErrorException("3D ROI cannot be applied to 2D emitter type") filter_roi(s2, (0.0, 2.0), (0.0, 2.0), (-1.0, 1.0))
+
+        mktempdir() do dir
+            t3 = SmiteSMLD{Float64,PropZLoc{3,Float64}}(p3s, cam, 1, 1, Dict{String,Any}())
+            save_smite(t3, dir, "p3.mat")
+            smd = SMLMData.MAT.matread(joinpath(dir, "p3.mat"))["SMD"]
+            @test vec(smd["Z"]) == [p[3] for p in pts]
+            @test vec(smd["Z_SE"]) == [0.02 + i for i in 1:4]
+            t2 = SmiteSMLD{Float64,PropZLoc{2,Float64}}(p2s, cam, 1, 1, Dict{String,Any}())
+            save_smite(t2, dir, "p2.mat")
+            smd = SMLMData.MAT.matread(joinpath(dir, "p2.mat"))["SMD"]
+            @test !haskey(smd, "Z")
+            @test !haskey(smd, "Z_SE")
+        end
+
+        @test occursin("2D", sprint(show, s2))
+        @test occursin("3D", sprint(show, s3))
+        @test occursin("2D localizations", sprint(show, MIME("text/plain"), s2))
+        @test occursin("3D localizations", sprint(show, MIME("text/plain"), s3))
+
+        # Documented limit: without an element only the fields are visible, so a computed z reads as 2.
+        @test emitter_ndims(PropZLoc{3,Float64}) == 2
+        @test emitter_ndims(PropZLoc{3,Float64}[]) == 2
     end
 
-    @testset "emitter_ndims parametric extension point" begin
-        p2 = ParamDimEmitter((1.0, 1.0), 100.0, 1, 1, 0, 1)
-        p3 = ParamDimEmitter((1.0, 1.0, 0.0), 100.0, 1, 1, 0, 2)
-        @test emitter_ndims(ParamDimEmitter{3,Float64}) == 3
-        @test emitter_ndims(ParamDimEmitter{2}) == 2
-        @test emitter_ndims(ParamDimEmitter) === nothing
-        @test emitter_ndims(p3) == 3
-        @test emitter_ndims(ParamDimEmitter[p3, p3]) == 3
-        @test emitter_ndims(ParamDimEmitter[p2, p2]) == 2
-        @test emitter_ndims(ParamDimEmitter[p2, p3]) === nothing
-        @test emitter_ndims(ParamDimEmitter[]) === nothing
+    @testset "emitter_ndims: declared type-only answer" begin
+        cam = IdealCamera(1:64, 1:64, 0.1)
+        d2 = DeclaredZLoc{2,Float64}((1.0, 1.0), (0.01, 0.01), 100.0, 5.0, 1.0, 1.0, 1, 1, 0, 1)
+        d3 = DeclaredZLoc{3,Float64}((1.0, 1.0, 0.0), (0.01, 0.01, 0.02), 100.0, 5.0, 1.0, 1.0, 1, 1, 0, 2)
+        @test emitter_ndims(DeclaredZLoc{3,Float64}) == 3
+        @test emitter_ndims(DeclaredZLoc{3,Float64}[]) == 3
+        @test emitter_ndims(DeclaredZLoc) === nothing
+        @test emitter_ndims(DeclaredZLoc[]) === nothing
+        @test emitter_ndims(DeclaredZLoc[d2, d3]) === nothing
+        empty_s = BasicSMLD(DeclaredZLoc{3,Float64}[], cam, 1, 1)
+        @test isempty(filter_roi(empty_s, (0.0, 2.0), (0.0, 2.0), (-1.0, 1.0)).emitters)
     end
 end

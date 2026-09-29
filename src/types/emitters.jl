@@ -229,23 +229,23 @@ end
     emitter_ndims(e::AbstractEmitter)
     emitter_ndims(::Type{<:AbstractEmitter})
 
-Spatial dimension of emitters: `3` when the emitter type has a field named `z`, otherwise `2`.
-Emitter types defined in other packages work as long as they subtype `AbstractEmitter` and
-store `z` as a field; nothing needs to be registered.
+Spatial dimension of emitters: `3` when an emitter has a property `z` (`hasproperty(e, :z)`),
+otherwise `2`. For an ordinary struct that is a field named `z`. A type that computes `z` in
+`getproperty` is seen as long as its `propertynames` lists `:z`, as Julia's convention for
+`getproperty` asks. Emitter types from other packages need nothing else.
 
-A type that computes `z` through `getproperty`, or keeps its dimension in a type parameter,
-declares it with a method on its type; every other method goes through that one. A type whose
-dimension is a parameter also declares that the type without it has no single dimension, so a
-vector of such emitters is checked element by element:
+Data are decided from their elements: a vector or SMLD with a concrete element type from its first
+element, otherwise from every element. The result is `nothing` when there is no single answer: the
+elements mix 2D and 3D, or the vector is empty and its element type is not concrete.
+
+Without an element (a type, or an empty vector with a concrete element type) only the type's fields
+can be read, so a computed `z` is not visible there and such a type reads as `2`. An abstract type or
+a `Union` gives `nothing`; a parametric type written without its parameters (`Emitter2DFit`) is
+decided from its fields. A type with a computed `z` that needs the type-only answer declares it with
+a method on its type; elements still decide whenever there are any:
 
     SMLMData.emitter_ndims(::Type{<:MyLocalization{N}}) where {N} = N
     SMLMData.emitter_ndims(::Type{<:MyLocalization}) = nothing
-
-A vector or SMLD whose element type is concrete is decided from that type alone, even when empty.
-Otherwise every element is checked, and the result is `nothing` when there is no single answer:
-the elements mix 2D and 3D, or the vector is empty. An abstract type (`AbstractEmitter`) or a
-`Union` also gives `nothing`; a parametric type written without its parameters (`Emitter2DFit`)
-is decided from its fields.
 
 A caller that needs a number must handle `nothing` itself, for example
 `d = emitter_ndims(smld); d === nothing && throw(ArgumentError("emitters are mixed 2D/3D or empty"))`,
@@ -279,11 +279,11 @@ function emitter_ndims(::Type{E}) where {E<:AbstractEmitter}
     (B isa DataType && !isabstracttype(B)) || return nothing
     return hasfield(B, :z) ? 3 : 2
 end
-emitter_ndims(e::AbstractEmitter) = emitter_ndims(typeof(e))
+emitter_ndims(e::AbstractEmitter) = hasproperty(e, :z) ? 3 : 2
 function emitter_ndims(emitters::AbstractVector{<:AbstractEmitter})
-    d = emitter_ndims(eltype(emitters))
-    (d !== nothing || isempty(emitters)) && return d
-    d1 = emitter_ndims(first(emitters))   # single assignment: a reassigned d captured by the closure would box
+    isempty(emitters) && return emitter_ndims(eltype(emitters))
+    d1 = emitter_ndims(first(emitters))
+    isconcretetype(eltype(emitters)) && return d1
     return all(e -> emitter_ndims(e) == d1, emitters) ? d1 : nothing
 end
 
