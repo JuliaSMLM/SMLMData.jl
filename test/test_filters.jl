@@ -347,17 +347,15 @@ _nd_alloc(v) = minimum(@allocated(emitter_ndims(v)) for _ in 1:5)
         @test isempty(filter_roi(empty_smld, xr, yr, zr).emitters)
     end
 
-    @testset "save_smite with foreign 3D emitters writes 0.7.0's columns" begin
+    @testset "save_smite with foreign 3D emitters" begin
         es = [ForeignEmitter3DFit{Float64}(xs[i], ys[i], zs[i], 1000.0, 10.0, 0.01, 0.01, 0.02 + i,
                                            50.0, 2.0, i, 1, 0, i) for i in 1:5]
         s = SmiteSMLD{Float64,ForeignEmitter3DFit{Float64}}(es, cam, 5, 1, Dict{String,Any}())
         mktempdir() do dir
             save_smite(s, dir, "foreign.mat")
             smd = SMLMData.MAT.matread(joinpath(dir, "foreign.mat"))["SMD"]
-            # Z columns are written only for Emitter3DFit data, as in 0.7.0.
-            @test vec(smd["X"]) == xs
-            @test !haskey(smd, "Z")
-            @test !haskey(smd, "Z_SE")
+            @test vec(smd["Z"]) == zs
+            @test vec(smd["Z_SE"]) == [0.02 + i for i in 1:5]
         end
     end
 
@@ -431,9 +429,8 @@ _nd_alloc(v) = minimum(@allocated(emitter_ndims(v)) for _ in 1:5)
             t3 = SmiteSMLD{Float64,PropZLoc{3,Float64}}(p3s, cam, 1, 1, Dict{String,Any}())
             save_smite(t3, dir, "p3.mat")
             smd = SMLMData.MAT.matread(joinpath(dir, "p3.mat"))["SMD"]
-            # A foreign type gets 0.7.0's columns: no Z.
-            @test !haskey(smd, "Z")
-            @test !haskey(smd, "Z_SE")
+            @test vec(smd["Z"]) == [p[3] for p in pts]
+            @test vec(smd["Z_SE"]) == [0.02 + i for i in 1:4]
             t2 = SmiteSMLD{Float64,PropZLoc{2,Float64}}(p2s, cam, 1, 1, Dict{String,Any}())
             save_smite(t2, dir, "p2.mat")
             smd = SMLMData.MAT.matread(joinpath(dir, "p2.mat"))["SMD"]
@@ -629,6 +626,14 @@ _nd_alloc(v) = minimum(@allocated(emitter_ndims(v)) for _ in 1:5)
             @test vec(smd["X"]) == [1.0, 1.0]
             @test !haskey(smd, "Z")
             @test !haskey(smd, "Z_SE")
+            # Mixed with 3D fits, or empty, it still saves as in 0.7.0: no Z.
+            sm = SmiteSMLD{Float64,A}(A[e3, fz], cam, 1, 1, Dict{String,Any}())
+            save_smite(sm, dir, "mz.mat")
+            @test !haskey(SMLMData.MAT.matread(joinpath(dir, "mz.mat"))["SMD"], "Z")
+            se = SmiteSMLD{Float64,ForeignZNoSigmaZ{Float64}}(ForeignZNoSigmaZ{Float64}[], cam, 1, 1,
+                                                              Dict{String,Any}())
+            save_smite(se, dir, "ez.mat")
+            @test !haskey(SMLMData.MAT.matread(joinpath(dir, "ez.mat"))["SMD"], "Z")
         end
     end
 end

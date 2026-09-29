@@ -11,8 +11,8 @@ Save SmiteSMLD data back to SMITE's SMD .mat format.
 # Notes
 - Saves in MATLAB v7.3 format
 - Preserves all metadata fields
-- Writes `Z` and `Z_SE` when the element type is an `Emitter3DFit` or every emitter is one; other
-  emitter types, including 3D types from other packages, are saved without them, as in v0.7.0
+- Writes `Z` and `Z_SE` when the element type is an `Emitter3DFit`, or the emitters are 3D and
+  every one has a property `σ_z`; other data are saved without them, as in v0.7.0
 
 # Throws
 - `ArgumentError` if the emitters mix 2D and 3D: a SMITE SMD file has one `Z` column for all
@@ -27,10 +27,11 @@ function save_smite(smld::SmiteSMLD, filepath::String, filename::String)
     d = emitter_ndims(smld.emitters)
     d === nothing && !isempty(smld.emitters) && throw(ArgumentError(
         "save_smite: emitters mix 2D and 3D; SMITE stores one Z column, so save 2D and 3D data separately"))
-    # Z columns follow 0.7.0's rule (an Emitter3DFit element type), widened only to data whose
-    # every emitter is an Emitter3DFit; other types, foreign 3D ones included, keep 0.7.0's columns.
+    # Z columns: 0.7.0's rule (an Emitter3DFit element type), or 3D data whose every emitter has σ_z
+    # (which includes data made only of Emitter3DFit). Anything else keeps 0.7.0's columns, so
+    # nothing 0.7.0 saved throws or loses a column.
     has_z = eltype(smld.emitters) <: Emitter3DFit ||
-            (!isempty(smld.emitters) && all(e -> e isa Emitter3DFit, smld.emitters))
+            (d == 3 && !isempty(smld.emitters) && all(e -> hasproperty(e, :σ_z), smld.emitters))
     
     # Extract arrays from emitters
     s["X"] = [e.x for e in smld.emitters]
