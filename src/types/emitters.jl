@@ -224,6 +224,86 @@ function Emitter3DFit{T}(x::T, y::T, z::T, photons::T, bg::T,
 end
 
 """
+    emitter_ndims(smld::AbstractSMLD)
+    emitter_ndims(emitters::AbstractVector{<:AbstractEmitter})
+    emitter_ndims(e::AbstractEmitter)
+    emitter_ndims(::Type{<:AbstractEmitter})
+
+Spatial dimension of emitters, `2` or `3`, or `nothing` when there is no single answer.
+
+An emitter's dimension is the one its type declares, and for a type that declares none it is
+`3` when the emitter has a property `z` (`hasproperty(e, :z)`) and `2` when it does not. A
+collection has its element type's declared dimension, or else the dimension all its elements
+share, and is `nothing` when they disagree or when it is empty and its element type declares
+none (`Union{}` never does).
+
+SMLMData's four emitter types declare their dimension, and so does a `Union` of its types of one
+dimension; for any other type the type method returns `nothing` unless the type declares one.
+Fields are never read: a type that computes `z` in `getproperty` is seen through
+`propertynames`, as Julia's convention for `getproperty` asks, and a type that stores `z` but
+leaves it out of `propertynames` is 2D. Emitter types from other packages need nothing else. A
+type whose `propertynames` lists a property that `getproperty` refuses breaks that convention
+and is not supported.
+
+A type declares its dimension with a method on its type. The declaration then decides for the
+type, for its elements (whatever their properties) and for empty vectors of it:
+
+    SMLMData.emitter_ndims(::Type{<:MyLocalization{N}}) where {N} = N
+
+A collection whose element type declares a dimension is answered from the type; otherwise every
+element is checked, stopping at the first element that differs from the first. The scan asks each
+element's type first and calls `propertynames` only on elements whose type declares nothing
+(twice on the first element); it allocates nothing itself, so a `propertynames` that allocates
+makes the scan allocate.
+
+A caller that needs a number must handle `nothing` itself, for example
+`d = emitter_ndims(smld); d === nothing && throw(ArgumentError("emitters are mixed 2D/3D or empty"))`,
+or treat an empty input as a no-op before asking. Do not compare the result with `<` or `>`
+without that check.
+
+# Examples
+```julia
+emitter_ndims(Emitter2DFit)   # 2
+emitter_ndims(smld_3d)        # 3 for an SMLD of Emitter3DFit
+
+# An emitter type defined in another package
+mutable struct MyEmitter{T} <: SMLMData.AbstractEmitter
+    x::T
+    y::T
+    photons::T
+    frame::Int
+    dataset::Int
+    track_id::Int
+    id::Int
+end
+emitter_ndims(MyEmitter(1.0, 2.0, 500.0, 1, 1, 0, 1))   # 2
+emitter_ndims(MyEmitter{Float64})                      # nothing: the type declares nothing
+
+mixed = SMLMData.AbstractEmitter[Emitter2D{Float64}(1.0, 2.0, 500.0),
+                                 Emitter3D{Float64}(1.0, 2.0, 0.1, 500.0)]
+emitter_ndims(mixed)          # nothing
+```
+"""
+function emitter_ndims(::Type{E}) where {E<:AbstractEmitter}
+    E <: Union{Emitter2D, Emitter2DFit} && return 2
+    E <: Union{Emitter3D, Emitter3DFit} && return 3
+    return nothing
+end
+# Union{} is a subtype of every emitter type, so without its own method it would match every
+# declared method at once (ambiguous) and take the 2D branch above.
+emitter_ndims(::Type{Union{}}) = nothing
+function emitter_ndims(e::AbstractEmitter)
+    d = emitter_ndims(typeof(e))
+    return d === nothing ? (hasproperty(e, :z) ? 3 : 2) : d
+end
+function emitter_ndims(emitters::AbstractVector{<:AbstractEmitter})
+    d = emitter_ndims(eltype(emitters))
+    (d === nothing && !isempty(emitters)) || return d
+    d1 = emitter_ndims(first(emitters))
+    return all(e -> emitter_ndims(e) == d1, emitters) ? d1 : nothing
+end
+
+"""
     Base.show methods for Emitter types
 
 These methods provide clean displays of all emitter types in both REPL and other contexts.

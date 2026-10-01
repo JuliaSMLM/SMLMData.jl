@@ -1,3 +1,6 @@
+using SMLMData, Test
+using Random: MersenneTwister
+
 @testset "Filtering" begin
     # Create test data with known values
     cam = IdealCamera(1:512, 1:512, 0.1)
@@ -53,5 +56,734 @@
         @test length(result.emitters) == 1
         @test result.emitters[1].x == 1.5  # Should be the second original emitter
         @test all(e -> (1.0 <= e.x <= 2.0) && e.photons > 1100, result.emitters)
+    end
+end
+
+# Reference copies of the 0.7.0 filter_roi bodies minus the type check, for allocation parity
+function _roi2d_reference(smld, x_range, y_range)
+    x_min, x_max = extrema(x_range)
+    y_min, y_max = extrema(y_range)
+    keep = [x_min ≤ e.x ≤ x_max && y_min ≤ e.y ≤ y_max for e in smld.emitters]
+    return typeof(smld)(
+        smld.emitters[keep],
+        smld.camera,
+        smld.n_frames,
+        smld.n_datasets,
+        copy(smld.metadata)
+    )
+end
+
+function _roi3d_reference(smld, x_range, y_range, z_range)
+    x_min, x_max = extrema(x_range)
+    y_min, y_max = extrema(y_range)
+    z_min, z_max = extrema(z_range)
+    keep = [x_min ≤ e.x ≤ x_max &&
+            y_min ≤ e.y ≤ y_max &&
+            z_min ≤ e.z ≤ z_max for e in smld.emitters]
+    return typeof(smld)(
+        smld.emitters[keep],
+        smld.camera,
+        smld.n_frames,
+        smld.n_datasets,
+        copy(smld.metadata)
+    )
+end
+
+# @allocated of a single call jitters by a few dozen bytes, so take the minimum of several
+_alloc_roi(smld, xr, yr) = minimum((@allocated filter_roi(smld, xr, yr)) for _ in 1:10)
+_alloc_roi(smld, xr, yr, zr) = minimum((@allocated filter_roi(smld, xr, yr, zr)) for _ in 1:10)
+_alloc_ref(smld, xr, yr) = minimum((@allocated _roi2d_reference(smld, xr, yr)) for _ in 1:10)
+_alloc_ref(smld, xr, yr, zr) = minimum((@allocated _roi3d_reference(smld, xr, yr, zr)) for _ in 1:10)
+
+# Emitter types as another package would define them: subtypes of AbstractEmitter only
+mutable struct ForeignEmitter2D{T} <: SMLMData.AbstractEmitter
+    x::T; y::T; photons::T; frame::Int; dataset::Int; track_id::Int; id::Int
+end
+mutable struct ForeignEmitter3D{T} <: SMLMData.AbstractEmitter
+    x::T; y::T; z::T; photons::T; frame::Int; dataset::Int; track_id::Int; id::Int
+end
+mutable struct ForeignEmitter3DFit{T} <: SMLMData.AbstractEmitter   # for save_smite
+    x::T; y::T; z::T; photons::T; bg::T; σ_x::T; σ_y::T; σ_z::T; σ_photons::T; σ_bg::T
+    frame::Int; dataset::Int; track_id::Int; id::Int
+end
+# Every field 0.7.0's save_smite reads, plus z, but no σ_z: 0.7.0 saved it without Z.
+mutable struct ForeignZNoSigmaZ{T} <: SMLMData.AbstractEmitter
+    x::T; y::T; z::T; photons::T; bg::T; σ_x::T; σ_y::T; σ_photons::T; σ_bg::T
+    frame::Int; dataset::Int; track_id::Int; id::Int
+end
+# Stores z but hides it: not in propertynames, refused by getproperty. Exposes σ_z. 0.7.0 saved it without Z.
+mutable struct HiddenZLoc{T} <: SMLMData.AbstractEmitter
+    x::T; y::T; z::T; photons::T; bg::T; σ_x::T; σ_y::T; σ_z::T; σ_photons::T; σ_bg::T
+    frame::Int; dataset::Int; track_id::Int; id::Int
+end
+Base.propertynames(::HiddenZLoc) = Tuple(f for f in fieldnames(HiddenZLoc) if f !== :z)
+Base.getproperty(e::HiddenZLoc, s::Symbol) =
+    s === :z ? throw(ArgumentError("HiddenZLoc keeps z private")) : getfield(e, s)
+# Every field 0.7.0's save_smite reads, with z and σ_z of any type. MAT's writer throws on missing
+# and Float16, so such a z must not reach the file; 0.7.0 saved these without Z.
+struct OddZLoc{Z,S} <: SMLMData.AbstractEmitter
+    x::Float64; y::Float64; z::Z; photons::Float64; bg::Float64; σ_x::Float64; σ_y::Float64; σ_z::S
+    σ_photons::Float64; σ_bg::Float64; frame::Int; dataset::Int; track_id::Int; id::Int
+end
+_oddz(z, σz) = OddZLoc(1.0, 1.5, z, 1000.0, 10.0, 0.01, 0.01, σz, 50.0, 2.0, 1, 1, 0, 1)
+
+# Mimics SykTrack's Localization: position in a tuple, x/y/z computed in getproperty,
+# :z listed in propertynames only for N >= 3. No emitter_ndims method of its own.
+struct PropZLoc{N,T} <: SMLMData.AbstractEmitter
+    position::NTuple{N,T}
+    uncertainty::NTuple{N,T}
+    photons::T
+    bg::T
+    σ_photons::T
+    σ_bg::T
+    frame::Int
+    dataset::Int
+    track_id::Int
+    id::Int
+end
+function Base.getproperty(e::PropZLoc{N,T}, s::Symbol) where {N,T}
+    s === :x && return getfield(e, :position)[1]
+    s === :y && return getfield(e, :position)[2]
+    s === :z && return N >= 3 ? getfield(e, :position)[3] : zero(T)
+    s === :σ_x && return getfield(e, :uncertainty)[1]
+    s === :σ_y && return getfield(e, :uncertainty)[2]
+    s === :σ_z && return N >= 3 ? getfield(e, :uncertainty)[3] : zero(T)
+    return getfield(e, s)
+end
+Base.propertynames(::PropZLoc{N,T}) where {N,T} =
+    (fieldnames(PropZLoc{N,T})..., (N >= 3 ? (:x, :y, :z, :σ_x, :σ_y, :σ_z) : (:x, :y, :σ_x, :σ_y))...)
+
+# One concrete type whose instances differ in dimension: :z is listed only when the
+# position has three entries.
+struct VarDimLoc <: SMLMData.AbstractEmitter
+    position::Vector{Float64}
+    photons::Float64
+    frame::Int
+    dataset::Int
+    track_id::Int
+    id::Int
+end
+function Base.getproperty(e::VarDimLoc, s::Symbol)
+    s === :x && return getfield(e, :position)[1]
+    s === :y && return getfield(e, :position)[2]
+    s === :z && return length(getfield(e, :position)) >= 3 ? getfield(e, :position)[3] : 0.0
+    return getfield(e, s)
+end
+# Two constant tuples: splatting a runtime-chosen tuple here would allocate on every call.
+Base.propertynames(e::VarDimLoc) = length(getfield(e, :position)) >= 3 ?
+    (:position, :photons, :frame, :dataset, :track_id, :id, :x, :y, :z) :
+    (:position, :photons, :frame, :dataset, :track_id, :id, :x, :y)
+
+# Same as PropZLoc, plus the documented type-only declaration.
+struct DeclaredZLoc{N,T} <: SMLMData.AbstractEmitter
+    position::NTuple{N,T}
+    uncertainty::NTuple{N,T}
+    photons::T
+    bg::T
+    σ_photons::T
+    σ_bg::T
+    frame::Int
+    dataset::Int
+    track_id::Int
+    id::Int
+end
+function Base.getproperty(e::DeclaredZLoc{N,T}, s::Symbol) where {N,T}
+    s === :x && return getfield(e, :position)[1]
+    s === :y && return getfield(e, :position)[2]
+    s === :z && return N >= 3 ? getfield(e, :position)[3] : zero(T)
+    s === :σ_x && return getfield(e, :uncertainty)[1]
+    s === :σ_y && return getfield(e, :uncertainty)[2]
+    s === :σ_z && return N >= 3 ? getfield(e, :uncertainty)[3] : zero(T)
+    return getfield(e, s)
+end
+Base.propertynames(::DeclaredZLoc{N,T}) where {N,T} =
+    (fieldnames(DeclaredZLoc{N,T})..., (N >= 3 ? (:x, :y, :z, :σ_x, :σ_y, :σ_z) : (:x, :y, :σ_x, :σ_y))...)
+SMLMData.emitter_ndims(::Type{<:DeclaredZLoc{N}}) where {N} = N
+SMLMData.emitter_ndims(::Type{<:DeclaredZLoc}) = nothing
+
+# Computes z in getproperty but does not list it in propertynames; declares its
+# dimension on its type instead.
+struct DeclaredOnlyLoc{N,T} <: SMLMData.AbstractEmitter
+    position::NTuple{N,T}
+    photons::T
+    frame::Int
+    dataset::Int
+    track_id::Int
+    id::Int
+end
+function Base.getproperty(e::DeclaredOnlyLoc{N,T}, s::Symbol) where {N,T}
+    s === :x && return getfield(e, :position)[1]
+    s === :y && return getfield(e, :position)[2]
+    s === :z && return N >= 3 ? getfield(e, :position)[3] : zero(T)
+    return getfield(e, s)
+end
+SMLMData.emitter_ndims(::Type{<:DeclaredOnlyLoc{N}}) where {N} = N
+
+# Has a field z but its type declares 2: the declaration decides, for the type and its elements.
+struct ZFieldDeclared2 <: SMLMData.AbstractEmitter
+    x::Float64
+    y::Float64
+    z::Float64
+    photons::Float64
+    frame::Int
+    dataset::Int
+    track_id::Int
+    id::Int
+end
+SMLMData.emitter_ndims(::Type{ZFieldDeclared2}) = 2
+
+# Function barrier so the allocation count is the scan's own.
+_nd_alloc(v) = minimum(@allocated(emitter_ndims(v)) for _ in 1:5)
+
+# 0.7.0's save_smite body, copied, to compare the columns and values written.
+function _save_smite_070(smld, filepath, filename)
+    s = Dict{String,Any}()
+    s["X"] = [e.x for e in smld.emitters]
+    s["Y"] = [e.y for e in smld.emitters]
+    if eltype(smld.emitters) <: Emitter3DFit
+        s["Z"] = [e.z for e in smld.emitters]
+    end
+    s["Photons"] = [e.photons for e in smld.emitters]
+    s["Bg"] = [e.bg for e in smld.emitters]
+    s["X_SE"] = [e.σ_x for e in smld.emitters]
+    s["Y_SE"] = [e.σ_y for e in smld.emitters]
+    if eltype(smld.emitters) <: Emitter3DFit
+        s["Z_SE"] = [e.σ_z for e in smld.emitters]
+    end
+    s["Photons_SE"] = [e.σ_photons for e in smld.emitters]
+    s["Bg_SE"] = [e.σ_bg for e in smld.emitters]
+    s["FrameNum"] = [e.frame for e in smld.emitters]
+    s["DatasetNum"] = [e.dataset for e in smld.emitters]
+    s["ConnectID"] = [e.track_id for e in smld.emitters]
+    s["NFrames"] = smld.n_frames
+    s["NDatasets"] = smld.n_datasets
+    for (key, value) in smld.metadata
+        haskey(s, key) || (s[key] = value)
+    end
+    SMLMData.MAT.matwrite(joinpath(filepath, filename), Dict("SMD" => s))
+end
+
+# Saves smld with 0.7.0's body and with save_smite (warnings silenced). Returns the keys the
+# current save adds, or :changed if it drops or alters a 0.7.0 key, and the current file's SMD.
+# A throw from save_smite propagates, failing the test.
+function _legacy_compare(smld)
+    mktempdir() do dir
+        _save_smite_070(smld, dir, "old.mat")
+        old = SMLMData.MAT.matread(joinpath(dir, "old.mat"))["SMD"]
+        Base.CoreLogging.with_logger(Base.CoreLogging.NullLogger()) do
+            save_smite(smld, dir, "new.mat")
+        end
+        new = SMLMData.MAT.matread(joinpath(dir, "new.mat"))["SMD"]
+        all(k -> haskey(new, k) && isequal(new[k], old[k]), keys(old)) || return :changed, new
+        return sort!(collect(setdiff(keys(new), keys(old)))), new
+    end
+end
+
+@testset "Dimension routing" begin
+    cam = IdealCamera(1:512, 1:512, 0.1)
+    xr, yr, zr = (0.0, 2.0), (0.0, 2.0), (-1.0, 1.0)
+    msg2on3 = "2D ROI cannot be applied to 3D emitter type"
+    msg3on2 = "3D ROI cannot be applied to 2D emitter type"
+    msg2onmixed = "2D ROI cannot be applied to mixed 2D/3D emitters"
+    msg3onmixed = "3D ROI cannot be applied to mixed 2D/3D emitters"
+
+    # Emitters 1 and 3 are inside the box; 2 (x), 4 (y) and 5 (z) are outside
+    xs = [1.0, 5.0, 0.5, 1.0, 1.5]
+    ys = [1.0, 1.0, 1.5, 9.0, 0.5]
+    zs = [0.0, 0.0, 0.5, 0.0, 3.0]
+    inside2d = [1, 3, 5]
+    inside3d = [1, 3]
+
+    make2d = Dict(
+        Emitter2D => () -> [Emitter2D{Float64}(xs[i], ys[i], 1000.0) for i in 1:5],
+        Emitter2DFit => () -> [Emitter2DFit{Float64}(xs[i], ys[i], 1000.0, 10.0, 0.01, 0.01, 50.0, 2.0,
+                                                     frame=i) for i in 1:5])
+    make3d = Dict(
+        Emitter3D => () -> [Emitter3D{Float64}(xs[i], ys[i], zs[i], 1000.0) for i in 1:5],
+        Emitter3DFit => () -> [Emitter3DFit{Float64}(xs[i], ys[i], zs[i], 1000.0, 10.0,
+                                                     0.01, 0.01, 0.02, 50.0, 2.0, frame=i) for i in 1:5])
+
+    for (E, make) in make2d
+        @testset "$E" begin
+            s = BasicSMLD(make(), cam, 5, 1, Dict{String,Any}("k" => 1))
+            r = filter_roi(s, xr, yr)
+            @test typeof(r) == typeof(s)
+            @test length(r.emitters) == length(inside2d)
+            @test [e.x for e in r.emitters] == xs[inside2d]
+            @test [e.y for e in r.emitters] == ys[inside2d]
+            @test r.camera === s.camera
+            @test r.n_frames == s.n_frames
+            @test r.n_datasets == s.n_datasets
+            @test r.metadata == s.metadata
+            @test r.metadata !== s.metadata
+            @test_throws ErrorException(msg3on2) filter_roi(s, xr, yr, zr)
+            @test occursin("2D", sprint(show, s))
+            @test occursin("2D localizations", sprint(show, MIME("text/plain"), s))
+        end
+    end
+
+    for (E, make) in make3d
+        @testset "$E" begin
+            s = BasicSMLD(make(), cam, 5, 1, Dict{String,Any}("k" => 1))
+            r = filter_roi(s, xr, yr, zr)
+            @test typeof(r) == typeof(s)
+            @test length(r.emitters) == length(inside3d)
+            @test [e.x for e in r.emitters] == xs[inside3d]
+            @test [e.y for e in r.emitters] == ys[inside3d]
+            @test [e.z for e in r.emitters] == zs[inside3d]
+            @test r.camera === s.camera
+            @test r.n_frames == s.n_frames
+            @test r.n_datasets == s.n_datasets
+            @test r.metadata == s.metadata
+            @test r.metadata !== s.metadata
+            @test_throws ErrorException(msg2on3) filter_roi(s, xr, yr)
+            @test occursin("3D", sprint(show, s))
+            @test occursin("3D localizations", sprint(show, MIME("text/plain"), s))
+        end
+    end
+
+    @testset "Allocation parity" begin
+        # Routing adds nothing for the four own types: the dimension query allocates 0 B and infers
+        # Int. filter_roi is compared with the copied 0.7.0 body within 128 B, not exactly, because
+        # @allocated differs by 32-64 B between two separately compiled functions even for identical
+        # code (0.7.0's own filter_roi misses exact equality with its copy on some random data).
+        n = 10_000
+        rx, ry, rz = (0.2, 0.8), (0.2, 0.8), (0.2, 0.8)
+        rng = MersenneTwister(1)   # seeded, so a failure reproduces
+        s2 = BasicSMLD([Emitter2DFit{Float64}(rand(rng), rand(rng), 1000.0, 10.0, 0.01, 0.01, 50.0, 2.0)
+                        for _ in 1:n], cam, 1, 1)
+        s3 = BasicSMLD([Emitter3DFit{Float64}(rand(rng), rand(rng), rand(rng), 1000.0, 10.0, 0.01, 0.01,
+                                              0.02, 50.0, 2.0) for _ in 1:n], cam, 1, 1)
+        t2 = BasicSMLD([Emitter2D{Float64}(rand(rng), rand(rng), 1000.0) for _ in 1:n], cam, 1, 1)
+        t3 = BasicSMLD([Emitter3D{Float64}(rand(rng), rand(rng), rand(rng), 1000.0) for _ in 1:n], cam, 1, 1)
+        for (s, d) in ((s2, 2), (t2, 2), (s3, 3), (t3, 3))
+            _nd_alloc(s.emitters)   # warm up
+            @test _nd_alloc(s.emitters) == 0
+            @test @inferred(emitter_ndims(s.emitters)) == d
+        end
+        for s in (s2, t2)
+            _alloc_roi(s, rx, ry); _alloc_ref(s, rx, ry)
+            @test abs(_alloc_roi(s, rx, ry) - _alloc_ref(s, rx, ry)) <= 128
+        end
+        for s in (s3, t3)
+            _alloc_roi(s, rx, ry, rz); _alloc_ref(s, rx, ry, rz)
+            @test abs(_alloc_roi(s, rx, ry, rz) - _alloc_ref(s, rx, ry, rz)) <= 128
+        end
+    end
+
+    @testset "Foreign emitter types" begin
+        e2 = [ForeignEmitter2D{Float64}(xs[i], ys[i], 1000.0, i, 1, 0, i) for i in 1:5]
+        s2 = BasicSMLD(e2, cam, 5, 1)
+        r2 = filter_roi(s2, xr, yr)
+        @test [e.x for e in r2.emitters] == xs[inside2d]
+        @test_throws ErrorException(msg3on2) filter_roi(s2, xr, yr, zr)
+        @test occursin("2D", sprint(show, s2))
+        @test occursin("2D localizations", sprint(show, MIME("text/plain"), s2))
+
+        e3 = [ForeignEmitter3D{Float64}(xs[i], ys[i], zs[i], 1000.0, i, 1, 0, i) for i in 1:5]
+        s3 = BasicSMLD(e3, cam, 5, 1)
+        r3 = filter_roi(s3, xr, yr, zr)
+        @test [e.x for e in r3.emitters] == xs[inside3d]
+        @test [e.z for e in r3.emitters] == zs[inside3d]
+        @test_throws ErrorException(msg2on3) filter_roi(s3, xr, yr)
+        @test occursin("3D", sprint(show, s3))
+        @test occursin("3D localizations", sprint(show, MIME("text/plain"), s3))
+    end
+
+    @testset "Non-concrete eltype" begin
+        A = SMLMData.AbstractEmitter
+        e2 = A[Emitter2DFit{Float64}(xs[i], ys[i], 1000.0, 10.0, 0.01, 0.01, 50.0, 2.0) for i in 1:5]
+        e3 = A[Emitter3DFit{Float64}(xs[i], ys[i], zs[i], 1000.0, 10.0, 0.01, 0.01, 0.02, 50.0, 2.0) for i in 1:5]
+
+        s2 = BasicSMLD(e2, cam, 5, 1)
+        @test [e.x for e in filter_roi(s2, xr, yr).emitters] == xs[inside2d]
+        @test_throws ErrorException(msg3on2) filter_roi(s2, xr, yr, zr)
+
+        s3 = BasicSMLD(e3, cam, 5, 1)
+        @test [e.z for e in filter_roi(s3, xr, yr, zr).emitters] == zs[inside3d]
+        @test_throws ErrorException(msg2on3) filter_roi(s3, xr, yr)
+
+        mixed = BasicSMLD(A[e2[1], e3[1]], cam, 5, 1)
+        @test_throws ErrorException(msg2onmixed) filter_roi(mixed, xr, yr)
+        @test_throws ErrorException(msg3onmixed) filter_roi(mixed, xr, yr, zr)
+
+        U = Union{Emitter2DFit{Float64}, Emitter3DFit{Float64}}
+        union_smld = BasicSMLD(U[e2[1], e3[1]], cam, 5, 1)
+        @test_throws ErrorException(msg2onmixed) filter_roi(union_smld, xr, yr)
+        @test_throws ErrorException(msg3onmixed) filter_roi(union_smld, xr, yr, zr)
+
+        empty_smld = BasicSMLD(A[], cam, 5, 1)
+        @test isempty(filter_roi(empty_smld, xr, yr).emitters)
+        @test isempty(filter_roi(empty_smld, xr, yr, zr).emitters)
+    end
+
+    @testset "save_smite with foreign 3D emitters" begin
+        es = [ForeignEmitter3DFit{Float64}(xs[i], ys[i], zs[i], 1000.0, 10.0, 0.01, 0.01, 0.02 + i,
+                                           50.0, 2.0, i, 1, 0, i) for i in 1:5]
+        s = SmiteSMLD{Float64,ForeignEmitter3DFit{Float64}}(es, cam, 5, 1, Dict{String,Any}())
+        mktempdir() do dir
+            save_smite(s, dir, "foreign.mat")
+            smd = SMLMData.MAT.matread(joinpath(dir, "foreign.mat"))["SMD"]
+            @test vec(smd["Z"]) == zs
+            @test vec(smd["Z_SE"]) == [0.02 + i for i in 1:5]
+        end
+    end
+
+    @testset "emitter_ndims" begin
+        A = SMLMData.AbstractEmitter
+        mk = Dict(
+            Emitter2D => (Emitter2D{Float64}(1.0, 2.0, 1000.0), 2),
+            Emitter2DFit => (Emitter2DFit{Float64}(1.0, 2.0, 1000.0, 10.0, 0.01, 0.01, 50.0, 2.0), 2),
+            Emitter3D => (Emitter3D{Float64}(1.0, 2.0, 3.0, 1000.0), 3),
+            Emitter3DFit => (Emitter3DFit{Float64}(1.0, 2.0, 3.0, 1000.0, 10.0, 0.01, 0.01, 0.02, 50.0, 2.0), 3))
+        for (E, (e, d)) in mk
+            @test emitter_ndims(E) == d
+            @test emitter_ndims(E{Float64}) == d
+            @test emitter_ndims(e) == d
+            @test emitter_ndims([e]) == d
+            @test emitter_ndims(BasicSMLD([e], cam, 1, 1)) == d
+        end
+
+        f2 = ForeignEmitter2D{Float64}(1.0, 2.0, 1000.0, 1, 1, 0, 1)
+        f3 = ForeignEmitter3D{Float64}(1.0, 2.0, 3.0, 1000.0, 1, 1, 0, 1)
+        for (F, f, d) in ((ForeignEmitter2D, f2, 2), (ForeignEmitter3D, f3, 3))
+            # An undeclared type has no type-level answer; its emitters decide by their properties.
+            @test emitter_ndims(F) === nothing
+            @test emitter_ndims(F{Float64}) === nothing
+            @test emitter_ndims(f) == d
+            @test emitter_ndims([f]) == d
+            @test emitter_ndims(BasicSMLD([f], cam, 1, 1)) == d
+        end
+
+        e2, e3 = mk[Emitter2D][1], mk[Emitter3D][1]
+        @test emitter_ndims(A[e2, e2]) == 2
+        @test emitter_ndims(A[e3, e3]) == 3
+        @test emitter_ndims(A[e2, e3]) === nothing
+        @test emitter_ndims(A[]) === nothing
+        @test emitter_ndims(Emitter3DFit{Float64}[]) == 3
+
+        @test emitter_ndims(A) === nothing
+        @test emitter_ndims(Union{Emitter2DFit{Float64}, Emitter3DFit{Float64}}) === nothing
+        @test @inferred(emitter_ndims(Emitter2DFit{Float64}[])) == 2
+        @test @inferred(emitter_ndims([mk[Emitter2DFit][1]])) == 2
+        @test @inferred(emitter_ndims([mk[Emitter3DFit][1]])) == 3
+    end
+
+    @testset "emitter_ndims: computed z via propertynames" begin
+        cam = IdealCamera(1:64, 1:64, 0.1)
+        mk2(x, y, i) = PropZLoc{2,Float64}((x, y), (0.01, 0.01), 100.0, 5.0, 1.0, 1.0, 1, 1, 0, i)
+        mk3(x, y, z, i) = PropZLoc{3,Float64}((x, y, z), (0.01, 0.01, 0.02 + i), 100.0, 5.0, 1.0, 1.0, 1, 1, 0, i)
+        pts = [(0.5, 0.5, 0.0), (1.5, 1.0, 0.5), (5.0, 1.0, 0.0), (1.0, 1.0, 3.0)]   # first two inside the box
+        p2s = [mk2(p[1], p[2], i) for (i, p) in enumerate(pts)]
+        p3s = [mk3(p..., i) for (i, p) in enumerate(pts)]
+        p2, p3 = p2s[1], p3s[1]
+
+        @test emitter_ndims(p2) == 2
+        @test emitter_ndims(p3) == 3
+        @test emitter_ndims(p3s) == 3
+        @test emitter_ndims(p2s) == 2
+        s2 = BasicSMLD(p2s, cam, 1, 1)
+        s3 = BasicSMLD(p3s, cam, 1, 1)
+        @test emitter_ndims(s2) == 2
+        @test emitter_ndims(s3) == 3
+        @test emitter_ndims(PropZLoc[p3, p3]) == 3
+        @test emitter_ndims(SMLMData.AbstractEmitter[p2, p3]) === nothing
+
+        r3 = filter_roi(s3, (0.0, 2.0), (0.0, 2.0), (-1.0, 1.0))
+        @test [e.id for e in r3.emitters] == [1, 2]
+        @test_throws ErrorException("2D ROI cannot be applied to 3D emitter type") filter_roi(s3, (0.0, 2.0), (0.0, 2.0))
+        r2 = filter_roi(s2, (0.0, 2.0), (0.0, 2.0))
+        @test [e.id for e in r2.emitters] == [1, 2, 4]
+        @test_throws ErrorException("3D ROI cannot be applied to 2D emitter type") filter_roi(s2, (0.0, 2.0), (0.0, 2.0), (-1.0, 1.0))
+
+        mktempdir() do dir
+            t3 = SmiteSMLD{Float64,PropZLoc{3,Float64}}(p3s, cam, 1, 1, Dict{String,Any}())
+            save_smite(t3, dir, "p3.mat")
+            smd = SMLMData.MAT.matread(joinpath(dir, "p3.mat"))["SMD"]
+            @test vec(smd["Z"]) == [p[3] for p in pts]
+            @test vec(smd["Z_SE"]) == [0.02 + i for i in 1:4]
+            t2 = SmiteSMLD{Float64,PropZLoc{2,Float64}}(p2s, cam, 1, 1, Dict{String,Any}())
+            save_smite(t2, dir, "p2.mat")
+            smd = SMLMData.MAT.matread(joinpath(dir, "p2.mat"))["SMD"]
+            @test !haskey(smd, "Z")
+            @test !haskey(smd, "Z_SE")
+        end
+
+        @test occursin("2D", sprint(show, s2))
+        @test occursin("3D", sprint(show, s3))
+        @test occursin("2D localizations", sprint(show, MIME("text/plain"), s2))
+        @test occursin("3D localizations", sprint(show, MIME("text/plain"), s3))
+
+        # Without an element an undeclared type gives no answer, so an ROI on empty data is a no-op.
+        @test emitter_ndims(PropZLoc{3,Float64}) === nothing
+        @test emitter_ndims(PropZLoc{3,Float64}[]) === nothing
+        empty3 = BasicSMLD(PropZLoc{3,Float64}[], cam, 1, 1)
+        @test isempty(filter_roi(empty3, (0.0, 2.0), (0.0, 2.0), (-1.0, 1.0)).emitters)
+        @test isempty(filter_roi(empty3, (0.0, 2.0), (0.0, 2.0)).emitters)
+    end
+
+    @testset "emitter_ndims: declared type-only answer" begin
+        cam = IdealCamera(1:64, 1:64, 0.1)
+        d2 = DeclaredZLoc{2,Float64}((1.0, 1.0), (0.01, 0.01), 100.0, 5.0, 1.0, 1.0, 1, 1, 0, 1)
+        d3 = DeclaredZLoc{3,Float64}((1.0, 1.0, 0.0), (0.01, 0.01, 0.02), 100.0, 5.0, 1.0, 1.0, 1, 1, 0, 2)
+        @test emitter_ndims(DeclaredZLoc{3,Float64}) == 3
+        @test emitter_ndims(DeclaredZLoc{3,Float64}[]) == 3
+        @test emitter_ndims(DeclaredZLoc) === nothing
+        @test emitter_ndims(DeclaredZLoc[]) === nothing
+        @test emitter_ndims(DeclaredZLoc[d2, d3]) === nothing
+        empty_s = BasicSMLD(DeclaredZLoc{3,Float64}[], cam, 1, 1)
+        @test isempty(filter_roi(empty_s, (0.0, 2.0), (0.0, 2.0), (-1.0, 1.0)).emitters)
+    end
+
+    @testset "emitter_ndims: precedence" begin
+        cam = IdealCamera(1:64, 1:64, 0.1)
+        in2 = DeclaredOnlyLoc{2,Float64}((1.0, 1.0), 100.0, 1, 1, 0, 1)
+        out2 = DeclaredOnlyLoc{2,Float64}((5.0, 5.0), 100.0, 1, 1, 0, 2)
+        in3 = DeclaredOnlyLoc{3,Float64}((1.0, 1.0, 0.0), 100.0, 1, 1, 0, 3)
+        out3 = DeclaredOnlyLoc{3,Float64}((5.0, 5.0, 5.0), 100.0, 1, 1, 0, 4)
+        @test emitter_ndims(in2) == 2
+        @test emitter_ndims(in3) == 3
+        @test emitter_ndims([in3, out3]) == 3
+        @test emitter_ndims(DeclaredOnlyLoc{3,Float64}[]) == 3
+        @test emitter_ndims(DeclaredOnlyLoc[in3, out3]) == 3
+        @test emitter_ndims(DeclaredOnlyLoc[in2, in3]) === nothing
+        @test emitter_ndims(DeclaredOnlyLoc{2}) == 2
+        s3 = BasicSMLD([in3, out3], cam, 1, 1)
+        r3 = filter_roi(s3, (0.0, 2.0), (0.0, 2.0), (-1.0, 1.0))
+        @test length(r3.emitters) == 1
+        @test r3.emitters[1].id == 3
+        s2 = BasicSMLD([in2, out2], cam, 1, 1)
+        r2 = filter_roi(s2, (0.0, 2.0), (0.0, 2.0))
+        @test length(r2.emitters) == 1
+        @test r2.emitters[1].id == 1
+
+        zf = ZFieldDeclared2(1.0, 1.0, 0.0, 100.0, 1, 1, 0, 1)
+        @test emitter_ndims(ZFieldDeclared2) == 2
+        @test emitter_ndims(zf) == 2
+        @test emitter_ndims([zf, zf]) == 2
+
+        e2 = Emitter2DFit{Float64}(1.0, 1.0, 100.0, 1.0, 0.01, 0.01, 1.0, 1.0, frame=1)
+        @test emitter_ndims(SMLMData.AbstractEmitter[e2, e2]) == 2
+    end
+    @testset "emitter_ndims: instances of one type that differ" begin
+        cam = IdealCamera(1:64, 1:64, 0.1)
+        a2 = VarDimLoc([1.0, 1.0], 100.0, 1, 1, 0, 1)
+        a3 = VarDimLoc([1.0, 1.0, 0.0], 100.0, 1, 1, 0, 2)
+        for order in ([a2, a3], [a3, a2])
+            @test order isa Vector{VarDimLoc}
+            @test emitter_ndims(order) === nothing
+            s = BasicSMLD(order, cam, 1, 1)
+            @test emitter_ndims(s) === nothing
+            @test_throws ErrorException(msg2onmixed) filter_roi(s, xr, yr)
+            @test_throws ErrorException(msg3onmixed) filter_roi(s, xr, yr, zr)
+            @test occursin("mixed 2D/3D", sprint(show, s))
+        end
+        @test emitter_ndims([a3, a3]) == 3
+        @test emitter_ndims([a2, a2]) == 2
+        r3 = filter_roi(BasicSMLD([a3, a3], cam, 1, 1), xr, yr, zr)
+        @test length(r3.emitters) == 2
+        r2 = filter_roi(BasicSMLD([a2, a2], cam, 1, 1), xr, yr)
+        @test length(r2.emitters) == 2
+    end
+
+    @testset "empty Union of one dimension" begin
+        # A Union of SMLMData's same-dimension types declares that dimension, so ROIs behave as in
+        # 0.7.0, which checked eltype <: Union{Emitter2D, Emitter2DFit} (or the 3D pair).
+        cam = IdealCamera(1:64, 1:64, 0.1)
+        E2 = Union{Emitter2D{Float64}, Emitter2DFit{Float64}}
+        E3 = Union{Emitter3D{Float64}, Emitter3DFit{Float64}}
+        @test emitter_ndims(E2[]) == 2
+        @test emitter_ndims(E3[]) == 3
+        s2, s3 = BasicSMLD(E2[], cam, 1, 1), BasicSMLD(E3[], cam, 1, 1)
+        @test isempty(filter_roi(s2, (0.0, 1.0), (0.0, 1.0)).emitters)
+        @test_throws ErrorException("3D ROI cannot be applied to 2D emitter type") filter_roi(
+            s2, (0.0, 1.0), (0.0, 1.0), (-1.0, 1.0))
+        @test isempty(filter_roi(s3, (0.0, 1.0), (0.0, 1.0), (-1.0, 1.0)).emitters)
+        @test_throws ErrorException("2D ROI cannot be applied to 3D emitter type") filter_roi(
+            s3, (0.0, 1.0), (0.0, 1.0))
+        @test emitter_ndims(Emitter2DFit{Float64}[]) == 2
+        @test emitter_ndims(Emitter3DFit{Float64}[]) == 3
+    end
+
+    @testset "foreign element scan allocates nothing" begin
+        n = 10_000
+        mkp2(i) = PropZLoc{2,Float64}((1.0, 2.0), (0.01, 0.01), 100.0, 5.0, 1.0, 1.0, 1, 1, 0, i)
+        mkp3(i) = PropZLoc{3,Float64}((1.0, 2.0, 3.0), (0.01, 0.01, 0.02), 100.0, 5.0, 1.0, 1.0, 1, 1, 0, i)
+        vs = (
+            [ForeignEmitter2D{Float64}(1.0, 2.0, 1000.0, 1, 1, 0, i) for i in 1:n],
+            [ForeignEmitter3D{Float64}(1.0, 2.0, 3.0, 1000.0, 1, 1, 0, i) for i in 1:n],
+            [mkp2(i) for i in 1:n],
+            [mkp3(i) for i in 1:n],
+            [VarDimLoc([1.0, 1.0], 100.0, 1, 1, 0, i) for i in 1:n],
+            [VarDimLoc([1.0, 1.0, 0.0], 100.0, 1, 1, 0, i) for i in 1:n],
+        )
+        for v in vs
+            _nd_alloc(v)   # warm up
+            @test _nd_alloc(v) == 0
+        end
+    end
+
+    @testset "save_smite on mixed dimensions warns" begin
+        cam = IdealCamera(1:64, 1:64, 0.1)
+        A = SMLMData.AbstractEmitter
+        e2 = Emitter2DFit{Float64}(1.0, 1.0, 1000.0, 10.0, 0.01, 0.01, 50.0, 2.0)
+        e3 = Emitter3DFit{Float64}(1.0, 1.0, 0.0, 1000.0, 10.0, 0.01, 0.01, 0.02, 50.0, 2.0)
+        mixed = SmiteSMLD{Float64,A}(A[e2, e3], cam, 1, 1, Dict{String,Any}())
+        empty_s = SmiteSMLD{Float64,A}(A[], cam, 1, 1, Dict{String,Any}())
+        mktempdir() do dir
+            # 0.7.0 saved mixed data without Z; it still does, and now says so.
+            @test_logs (:warn, r"mixed 2D/3D") save_smite(mixed, dir, "mixed.mat")
+            smd = SMLMData.MAT.matread(joinpath(dir, "mixed.mat"))["SMD"]
+            @test vec(smd["X"]) == [1.0, 1.0]
+            @test !haskey(smd, "Z")
+            @test !haskey(smd, "Z_SE")
+            @test_logs save_smite(empty_s, dir, "empty.mat")
+            smd = SMLMData.MAT.matread(joinpath(dir, "empty.mat"))["SMD"]
+            @test !haskey(smd, "Z")
+        end
+    end
+
+    @testset "show labels mixed and unknown dimensions" begin
+        cam = IdealCamera(1:64, 1:64, 0.1)
+        A = SMLMData.AbstractEmitter
+        e2 = Emitter2DFit{Float64}(1.0, 1.0, 1000.0, 10.0, 0.01, 0.01, 50.0, 2.0)
+        e3 = Emitter3DFit{Float64}(1.0, 1.0, 0.0, 1000.0, 10.0, 0.01, 0.01, 0.02, 50.0, 2.0)
+        s = BasicSMLD(A[e2, e3], cam, 1, 1)
+        @test occursin("mixed 2D/3D", sprint(show, s))
+        @test occursin("mixed 2D/3D localizations", sprint(show, MIME("text/plain"), s))
+        @test occursin("unknown-dimension", sprint(show, BasicSMLD(A[], cam, 1, 1)))
+        ms = SmiteSMLD{Float64,A}(A[e2, e3], cam, 1, 1, Dict{String,Any}())
+        @test occursin("mixed 2D/3D", sprint(show, MIME("text/plain"), ms))
+    end
+
+    @testset "save_smite on an empty Union of fit types" begin
+        # 0.7.0 wrote Z and Z_SE whenever the element type was a subtype of Emitter3DFit.
+        cam = IdealCamera(1:64, 1:64, 0.1)
+        U3 = Union{Emitter3DFit{Float32}, Emitter3DFit{Float64}}
+        U2 = Union{Emitter2DFit{Float32}, Emitter2DFit{Float64}}
+        mktempdir() do dir
+            save_smite(SmiteSMLD{Float64,U3}(U3[], cam, 1, 1, Dict{String,Any}()), dir, "u3.mat")
+            smd = SMLMData.MAT.matread(joinpath(dir, "u3.mat"))["SMD"]
+            @test haskey(smd, "Z")
+            @test haskey(smd, "Z_SE")
+            save_smite(SmiteSMLD{Float64,U2}(U2[], cam, 1, 1, Dict{String,Any}()), dir, "u2.mat")
+            smd = SMLMData.MAT.matread(joinpath(dir, "u2.mat"))["SMD"]
+            @test !haskey(smd, "Z")
+            @test !haskey(smd, "Z_SE")
+        end
+    end
+
+    @testset "bottom element type" begin
+        # Union{} is a subtype of every type declared in this file (DeclaredZLoc, DeclaredOnlyLoc,
+        # ZFieldDeclared2); its own method answers without ambiguity.
+        cam = IdealCamera(1:64, 1:64, 0.1)
+        @test emitter_ndims(Union{}) === nothing
+        @test emitter_ndims(Union{}[]) === nothing
+        @test emitter_ndims(BasicSMLD(Union{}[], cam, 1, 1)) === nothing
+    end
+
+    @testset "save_smite keeps 0.7.0's columns" begin
+        cam = IdealCamera(1:64, 1:64, 0.1)
+        A = SMLMData.AbstractEmitter
+        U3 = Union{Emitter3DFit{Float32}, Emitter3DFit{Float64}}
+        e3 = Emitter3DFit{Float64}(1.0, 1.0, 0.5, 1000.0, 10.0, 0.01, 0.01, 0.125, 50.0, 2.0)
+        e3b = Emitter3DFit{Float64}(2.0, 2.0, 0.75, 1000.0, 10.0, 0.01, 0.01, 0.5, 50.0, 2.0)
+        e3f = Emitter3DFit{Float32}(1.0f0, 1.0f0, 0.25f0, 1000.0f0, 10.0f0, 0.01f0, 0.01f0, 0.0625f0,
+                                    50.0f0, 2.0f0)
+        fz = ForeignZNoSigmaZ{Float64}(1.0, 1.0, 0.5, 1000.0, 10.0, 0.01, 0.01, 50.0, 2.0, 1, 1, 0, 1)
+        mktempdir() do dir
+            # 0.7.0 dropped Z for an abstract-typed vector of 3D fits; now every emitter being
+            # an Emitter3DFit writes it.
+            sa = SmiteSMLD{Float64,A}(A[e3, e3b], cam, 1, 1, Dict{String,Any}())
+            @test_logs save_smite(sa, dir, "a3.mat")
+            smd = SMLMData.MAT.matread(joinpath(dir, "a3.mat"))["SMD"]
+            @test vec(smd["Z"]) == [0.5, 0.75]
+            @test vec(smd["Z_SE"]) == [0.125, 0.5]
+            su = SmiteSMLD{Float64,U3}(U3[e3, e3f], cam, 1, 1, Dict{String,Any}())
+            @test_logs save_smite(su, dir, "u3.mat")
+            smd = SMLMData.MAT.matread(joinpath(dir, "u3.mat"))["SMD"]
+            @test Float64.(vec(smd["Z"])) == [0.5, 0.25]
+            @test Float64.(vec(smd["Z_SE"])) == [0.125, 0.0625]
+            # A foreign emitter with z but no σ_z saves as in 0.7.0: no error, no Z, a warning.
+            sf = SmiteSMLD{Float64,ForeignZNoSigmaZ{Float64}}([fz, fz], cam, 1, 1, Dict{String,Any}())
+            @test_logs (:warn, r"3D emitters") save_smite(sf, dir, "fz.mat")
+            smd = SMLMData.MAT.matread(joinpath(dir, "fz.mat"))["SMD"]
+            @test vec(smd["X"]) == [1.0, 1.0]
+            @test !haskey(smd, "Z")
+            @test !haskey(smd, "Z_SE")
+            # Mixed with 3D fits, or empty, it still saves as in 0.7.0: no Z.
+            sm = SmiteSMLD{Float64,A}(A[e3, fz], cam, 1, 1, Dict{String,Any}())
+            @test_logs (:warn, r"3D emitters") save_smite(sm, dir, "mz.mat")
+            @test !haskey(SMLMData.MAT.matread(joinpath(dir, "mz.mat"))["SMD"], "Z")
+            se = SmiteSMLD{Float64,ForeignZNoSigmaZ{Float64}}(ForeignZNoSigmaZ{Float64}[], cam, 1, 1,
+                                                              Dict{String,Any}())
+            @test_logs save_smite(se, dir, "ez.mat")
+            @test !haskey(SMLMData.MAT.matread(joinpath(dir, "ez.mat"))["SMD"], "Z")
+            # A stored z hidden from the properties, with σ_z exposed, is 2D and saves as in 0.7.0: no Z.
+            hz = HiddenZLoc{Float64}(1.0, 1.0, 0.5, 1000.0, 10.0, 0.01, 0.01, 0.02, 50.0, 2.0, 1, 1, 0, 1)
+            @test emitter_ndims(hz) == 2
+            @test emitter_ndims([hz, hz]) == 2
+            sh = SmiteSMLD{Float64,HiddenZLoc{Float64}}([hz, hz], cam, 1, 1, Dict{String,Any}())
+            @test_logs save_smite(sh, dir, "hz.mat")
+            smd = SMLMData.MAT.matread(joinpath(dir, "hz.mat"))["SMD"]
+            @test vec(smd["X"]) == [1.0, 1.0]
+            @test !haskey(smd, "Z")
+            @test !haskey(smd, "Z_SE")
+        end
+    end
+
+    @testset "save_smite against 0.7.0" begin
+        # Where 0.7.0 saved, save_smite saves too, keeping every 0.7.0 key and value; it adds only
+        # Z and Z_SE, for non-empty 3D data whose z and σ_z are all Float32 or Float64.
+        cam = IdealCamera(1:64, 1:64, 0.1)
+        A = SMLMData.AbstractEmitter
+        sm(v) = SmiteSMLD{Float64,eltype(v)}(v, cam, 1, 1, Dict{String,Any}())
+        e2 = Emitter2DFit{Float64}(1.0, 1.5, 1000.0, 10.0, 0.01, 0.01, 50.0, 2.0)
+        e3 = Emitter3DFit{Float64}(1.0, 1.5, 0.5, 1000.0, 10.0, 0.01, 0.01, 0.125, 50.0, 2.0)
+        e3f = Emitter3DFit{Float32}(1.0f0, 1.5f0, 0.25f0, 1000.0f0, 10.0f0, 0.01f0, 0.01f0, 0.0625f0,
+                                    50.0f0, 2.0f0)
+        f3 = ForeignEmitter3DFit{Float64}(1.0, 1.5, 0.5, 1000.0, 10.0, 0.01, 0.01, 0.02, 50.0, 2.0, 1, 1, 0, 1)
+        f3b = ForeignEmitter3DFit{Float64}(2.0, 2.5, 0.75, 1000.0, 10.0, 0.01, 0.01, 0.04, 50.0, 2.0, 1, 1, 0, 2)
+        e3b = Emitter3DFit{Float64}(2.0, 2.5, 0.75, 1000.0, 10.0, 0.01, 0.01, 0.25, 50.0, 2.0)
+        fz = ForeignZNoSigmaZ{Float64}(1.0, 1.5, 0.5, 1000.0, 10.0, 0.01, 0.01, 50.0, 2.0, 1, 1, 0, 1)
+        hz = HiddenZLoc{Float64}(1.0, 1.5, 0.5, 1000.0, 10.0, 0.01, 0.01, 0.02, 50.0, 2.0, 1, 1, 0, 1)
+        U3 = Union{Emitter3DFit{Float32}, Emitter3DFit{Float64}}
+        unchanged = (sm([e2, e2]), sm([e3, e3]), sm([e3f, e3f]), sm(U3[]), sm(A[]), sm(A[e2, e3]),
+                     sm([fz, fz]), sm([hz, hz]), sm([_oddz(missing, 0.02), _oddz(missing, 0.02)]),
+                     sm([_oddz(Float16(0.5), Float16(0.02)), _oddz(Float16(0.5), Float16(0.02))]),
+                     sm(A[e3, _oddz(missing, 0.02)]),
+                     # Float32 and Float64 z together make an AbstractFloat column, which MAT
+                     # would write as a cell: no Z.
+                     sm([_oddz(0.5, 0.02), _oddz(0.25f0, 0.03)]))
+        for s in unchanged
+            @test first(_legacy_compare(s)) == String[]
+        end
+        widened = (sm(A[e3, e3b]), sm([f3, f3b]), sm([_oddz(0.5, 0.02), _oddz(0.25, 0.03)]),
+                   sm([_oddz(0.5f0, 0.02f0), _oddz(0.25f0, 0.03f0)]))
+        for s in widened
+            added, new = _legacy_compare(s)
+            @test added == ["Z", "Z_SE"]
+            @test vec(new["Z"]) == [e.z for e in s.emitters]
+            @test vec(new["Z_SE"]) == [e.σ_z for e in s.emitters]
+            @test eltype(new["Z"]) === typeof(first(s.emitters).z)
+        end
+    end
+
+    @testset "save_smite warns when data lose Z" begin
+        cam = IdealCamera(1:64, 1:64, 0.1)
+        A = SMLMData.AbstractEmitter
+        sm(v) = SmiteSMLD{Float64,eltype(v)}(v, cam, 1, 1, Dict{String,Any}())
+        e2 = Emitter2DFit{Float64}(1.0, 1.5, 1000.0, 10.0, 0.01, 0.01, 50.0, 2.0)
+        e3 = Emitter3DFit{Float64}(1.0, 1.5, 0.5, 1000.0, 10.0, 0.01, 0.01, 0.125, 50.0, 2.0)
+        mktempdir() do dir
+            @test_logs (:warn, r"mixed 2D/3D") save_smite(sm(A[e2, e3]), dir, "m.mat")
+            @test_logs (:warn, r"3D emitters") save_smite(sm([_oddz(missing, 0.02)]), dir, "o.mat")
+            @test_logs (:warn, r"3D emitters") save_smite(sm([_oddz(Float16(0.5), Float16(0.02))]), dir, "h.mat")
+            @test_logs (:warn, r"3D emitters") save_smite(sm([_oddz(0.5, 0.02), _oddz(0.25f0, 0.03)]), dir, "f.mat")
+            @test !haskey(SMLMData.MAT.matread(joinpath(dir, "h.mat"))["SMD"], "Z")
+            @test_logs save_smite(sm([e2, e2]), dir, "2.mat")   # 2D data lose nothing
+            @test_logs save_smite(sm(A[e3, e3]), dir, "3.mat")  # widened: Z written
+            @test_logs save_smite(sm(A[]), dir, "e.mat")        # empty data lose nothing
+        end
     end
 end

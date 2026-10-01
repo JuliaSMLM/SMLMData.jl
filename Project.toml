@@ -1,7 +1,7 @@
 name = "SMLMData"
 uuid = "5488f106-40b8-4660-84c5-84a168990d1b"
 authors = ["klidke@unm.edu"]
-version = "0.7.0"
+version = "0.7.1"
 
 [deps]
 Adapt = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
@@ -15,7 +15,10 @@ StaticArrays = "1"
 julia = "1.9"
 
 [extras]
+Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test"]
+test = ["Pkg", "Random", "TOML", "Test"]

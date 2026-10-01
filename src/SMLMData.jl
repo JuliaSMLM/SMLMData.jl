@@ -96,6 +96,7 @@ export
     @filter,
     filter_frames,
     filter_roi,
+    emitter_ndims,
     cat_smld,
     merge_smld
 

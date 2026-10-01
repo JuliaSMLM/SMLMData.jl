@@ -80,7 +80,7 @@ function Base.show(io::IO, ::MIME"text/plain", smld::SmiteSMLD{T,E}) where {T,E}
     end
     
     # Get localization dimensions (2D or 3D)
-    dim_str = E <: Union{Emitter2D, Emitter2DFit} ? "2D" : "3D"
+    dim_str = _dim_label(smld.emitters)
     
     # Extract original file if available
     orig_file = get(smld.metadata, "original_file", "unknown")

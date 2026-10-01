@@ -1,3 +1,5 @@
+using SMLMData, Test
+
 @testset "SMLD Operations" begin
     # Setup helper function to create test data
     function create_test_smld(frame_range, dataset_num=1)

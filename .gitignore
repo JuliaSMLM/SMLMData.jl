@@ -8,3 +8,4 @@ examples/.vscode/*
 *.png
 docs/Manifest.toml
 build/
+dev/output/
