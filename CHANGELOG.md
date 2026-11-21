@@ -20,8 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 Fixed in SMLMCore 0.1.0 and SMLMio 0.1.0, and so in SMLMData; their changelogs give every case:
-- `merge_smld` with `adjust_frames` or `adjust_datasets` no longer changes its inputs' emitters,
-  moves each input's datasets past the earlier inputs' total `n_datasets`, and reports that total.
+- `merge_smld` with `adjust_frames` or `adjust_datasets` no longer changes its inputs' emitters;
+  with `adjust_datasets` it moves each input's datasets past the earlier inputs' total
+  `n_datasets` and reports that total.
 - `cat_smld` and `merge_smld` refuse cameras that differ in any field, calibration included, and
   return a new SMLD for one input.
 - `physical_to_pixel_index` returns the pixel whose half-open interval holds the position, so
@@ -31,7 +32,10 @@ Fixed in SMLMCore 0.1.0 and SMLMio 0.1.0, and so in SMLMData; their changelogs g
 - `load_smite_2d` and `load_smite_3d` convert SMITE's pixel positions and uncertainties to µm,
   load files whose optional fields are per dataset or empty, need `pixel_size` for a file without
   `PixelSize`, and no longer require `ZSize`; `save_smite` writes pixels and the camera's size, so
-  its files load again, and takes any `AbstractSMLD`.
+  its files load again, and takes any `AbstractSMLD`. Files that 0.7.1's `save_smite` wrote have
+  no `XSize`, `YSize` or `PixelSize` and are refused with an `ArgumentError` (0.7.1 could not
+  load them back either); their `X` and `Y` are µm if the SMLD was built in Julia and SMITE
+  pixels if it came from a SMITE file.
 
 ### Removed
 - Internal names that 0.7.1 defined but did not export (`SMLMData.MAT`, `SMLMData.Adapt`,

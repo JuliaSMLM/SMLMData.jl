@@ -32,8 +32,9 @@ and `save_smite` converts back.
 Names, types and fields are unchanged. Behavior changes where SMLMCore 0.1.0 and SMLMio 0.1.0
 fixed bugs (see their CHANGELOG.md files):
 
-- `merge_smld(...; adjust_frames, adjust_datasets)` leaves its inputs unchanged; datasets of each
-  input move past all earlier inputs' datasets, and `n_datasets` is the total.
+- `merge_smld(...; adjust_frames, adjust_datasets)` leaves its inputs unchanged. With
+  `adjust_datasets`, datasets of each input move past all earlier inputs' datasets and
+  `n_datasets` is the total; without it, `n_datasets` is the largest input's.
 - `cat_smld` / `merge_smld` refuse cameras that differ in any field (calibration included); with
   one input they return a new SMLD.
 - `physical_to_pixel_index` uses half-open pixels: `x = 0` is pixel 1.
@@ -42,6 +43,9 @@ fixed bugs (see their CHANGELOG.md files):
 - SMITE loaders return µm (SMITE stores pixels); `save_smite` writes pixels and the camera's
   `XSize`, `YSize`, `PixelSize`, `NDims`, takes any `AbstractSMLD`, and its files load again.
   A file without `PixelSize` needs `pixel_size = ...`.
+- Files written by 0.7.1's `save_smite` lack `XSize`, `YSize` and `PixelSize`; the loaders refuse
+  them with an `ArgumentError`. Their `X`/`Y` are µm if the SMLD was built in Julia, SMITE pixels
+  if it was loaded from a SMITE file.
 - Julia 1.10 or later.
 
 ## Installing beside SMLMCore or SMLMio
@@ -53,5 +57,6 @@ SMLMio (files) directly.
 ## Saved results
 
 JLD2 files written under SMLMData 0.7.1 load with SMLMData loaded (JLD2 finds each type through
-SMLMData's name). Files written from 0.7.2 on record SMLMCore or SMLMio names and do not load as
-the same types under SMLMData 0.7.1.
+SMLMData's name). Files written from 0.7.2 on record SMLMCore or SMLMio names: they load with
+SMLMData 0.7.2, or with the owning packages loaded, and do not load as the same types under
+SMLMData 0.7.1.

@@ -50,8 +50,10 @@ Names, types and their fields are unchanged. Behavior changes only where SMLMCor
 ([SMLMCore](https://github.com/JuliaSMLM/SMLMCore.jl/blob/main/CHANGELOG.md),
 [SMLMio](https://github.com/JuliaSMLM/SMLMio.jl/blob/main/CHANGELOG.md)). The ones a caller sees:
 
-- `merge_smld` with `adjust_frames` or `adjust_datasets` no longer renumbers its inputs, and moves
-  each input's datasets past all of the earlier inputs' datasets; `n_datasets` is their total.
+- `merge_smld` with `adjust_frames` or `adjust_datasets` no longer renumbers its inputs. With
+  `adjust_datasets`, each input's datasets move past all of the earlier inputs' datasets and
+  `n_datasets` is their total; without it, dataset numbers stay as given and `n_datasets` is the
+  largest input's, as before.
 - `cat_smld` and `merge_smld` refuse cameras that differ in any field, calibration included, and
   return a new SMLD for a single input.
 - `physical_to_pixel_index` puts a position in the pixel whose half-open interval holds it, so
@@ -61,14 +63,19 @@ Names, types and their fields are unchanged. Behavior changes only where SMLMCor
 - SMITE files load with positions and their uncertainties in µm (SMITE stores pixels), and
   `save_smite` writes pixels back, with the camera's `XSize`, `YSize`, `PixelSize` and `NDims`, so
   a saved file loads again. A file without `PixelSize` needs the `pixel_size` keyword.
+- A file that 0.7.1's `save_smite` wrote has no `XSize`, `YSize` or `PixelSize`, so the loaders
+  refuse it with an `ArgumentError` naming what is missing (0.7.1 could not load it back either).
+  Its `X` and `Y` are in µm if the SMLD was built in Julia, but in SMITE pixels if it was loaded
+  from a SMITE file, and the file does not say which: adding the missing fields by hand needs to
+  know where the data came from.
 - Julia 1.10 or later is required (0.7.1 allowed 1.9).
 - In printed output, types defined in SMLMCore or SMLMio may show those names
   (`SMLMCore.BasicSMLD`) where 0.7.1 showed `SMLMData.BasicSMLD`.
 
 Results saved with JLD2 under SMLMData 0.7.1 load as they did there, as long as SMLMData is
 loaded; JLD2 recorded their types under SMLMData's name. Results saved from 0.7.2 on record
-SMLMCore's (or SMLMio's) names: they load with SMLMData 0.7.2 or with SMLMCore alone, but not with
-SMLMData 0.7.1.
+SMLMCore's and SMLMio's names: they load with SMLMData 0.7.2, or with SMLMCore alone when they hold
+only SMLMCore's types (a `SmiteSMLD` also needs SMLMio), but not with SMLMData 0.7.1.
 
 ## Moving to SMLMCore and SMLMio
 
