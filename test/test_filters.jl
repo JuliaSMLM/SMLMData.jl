@@ -128,7 +128,7 @@ struct OddZLoc{Z,S} <: SMLMData.AbstractEmitter
 end
 _oddz(z, σz) = OddZLoc(1.0, 1.5, z, 1000.0, 10.0, 0.01, 0.01, σz, 50.0, 2.0, 1, 1, 0, 1)
 
-# Mimics SykTrack's Localization: position in a tuple, x/y/z computed in getproperty,
+# An emitter with its position in a tuple, x/y/z computed in getproperty,
 # :z listed in propertynames only for N >= 3. No emitter_ndims method of its own.
 struct PropZLoc{N,T} <: SMLMData.AbstractEmitter
     position::NTuple{N,T}
