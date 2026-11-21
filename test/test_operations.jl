@@ -100,7 +100,8 @@ using SMLMData, Test
             
             # Test with dataset adjustment
             result = merge_smld(smld1, smld2, adjust_datasets=true)
-            @test result.n_datasets == 2
+            # SMLMCore 0.1.0: each input moves by the earlier inputs' n_datasets (1, then 2 -> 3)
+            @test result.n_datasets == 3
             unique_datasets = unique(e.dataset for e in result.emitters)
             @test length(unique_datasets) == 2
         end

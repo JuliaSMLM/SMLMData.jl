@@ -266,7 +266,9 @@ end
 
 # Saves smld with 0.7.0's body and with save_smite (warnings silenced). Returns the keys the
 # current save adds, or :changed if it drops or alters a 0.7.0 key, and the current file's SMD.
-# A throw from save_smite propagates, failing the test.
+# A throw from save_smite propagates, failing the test. 0.7.0 wrote X, Y, X_SE and Y_SE in
+# microns; save_smite (SMLMio 0.1.0) writes SMITE's pixels, so those four compare after that
+# conversion (cameras here start at 0).
 function _legacy_compare(smld)
     mktempdir() do dir
         _save_smite_070(smld, dir, "old.mat")
@@ -275,7 +277,12 @@ function _legacy_compare(smld)
             save_smite(smld, dir, "new.mat")
         end
         new = MAT.matread(joinpath(dir, "new.mat"))["SMD"]
-        all(k -> haskey(new, k) && isequal(new[k], old[k]), keys(old)) || return :changed, new
+        px = smld.camera.pixel_edges_x[2] - smld.camera.pixel_edges_x[1]
+        pixels = Dict("X" => v -> v ./ px .+ 0.5, "Y" => v -> v ./ px .+ 0.5,
+                      "X_SE" => v -> v ./ px, "Y_SE" => v -> v ./ px)
+        same(k) = !haskey(pixels, k) ? isequal(new[k], old[k]) :
+                  size(new[k]) == size(old[k]) && (isempty(old[k]) || new[k] ≈ pixels[k](old[k]))
+        all(k -> haskey(new, k) && same(k), keys(old)) || return :changed, new
         return sort!(collect(setdiff(keys(new), keys(old)))), new
     end
 end
@@ -635,7 +642,7 @@ end
             # 0.7.0 saved mixed data without Z; it still does, and now says so.
             @test_logs (:warn, r"mixed 2D/3D") save_smite(mixed, dir, "mixed.mat")
             smd = MAT.matread(joinpath(dir, "mixed.mat"))["SMD"]
-            @test vec(smd["X"]) == [1.0, 1.0]
+            @test vec(smd["X"]) ≈ [10.5, 10.5]   # x = 1.0 µm with 0.1 µm pixels: SMITE X = 10.5 (SMLMio 0.1.0)
             @test !haskey(smd, "Z")
             @test !haskey(smd, "Z_SE")
             @test_logs save_smite(empty_s, dir, "empty.mat")
@@ -709,7 +716,7 @@ end
             sf = SmiteSMLD{Float64,ForeignZNoSigmaZ{Float64}}([fz, fz], cam, 1, 1, Dict{String,Any}())
             @test_logs (:warn, r"3D emitters") save_smite(sf, dir, "fz.mat")
             smd = MAT.matread(joinpath(dir, "fz.mat"))["SMD"]
-            @test vec(smd["X"]) == [1.0, 1.0]
+            @test vec(smd["X"]) ≈ [10.5, 10.5]   # x = 1.0 µm with 0.1 µm pixels: SMITE X = 10.5 (SMLMio 0.1.0)
             @test !haskey(smd, "Z")
             @test !haskey(smd, "Z_SE")
             # Mixed with 3D fits, or empty, it still saves as in 0.7.0: no Z.
@@ -727,15 +734,17 @@ end
             sh = SmiteSMLD{Float64,HiddenZLoc{Float64}}([hz, hz], cam, 1, 1, Dict{String,Any}())
             @test_logs save_smite(sh, dir, "hz.mat")
             smd = MAT.matread(joinpath(dir, "hz.mat"))["SMD"]
-            @test vec(smd["X"]) == [1.0, 1.0]
+            @test vec(smd["X"]) ≈ [10.5, 10.5]   # x = 1.0 µm with 0.1 µm pixels: SMITE X = 10.5 (SMLMio 0.1.0)
             @test !haskey(smd, "Z")
             @test !haskey(smd, "Z_SE")
         end
     end
 
     @testset "save_smite against 0.7.0" begin
-        # Where 0.7.0 saved, save_smite saves too, keeping every 0.7.0 key and value; it adds only
-        # Z and Z_SE, for non-empty 3D data whose z and σ_z are all Float32 or Float64.
+        # Where 0.7.0 saved, save_smite saves too, keeping every 0.7.0 key and value (positions in
+        # SMITE's pixels); it adds the camera's NDims, PixelSize, XSize and YSize (SMLMio 0.1.0),
+        # and Z and Z_SE for non-empty 3D data whose z and σ_z are all Float32 or Float64.
+        camkeys = ["NDims", "PixelSize", "XSize", "YSize"]
         cam = IdealCamera(1:64, 1:64, 0.1)
         A = SMLMData.AbstractEmitter
         sm(v) = SmiteSMLD{Float64,eltype(v)}(v, cam, 1, 1, Dict{String,Any}())
@@ -757,13 +766,13 @@ end
                      # would write as a cell: no Z.
                      sm([_oddz(0.5, 0.02), _oddz(0.25f0, 0.03)]))
         for s in unchanged
-            @test first(_legacy_compare(s)) == String[]
+            @test first(_legacy_compare(s)) == camkeys
         end
         widened = (sm(A[e3, e3b]), sm([f3, f3b]), sm([_oddz(0.5, 0.02), _oddz(0.25, 0.03)]),
                    sm([_oddz(0.5f0, 0.02f0), _oddz(0.25f0, 0.03f0)]))
         for s in widened
             added, new = _legacy_compare(s)
-            @test added == ["Z", "Z_SE"]
+            @test added == [camkeys; "Z"; "Z_SE"]
             @test vec(new["Z"]) == [e.z for e in s.emitters]
             @test vec(new["Z_SE"]) == [e.σ_z for e in s.emitters]
             @test eltype(new["Z"]) === typeof(first(s.emitters).z)
