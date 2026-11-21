@@ -1,4 +1,8 @@
-# Test groups (admiral decision 0008). Every folder under test/ must be a declared group.
-#   Core      test/*.jl         fast curated tests; plain Pkg.test()
+# Test groups (admiral decision 0008). Declare only the groups this package has; every declared
+# group needs at least one .jl file, and every folder under test/ must be a declared group.
+#   Core      test/*.jl         fast curated tests; plain Pkg.test(); at most 2 min on CI
+#   QA        test/qa/          Aqua and ExplicitImports; its own CI job
 
 [Core]
+
+[QA]
