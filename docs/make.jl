@@ -5,6 +5,8 @@ DocMeta.setdocmeta!(SMLMData, :DocTestSetup, :(using SMLMData); recursive=true)
 
 makedocs(;
     modules=[SMLMData],
+    doctest = false, # QA runs every docstring jldoctest (admiral decision 0018)
+    checkdocs = :exports, # SMLMData's own docstrings; the re-exported names are documented by SMLMCore and SMLMio
     sitename="SMLMData.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
@@ -13,12 +15,11 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
-        "Saving and Loading" => "io.md",
-        "API Reference" => "api.md",
+        "API" => "api.md",
     ],
 )
 
 deploydocs(;
     repo="github.com/JuliaSMLM/SMLMData.jl",
-    devbranch = "main" 
+    devbranch = "main"
 )
