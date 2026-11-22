@@ -1,68 +1,41 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code in this repository.
 
-## Package Overview
+## What this package is
 
-SMLMData.jl is a Julia package for handling Single Molecule Localization Microscopy (SMLM) data. It provides types for representing fluorophore localizations, camera geometries, and complete SMLM datasets, along with tools for coordinate conversion, filtering, and I/O operations.
+SMLMData (0.7.2 and later) is a container with no code of its own. `src/SMLMData.jl` loads
+SMLMCore (types, coordinates, filters, operations) and SMLMio (SMITE files) and exports the 32
+names SMLMData 0.7.1 exported, each the owning package's own object. The only function defined
+here is `api_overview()` (unexported), which returns `api_overview.md` followed by
+`SMLMCore.api_overview()`.
 
-## Development Commands
+- A bug or feature in any exported name belongs to SMLMCore or SMLMio, through that package's
+  session and release. Nothing here wraps, copies or patches their code.
+- Never add or drop an export: the export list is 0.7.1's, checked by `test/test_container.jl`.
+- SMLMCore and SMLMio name SMLMData as a weak dependency with compat `>= 0.7.2`, so they cannot be
+  installed beside SMLMData 0.7.1 or earlier, which defined its own copies of the types.
 
-### Running Tests
+## Commands
+
 ```bash
-# Full test suite
-julia --project=. -e 'using Pkg; Pkg.test()'
-
-# Direct test execution
-julia --project=. test/runtests.jl
-
-# Single test file
-julia --project=. test/test_emitters.jl
+julia --project=. -e 'using Pkg; Pkg.test()'                  # Core group
+GROUP=QA julia --project=. -e 'using Pkg; Pkg.test()'          # Aqua, ExplicitImports, docstrings
+julia --project=docs docs/make.jl                              # docs (docs/Project.toml has [sources])
 ```
 
-### Building Documentation
-```bash
-# Build and open documentation
-julia dev/build_docs.jl
-```
+## Tests
 
-### Package Management
-```bash
-# Install dependencies
-julia --project=. -e 'using Pkg; Pkg.instantiate()'
+- `test/test_container.jl`: the export list equals 0.7.1's; each name is SMLMCore's or SMLMio's
+  object; a method added through SMLMData lands on the owner's function; `api_overview`; and SMLDs
+  that SMLMData 0.7.1 writes with JLD2 at test time, in a temporary environment of its own (it needs
+  the registry), load as the same types with equal values.
+- The other `test/test_*.jl` files are SMLMData 0.7.1's suite, run through the container. Where
+  SMLMCore 0.1.0 or SMLMio 0.1.0 fixed a bug, the assertion expects the fixed behavior and says so.
+- No data file is tracked: tests build their inputs at test time.
+- `test/runtests.jl` and `test/qa/qa.jl` are the lab templates; never edit them.
 
-# Update dependencies
-julia --project=. -e 'using Pkg; Pkg.update()'
-```
+## Rules
 
-## Architecture
-
-### Type Hierarchy
-- **Abstract Types**: `AbstractEmitter`, `AbstractCamera`, `SMLD` define interfaces
-- **Emitter Types**: `Emitter2D`, `Emitter3D`, `Emitter2DFit`, `Emitter3DFit` represent localizations
-- **Container Types**: `BasicSMLD`, `SmiteSMLD` store collections of emitters
-- **Camera Types**: `IdealCamera` defines pixel-to-physical coordinate mapping
-
-### Core Modules
-1. **Coordinates** (`src/core/coordinates.jl`): Conversions between pixel and physical coordinates
-2. **Filters** (`src/core/filters.jl`): `@filter` macro and spatial/temporal selection functions
-3. **Operations** (`src/core/operations.jl`): Dataset concatenation and merging
-4. **I/O** (`src/io/smite/`): SMITE format support for MATLAB interoperability
-
-### Key Design Patterns
-- All spatial coordinates are in microns
-- Parametric types `{T}` for numeric precision flexibility
-- Immutable structs for basic types, mutable for fit results
-- Operations return new SMLD objects (functional style)
-- Macro-based filtering syntax for intuitive API
-
-### Testing Structure
-Tests are organized by component in separate files:
-- `test_emitters.jl`: Emitter type tests
-- `test_cameras.jl`: Camera and coordinate tests
-- `test_smld.jl`: Container type tests
-- `test_filters.jl`: Filtering functionality
-- `test_operations.jl`: Dataset operations
-- `test_smite.jl`: SMITE format I/O
-
-All tests use `@testset` blocks for organization and run via `runtests.jl`.
+- Lengths are in µm. Julia floor 1.10, as SMLMCore's.
+- Versions follow the lab's 0.Y.Z rule: main carries the next version with `-DEV`.

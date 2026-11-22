@@ -152,7 +152,7 @@ end
         y_corners = rand(Int32(1):Int32(500), 5)
         frame_indices = rand(Int32(1):Int32(100), 5)
 
-        @test_throws AssertionError ROIBatch(data, x_corners, y_corners, frame_indices, camera)
+        @test_throws ArgumentError ROIBatch(data, x_corners, y_corners, frame_indices, camera)
     end
 
     @testset "x_corners size mismatch error" begin
@@ -162,7 +162,7 @@ end
         y_corners = rand(Int32(1):Int32(500), 5)
         frame_indices = rand(Int32(1):Int32(100), 5)
 
-        @test_throws AssertionError ROIBatch(data, x_corners, y_corners, frame_indices, camera)
+        @test_throws DimensionMismatch ROIBatch(data, x_corners, y_corners, frame_indices, camera)
     end
 
     @testset "y_corners size mismatch error" begin
@@ -172,7 +172,7 @@ end
         y_corners = rand(Int32(1):Int32(500), 7)  # Wrong n_rois
         frame_indices = rand(Int32(1):Int32(100), 5)
 
-        @test_throws AssertionError ROIBatch(data, x_corners, y_corners, frame_indices, camera)
+        @test_throws DimensionMismatch ROIBatch(data, x_corners, y_corners, frame_indices, camera)
     end
 
     @testset "Frame indices size mismatch error" begin
@@ -182,7 +182,7 @@ end
         y_corners = rand(Int32(1):Int32(500), 5)
         frame_indices = rand(Int32(1):Int32(100), 3)  # Wrong count
 
-        @test_throws AssertionError ROIBatch(data, x_corners, y_corners, frame_indices, camera)
+        @test_throws DimensionMismatch ROIBatch(data, x_corners, y_corners, frame_indices, camera)
     end
 end
 
@@ -377,12 +377,13 @@ end
         @test adapted isa ROIBatch
         @test adapted.data isa Array{Float64,3}
         @test adapted.data == Float64.(batch.data)
+        # SMLMCore 0.1.0: only data is adapted; corners and frame indices stay on the host
         @test adapted.x_corners == batch.x_corners
-        @test adapted.x_corners !== batch.x_corners
+        @test adapted.x_corners === batch.x_corners
         @test adapted.y_corners == batch.y_corners
-        @test adapted.y_corners !== batch.y_corners
+        @test adapted.y_corners === batch.y_corners
         @test adapted.frame_indices == batch.frame_indices
-        @test adapted.frame_indices !== batch.frame_indices
+        @test adapted.frame_indices === batch.frame_indices
         @test adapted.x_corners isa Vector{Int32}
         @test adapted.y_corners isa Vector{Int32}
         @test adapted.frame_indices isa Vector{Int32}

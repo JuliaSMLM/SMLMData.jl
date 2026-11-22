@@ -1,24 +1,40 @@
 name = "SMLMData"
 uuid = "5488f106-40b8-4660-84c5-84a168990d1b"
 authors = ["klidke@unm.edu"]
-version = "0.7.1"
+version = "0.7.2-DEV"
 
 [deps]
-Adapt = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
-MAT = "23992714-dd62-5051-b70f-ba57cb901cac"
-StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+SMLMCore = "240e48d6-ab50-4b9c-b28c-b5763f96a46b"
+SMLMio = "b22eae6f-8030-48c8-88e1-31d49f7b605c"
 
 [compat]
 Adapt = "3, 4"
-MAT = "0.10"
-StaticArrays = "1"
-julia = "1.9"
+Aqua = "0.8"
+Documenter = "1"
+ExplicitImports = "1"
+JLD2 = "0.6"
+MAT = "0.10, 0.11, 0.12, 0.13"
+Pkg = "1"
+Random = "1"
+SMLMCore = "0.1"
+SMLMio = "0.1"
+StaticArrays = "1.9.8"
+TOML = "1"
+Test = "1"
+julia = "1.10"
 
 [extras]
+Adapt = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
+Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+ExplicitImports = "7d51a73a-1435-4ff3-83d9-f097790105c7"
+JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
+MAT = "23992714-dd62-5051-b70f-ba57cb901cac"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Pkg", "Random", "TOML", "Test"]
+test = ["Adapt", "Aqua", "Documenter", "ExplicitImports", "JLD2", "MAT", "Pkg", "Random", "StaticArrays", "TOML", "Test"]

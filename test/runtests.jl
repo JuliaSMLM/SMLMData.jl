@@ -31,24 +31,40 @@ for d in readdir(TESTDIR)
         error("test/$d/ is not the folder of a group declared in test_groups.toml")
 end
 
+# Returns nothing when the GPU package pkg (CUDA or AMDGPU) is in the group env and functional,
+# else the reason it is not.
+function gpuunmet(g, pkg)
+    Base.find_package(pkg) === nothing && return "$pkg.jl is not in the $g environment"
+    Core.eval(Main, :(import $(Symbol(pkg))))
+    Base.invokelatest(() -> getfield(Main, Symbol(pkg)).functional()) ||
+        return "$pkg.functional() is false"
+    return nothing
+end
+
 # Returns nothing when every requirement of group g is met, else the reason it is not.
 function unmet(g)
     for r in get(CFG[g], "requires", String[])
         if r == "cuda"
-            Base.find_package("CUDA") === nothing &&
-                return "CUDA.jl is not in the $g environment"
-            Core.eval(Main, :(import CUDA))
-            Base.invokelatest(() -> Main.CUDA.functional()) ||
-                return "CUDA.functional() is false"
+            why = gpuunmet(g, "CUDA")
+            why === nothing || return why
+        elseif r == "amdgpu"
+            why = gpuunmet(g, "AMDGPU")
+            why === nothing || return why
+        elseif r == "gpu"
+            whys = [gpuunmet(g, p) for p in ("CUDA", "AMDGPU")]
+            any(isnothing, whys) || return join(whys, "; ")
         elseif r == "data"
             p = expanduser(get(CFG[g], "data_path", ""))
             isempty(p) && error("test_groups.toml: $g requires data but sets no data_path")
             ispath(p) || return "data_path $p does not exist"
         elseif r == "hardware"
             get(ENV, "TEST_HARDWARE", "") == "1" || return "TEST_HARDWARE=1 is not set"
+        elseif r == "display"
+            Sys.islinux() && isempty(get(ENV, "DISPLAY", "")) &&
+                return "DISPLAY is not set (run under xvfb-run)"
         else
             error(
-                "test_groups.toml: $g has unknown requirement \"$r\" (cuda, data, hardware)"
+                "test_groups.toml: $g has unknown requirement \"$r\" (cuda, amdgpu, gpu, data, hardware, display)"
             )
         end
     end

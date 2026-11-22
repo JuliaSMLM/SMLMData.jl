@@ -1,64 +1,52 @@
 """
     SMLMData
 
-A Julia package for working with Single Molecule Localization Microscopy (SMLM) data.
+Single molecule localization microscopy (SMLM) data types and SMITE file io, as one package.
 
-# Features
-- Type system for emitters, cameras, and localization data
-- Physical coordinate handling (microns) with camera pixel mappings
-- Filtering and ROI selection tools
-- SMITE format compatibility
-- Memory-efficient data structures
+Since 0.7.2 SMLMData holds no code of its own: it loads [SMLMCore](https://github.com/JuliaSMLM/SMLMCore.jl)
+(emitters, cameras, ROI batches, SMLD containers, coordinates, filters and operations) and
+[SMLMio](https://github.com/JuliaSMLM/SMLMio.jl) (SMITE files) and exports every name SMLMData 0.7.1
+exported. Each name is the owning package's own object, so `SMLMData.BasicSMLD === SMLMCore.BasicSMLD`
+and a method added to `SMLMData.filter_roi` is a method of `SMLMCore.filter_roi`. New code can depend
+on SMLMCore, or on SMLMio for files, directly.
 
-# Basic Usage
+# Example
 ```julia
 using SMLMData
 
-# Create a camera
-cam = IdealCamera(1:512, 1:512, 0.1)  # 512x512 camera with 0.1 micron pixels
-
-# Create some emitters
+cam = IdealCamera(512, 512, 0.1)  # 512 x 512 pixels of 0.1 µm
 emitters = [
     Emitter2DFit{Float64}(1.0, 2.0, 1000.0, 10.0, 0.01, 0.01, 50.0, 2.0),
-    Emitter2DFit{Float64}(3.0, 4.0, 1200.0, 12.0, 0.01, 0.01, 60.0, 2.0)
+    Emitter2DFit{Float64}(3.0, 4.0, 1200.0, 12.0, 0.01, 0.01, 60.0, 2.0),
 ]
-
-# Create SMLD object
-smld = BasicSMLD(emitters, cam, 1, 1, Dict{String,Any}())
-
-# Filter operations
-roi = filter_roi(smld, 0.0:2.0, 1.0:3.0)
-bright = @filter(smld, photons > 1000)
+smld = BasicSMLD(emitters, cam, 1, 1)
+bright = @filter(smld, photons > 1100)
 ```
 
-# API Overview
-For a comprehensive overview of the API, use the help mode on `api`:
-
-```julia
-?api
-```
-
-Or access the complete API documentation programmatically:
-
-```julia
-docs = SMLMData.api()
-```
+`SMLMData.api_overview()` returns an overview of the whole API as a `String`.
 """
 module SMLMData
 
-# External Packages
-using MAT
+using SMLMCore: SMLMCore,
+    AbstractEmitter, AbstractCamera, AbstractSMLD, SMLD,
+    AbstractSMLMConfig, AbstractSMLMInfo,
+    Emitter2D, Emitter3D, Emitter2DFit, Emitter3DFit,
+    IdealCamera, SCMOSCamera,
+    SingleROI, ROIBatch,
+    BasicSMLD,
+    pixel_to_physical, physical_to_pixel, physical_to_pixel_index,
+    compute_bin_edges, get_pixel_centers,
+    @filter, filter_frames, filter_roi, emitter_ndims, cat_smld, merge_smld
+using SMLMio: SMLMio,
+    SmiteSMD, SmiteSMLD, load_smite_2d, load_smite_3d, save_smite
 
-# Base imports
-import Base: filter
-
-# Type definitions
+# Every name SMLMData 0.7.1 exported, and no other.
 export
     # Abstract types
     AbstractEmitter,
     AbstractCamera,
     AbstractSMLD,
-    SMLD,  # Deprecated alias for AbstractSMLD
+    SMLD,  # Alias of AbstractSMLD
 
     # Ecosystem abstract types (tuple pattern)
     AbstractSMLMConfig,
@@ -84,7 +72,7 @@ export
     SmiteSMD
 
 # Coordinates and conversions
-export 
+export
     pixel_to_physical,
     physical_to_pixel,
     physical_to_pixel_index,
@@ -106,38 +94,16 @@ export
     load_smite_3d,
     save_smite
 
-# Ecosystem abstract types for the (Config, Info, Data) tuple pattern
 """
-    AbstractSMLMConfig
+    api_overview() -> String
 
-Abstract supertype for configuration structs in the JuliaSMLM ecosystem.
-Subtypes hold algorithm parameters (e.g., fit settings, simulation parameters).
+An overview of the API for readers and language models: SMLMData's own `api_overview.md`, which
+says where each name lives and what changed in 0.7.2, followed by `SMLMCore.api_overview()`. The
+SMITE functions are documented by their docstrings (`?load_smite_2d`) and SMLMio's manual.
 """
-abstract type AbstractSMLMConfig end
-
-"""
-    AbstractSMLMInfo
-
-Abstract supertype for information/results structs in the JuliaSMLM ecosystem.
-Subtypes hold computed metadata or diagnostic output from algorithms.
-"""
-abstract type AbstractSMLMInfo end
-
-# Include all source files
-include("types/emitters.jl")  # Move from current location
-include("types/cameras.jl")   # Move from current location
-include("types/roi_batch.jl") # ROI batch types for ecosystem interop
-include("types/smld.jl")      # Move from current location
-
-include("core/coordinates.jl") # Move from coordinates.jl
-include("core/filters.jl")    # Move from filters.jl
-include("core/operations.jl") # Move from operations.jl
-
-include("io/smite/types.jl")   # Move from smite/types.jl
-include("io/smite/loading.jl") # Move from smite/loading.jl
-include("io/smite/saving.jl")  # Move from smite/saving.jl
-
-# Include the API overview functionality
-include("api.jl")
+function api_overview()
+    own = read(joinpath(pkgdir(SMLMData), "api_overview.md"), String)
+    return own * "\n\n" * SMLMCore.api_overview()
+end
 
 end
